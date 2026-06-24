@@ -1,9 +1,15 @@
 # Talam — Open Source Design Spec
 
 **Date:** 2026-06-23
+**Last updated:** 2026-06-24
 **Status:** Open for Contribution
-**Version:** 1.0
+**Version:** 1.1
 **For:** UI/UX designers contributing to the Talam open source project
+
+**Changelog v1.1 (2026-06-24)**
+- Domain updated: `talam.app` → `mytalam.com` throughout
+- Added `/shop/[categorySlug]` SEO route to storefront section
+- Added `mytalam.com/pricing` and `mytalam.com/join` to marketing site scope
 
 ---
 
@@ -11,7 +17,7 @@
 
 Talam is an open-source multi-tenant e-commerce SaaS platform built for Indian small businesses. We are looking for design contributions across two surfaces:
 
-1. **Storefront** — what customers see when they visit a store (e.g. `silk.talam.app`)
+1. **Storefront** — what customers see when they visit a store (e.g. `silk.mytalam.com`)
 2. **Tenant Admin Panel** — what store owners use to manage products, orders, and settings (mobile-first)
 
 This document gives you everything you need to contribute designs without writing code.
@@ -159,7 +165,7 @@ Built on **shadcn/ui** (Radix UI primitives + Tailwind). Designers should use sh
 
 **Key decisions:**
 - Hero image is uploaded by store owner — design must work with any aspect ratio image
-- "Powered by Talam" badge: subtle, bottom-right of footer, links to talam.app
+- "Powered by Talam" badge: subtle, bottom-right of footer, links to mytalam.com
 - All section content is configurable by store owner
 
 ---
@@ -167,6 +173,10 @@ Built on **shadcn/ui** (Radix UI primitives + Tailwind). Designers should use sh
 ### 4.2 Storefront — Shop (`/shop`)
 
 **Purpose:** Product discovery. Filter and browse.
+
+**Routes:**
+- `/shop` — main product listing with filter controls
+- `/shop/[categorySlug]` — pre-rendered category page (e.g. `silk.mytalam.com/shop/sarees`). SEO-indexable, shareable URL. Same layout as `/shop` but pre-filtered to that category and with the category name as the page heading.
 
 **Layout:**
 - Mobile: Filter button (top) → 2-column product grid
@@ -279,7 +289,7 @@ Built on **shadcn/ui** (Radix UI primitives + Tailwind). Designers should use sh
 ```
 Step 1: Name your store
   - Store name (text input)
-  - Store URL preview: [name].talam.app (auto-generated slug)
+  - Store URL preview: [name].mytalam.com (auto-generated slug)
   - Category (dropdown: Fashion / Food / Education / Beauty / Other)
 
 Step 2: Set up your categories
@@ -537,7 +547,9 @@ Talam Design/
 ├── 03 - Onboarding/
 │   └── 5-Step Wizard
 └── 04 - Marketing Site/
-    └── talam.app landing page
+    ├── mytalam.com landing page
+    ├── mytalam.com/pricing (plan comparison)
+    └── mytalam.com/join (referral landing)
 ```
 
 ### Naming Convention
@@ -590,7 +602,7 @@ Designers: these are the exact variable names used in the codebase. Use them in 
 2. **Tenant Admin — Mobile dashboard** (most used by store owners)
 3. **Onboarding wizard** (first experience — sets expectations)
 4. **Checkout flow** (trust = conversion)
-5. **talam.app marketing landing page** (acquisition)
+5. **mytalam.com marketing site** — landing page, `/pricing` plan comparison, `/join` referral page (acquisition)
 6. **Empty states** (polish, delight)
 7. **Illustration set** (empty states, onboarding, success screens)
 
