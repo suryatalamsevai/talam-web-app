@@ -1,15 +1,22 @@
 # Talam — Open Source Design Spec
 
 **Date:** 2026-06-23
-**Last updated:** 2026-06-24
+**Last updated:** 2026-06-25
 **Status:** Open for Contribution
-**Version:** 1.1
+**Version:** 1.1 (consolidated with gap resolution)
 **For:** UI/UX designers contributing to the Talam open source project
 
-**Changelog v1.1 (2026-06-24)**
+**Changelog v1.1 (2026-06-25)**
 - Domain updated: `talam.app` → `mytalam.com` throughout
 - Added `/shop/[categorySlug]` SEO route to storefront section
 - Added `mytalam.com/pricing` and `mytalam.com/join` to marketing site scope
+- **NEW:** Storefront `/about` page — store story, owner photo, social links, trust stats, branch locations
+- **NEW:** Storefront `/wishlist` page design specs
+- **NEW:** Product reviews UI — individual review cards, verified purchase badges, review filtering, report mechanism
+- **NEW:** Admin `/admin/about` page — store story editor, social links, branch CRUD
+- **NEW:** Admin `/admin/reviews` page — moderation dashboard (all reviews + reported reviews tabs)
+- **NEW:** Product categories in home and shop filters (dynamic, owner-defined, reorderable)
+- **NEW:** Trust badges on product detail (free delivery, return window, custom trust text)
 
 ---
 
@@ -56,94 +63,141 @@ The Talam wordmark uses the concept of a solid ground — the platform that busi
 
 ### Colour System
 
+#### Admin Panel (Talam Platform UI)
 ```
---color-brand-primary:    #4F3FF0   /* Indigo — trust, platform */
---color-brand-secondary:  #F59E0B   /* Amber — warmth, India */
---color-brand-dark:       #1A1040   /* Deep indigo — headings */
-
-/* Neutrals */
---color-neutral-50:       #FAFAFA
---color-neutral-100:      #F4F4F5
---color-neutral-200:      #E4E4E7
---color-neutral-400:      #A1A1AA
---color-neutral-600:      #52525B
---color-neutral-900:      #18181B
-
-/* Semantic */
---color-success:          #10B981
---color-warning:          #F59E0B
---color-error:            #EF4444
---color-info:             #3B82F6
+--bg:        #F9FAFB   /* Light background */
+--surface:   #fff      /* Cards, panels */
+--fg:        #111827   /* Text, foreground */
+--muted:     #6B7280   /* Secondary text */
+--border:    #E5E7EB   /* Borders, dividers */
+--ph:        #D1D5DB   /* Placeholder, icons */
+--brand:     #4F3FF0   /* Primary indigo */
+--amber:     #F59E0B   /* Accent, warmth */
+--success:   #10B981   /* Positive actions */
+--danger:    #EF4444   /* Destructive, errors */
 ```
 
-**Store theming:** Each store has a `brand_color` (set by owner). The storefront uses this as the primary action colour (buttons, links, badges). Design components should accept a `--store-primary` CSS variable that overrides defaults.
+#### Storefront (Store-Customizable)
+```
+--sp:        #C2185B   /* Store Primary (example: rose) */
+--sp-h:      #9A1248   /* Store Primary Hover */
+--bg:        #FAFAFA   /* Background */
+--surface:   #fff      /* Surface, cards */
+--fg:        #18181B   /* Foreground text */
+--muted:     #71717A   /* Secondary text */
+--border:    #E4E4E7   /* Borders */
+--n100:      #F4F4F5   /* Neutral 100 */
+--sale:      #EF4444   /* Sale/discount badges */
+--new:       #10B981   /* New product badge */
+--wa:        #25D366   /* WhatsApp brand colour */
+```
+
+**Store theming:** Each store owner sets a `--sp` (store primary) colour during onboarding. This colour is used for all primary actions (buttons, links, badges, active states). The example prototype uses rose (#C2185B), but any colour can be substituted.
 
 ### Typography
 
+#### Admin Panel (Talam Platform UI)
 ```
-/* Talam platform UI */
---font-sans: 'Inter', system-ui, sans-serif
---font-display: 'Plus Jakarta Sans', sans-serif
-
-/* Storefront (inherits from store owner's preference — default below) */
---font-store-heading: 'Playfair Display', serif   /* elegant, ethnic */
---font-store-body: 'DM Sans', sans-serif
+--fn: -apple-system, 'SF Pro Text', system-ui, sans-serif
+     (fallback to system fonts: Inter, Segoe UI, Roboto, etc.)
 ```
 
-**Scale (mobile-first):**
+#### Storefront (Store-Customizable)
 ```
-xs:   12px / 1.4
-sm:   14px / 1.5
-base: 16px / 1.6
-lg:   18px / 1.5
-xl:   20px / 1.4
-2xl:  24px / 1.3
-3xl:  30px / 1.2
-4xl:  36px / 1.1
+--fh: 'Playfair Display', serif    /* Headings — elegant, ethnic */
+--fb: 'DM Sans', sans-serif        /* Body — clean, readable */
+```
+
+**Font sizes (mobile-first, px):**
+```
+12px  — Labels, badges, captions (font-weight: 600–700)
+13px  — Button text, filter labels (font-weight: 500–600)
+14px  — Body text, small descriptions (font-weight: 400–500)
+15px  — Input text, card headings (font-weight: 500–600)
+16px  — Body text default, section headings (font-weight: 400–600)
+18px  — Page titles on mobile (font-weight: 600)
+20px  — Product names, large headings (font-weight: 600–700)
+24px  — Modal/section headings (font-weight: 600–700)
+26px+ — Hero titles, page titles (font-weight: 700, clamp() on mobile)
+```
+
+**Line heights:**
+```
+1.3  — Tight (headings, product names)
+1.4  — Normal (labels, captions)
+1.5  — Readable (body text, descriptions)
+1.6  — Loose (multi-line input, long-form text)
 ```
 
 ### Spacing System (4px base)
+
+Used consistently in padding, margin, and gaps:
+
 ```
-1 → 4px    2 → 8px    3 → 12px   4 → 16px
-5 → 20px   6 → 24px   8 → 32px   10 → 40px
-12 → 48px  16 → 64px  20 → 80px  24 → 96px
+4px     — Minimal (icon spacing, tight lists)
+6px     — Form element internal spacing
+8px     — Chips, buttons, small gaps
+10px    — Card padding, moderate gaps
+12px    — Form row gaps, section spacing
+14px    — Order cards, product rows
+16px    — Main padding (mobile), form fields
+20px    — Section padding, moderate gaps
+24px    — Spacing between major sections
+32px    — Large section gaps, hero padding
+40px    — Hero padding on desktop
 ```
 
 ### Border Radius
+
 ```
-sm:   4px    (inputs, tags)
-md:   8px    (cards, buttons)
-lg:   12px   (modals, sheets)
-xl:   16px   (product cards)
-full: 9999px (pills, avatars)
+4px    — Minimal, small interactive elements
+6px    — Compact form controls, tight buttons
+8px    — Standard cards, buttons, inputs
+10px   — Order/product cards
+12px   — Modals, larger containers
+16px   — Product cards (desktop), large modals
+20px   — Filter sheets, onboarding modals
+999px  — Pills (filters, badges), avatars
 ```
 
 ---
 
 ## 3. Component Library
 
-Built on **shadcn/ui** (Radix UI primitives + Tailwind). Designers should use shadcn component names and extend — not replace — existing patterns.
+Components are built with vanilla HTML/CSS (no framework dependency). Use CSS Grid, Flexbox, and CSS custom properties for theming. Designers should reference component implementations in the prototype files for exact specifications.
 
-### Core Components Needed
+### Core Components (Prototypes Documented)
 
-| Component | Used In | Notes |
-|---|---|---|
-| ProductCard | Shop, Home, Wishlist | Mobile: full-width. Desktop: grid. Has sale badge, wishlist heart |
-| SizeSelector | Product detail | XS/S/M/L/XL/XXL pill buttons. Selected = filled brand colour |
-| CartDrawer | All storefront | Slides from right (Sheet). Shows items, subtotal, checkout CTA |
-| ImageGallery | Product detail | Swipeable on mobile. Thumbnail strip on desktop |
-| OrderStatusBadge | Orders | Pending/Confirmed/Shipped/Delivered/Cancelled — colour coded |
-| PaymentSelector | Checkout | Card UI with radio — UPI QR / Instamojo / Razorpay |
-| UPIQRCode | Checkout | Shows store's QR + UPI ID. UTR input for manual confirm |
-| SaleBanner | Home | Full-width, dismissable. Countdown timer optional |
-| FilterDrawer | Shop | Mobile: bottom sheet. Desktop: left sidebar |
-| OnboardingWizard | Admin setup | 6-step progress. Step indicator at top |
-| ProductEditor | Admin | Form: name, price, sizes (checkboxes), images (drag-drop) |
-| OrderCard | Admin orders | Compact: customer name, items, amount, status, quick action |
-| StatCard | Admin dashboard | Number + label + trend arrow. 2-column grid on mobile |
-| ThemePicker | Admin settings | Colour swatches + live preview of store primary colour |
-| CategoryManager | Admin categories | Editable list of tenant-defined categories with drag-to-reorder and add/delete |
-| TrialBanner | All admin | Sticky top bar: "X days left" + Upgrade CTA |
+| Component | Used In | Status | Notes |
+|---|---|---|---|
+| **ProductCard** | Shop, Home | ✓ | 2-col mobile grid, 4-col desktop. Image, badge (Sale/New), wishlist heart, name, price, rating |
+| **SizeSelector** | Product detail | ✓ | Pill buttons (XS/S/M/L/XL/XXL). Selected = filled store primary. Disabled/strikethrough if OOS |
+| **CartDrawer** | Storefront | ✓ | Slides from right (fixed position). Items, quantity stepper, subtotal, checkout CTA |
+| **ImageGallery** | Product detail | ✓ | Full-width mobile, swipeable with touch. Dot indicators. Desktop thumbnails below |
+| **OrderStatusBadge** | Orders | ✓ | Pending (amber), Confirmed (green), Shipped (blue), Delivered (green), Cancelled (red) |
+| **PaymentSelector** | Checkout | ✓ | Card UI with radio button. UPI / Instamojo / Razorpay with icons and descriptions |
+| **UPIQRCode** | Checkout | ✓ | QR code placeholder + UPI ID + UTR input field |
+| **SaleBanner** | Home | ✓ | Full-width dark bar with countdown timer (dismissable) |
+| **FilterSheet** | Shop | ✓ | Mobile: bottom sheet with handle. Category / Size / Price / Sort sections. Apply button |
+| **FilterSidebar** | Shop (desktop) | ✓ | Left sidebar with checkboxes. Price range inputs. Sort radio options |
+| **OnboardingWizard** | Admin setup | ✓ | 6-step wizard with horizontal step indicator. Store → Brand → Product → Payment → Go Live |
+| **ProductEditor** | Admin products | ✓ | Modal/sheet: image upload, name, description, category, price, sizes, stock inputs, visible toggle |
+| **OrderCard** | Admin orders | ✓ | Compact: order ID + time, customer name, items, amount, status button, tracking input |
+| **StatCard** | Admin dashboard | ✓ | Large number + small label + trend indicator (↑/↓). 2-col mobile, 4-col desktop |
+| **ThemePicker** | Admin settings | ✓ | 6 colour swatches + custom hex input. Live preview of action buttons |
+| **CategoryList** | Admin categories | ✓ | Drag-reorderable rows with inline edit + delete. Add button at top |
+| **TrialBanner** | Admin dashboard | ✓ | Sticky top: "X days left" text + Upgrade CTA button |
+| **BottomNav** | Mobile (all) | ✓ | 5 items (Storefront) / 4 items (Admin). Icon + label. Active state in store primary |
+| **StepIndicator** | Checkout, Onboarding | ✓ | Horizontal dots: unfilled → filled on complete → checkmark. Connected line between steps |
+| **ReviewCard** | Product detail, Admin reviews | ✓ | Review with rating, author, date, verified purchase badge, text, images, helpful count, report button |
+| **ReviewForm** | Product detail | ✓ | Rating picker (5 stars), title input, text area, photo upload, submit button. V1: read-only display only |
+| **ReviewRatingBreakdown** | Product detail | ✓ | 5-row breakdown: ★★★★★ (count), ★★★★ (count), etc. Tap to filter |
+| **StoreBranchCard** | `/about`, Admin | ✓ | Branch name, address, phone, maps link button. Reorderable in admin |
+| **StoreBranchEditor** | `/admin/about` | ✓ | Modal form: name, address, city, phone, maps URL inputs. Create/edit/delete actions |
+| **SocialLinkInput** | `/admin/about` | ✓ | Platform icon + URL input. Instagram, Facebook, YouTube, Google Business. Add more button |
+| **StoreAboutSection** | `/about` | ✓ | Owner photo, story text, trust stats, social links, branches list |
+| **ReportReviewModal** | Product detail | ✓ | Bottom sheet: reason radio buttons (Spam, Inappropriate, Fake, Other), details textarea, submit |
+| **ReviewActionMenu** | Admin reviews | ✓ | Dropdown: Hide, Delete, Mark verified, Pin, Contact (V2). Bulk actions checkbox |
 
 ---
 
@@ -153,20 +207,85 @@ Built on **shadcn/ui** (Radix UI primitives + Tailwind). Designers should use sh
 
 **Purpose:** First impression. Converts WhatsApp link clickers to browsers to buyers.
 
-**Sections (top to bottom):**
-1. **Header** — Store logo, store name, nav links (Shop, About), cart icon with badge, account icon
-2. **Sale announcement bar** — Dismissable. "Exclusive discounts on Kurtis & Sarees" (if set by owner)
-3. **Hero banner** — Full-bleed image + store tagline + primary CTA button ("Shop Now")
-4. **Category strips** — Horizontal scrollable cards, one per entry in `product_categories` ordered by `sort_order`. A bakery shows "Cakes / Cookies / Bread"; a boutique shows "Kurtis / Sarees / Tops". Hidden if tenant has defined no categories.
-5. **New arrivals grid** — 4 product cards (2-col mobile, 4-col desktop)
-6. **About the store** — Short brand story blurb + owner photo (optional)
-7. **WhatsApp CTA** — "Questions? Chat with us on WhatsApp" floating button (bottom-right, always visible)
-8. **Footer** — Store name, social links, "Powered by Talam" badge (if Free tier)
+**Layout (top to bottom):**
 
-**Key decisions:**
-- Hero image is uploaded by store owner — design must work with any aspect ratio image
-- "Powered by Talam" badge: subtle, bottom-right of footer, links to mytalam.com
-- All section content is configurable by store owner
+1. **Sale banner** (if active) — Full-width dark bar, countdown timer, dismissable close button
+2. **Header** — Sticky, height 60px (mobile) / 72px (desktop)
+   - Left: Store logo (serif heading, name with dot in store primary colour)
+   - Center (desktop only): Nav links (Shop, About)
+   - Right: Search icon, Wishlist icon, Cart icon (with badge count), Account icon
+3. **Hero section** — Full-width, min-height 56vw mobile (max 560px), 460px desktop
+   - Background: Dark gradient (#5C1230 → #2d1b69) with warm overlay glow
+   - Content: Hero eyebrow (uppercase, amber), headline (clamp 26–48px), description, CTA button
+   - Desktop only: Model illustration on right (fade from amber to brown)
+4. **Chip rail** — Horizontal scrollable category filters (All, Kurtis, Sarees, Tops, etc.)
+   - Active chip: filled store primary background + white text
+5. **Category section** — "Shop by Category" with horizontal scroll cards
+   - Each card: image (gradient placeholder), label overlay at bottom
+   - Hidden if tenant has no categories defined
+6. **New arrivals grid** — 2-col mobile, 4-col desktop
+   - Each card: image, badge (Sale/New), wishlist heart, name, price, rating
+7. **Editorial section** — "Festival Edit" full-width card with warm background
+   - Title, subtitle, "Shop the Edit →" link
+8. **About section** — Dark background (#1A1040), warm text
+   - Eyebrow (amber), headline, paragraph (max 65 characters width)
+9. **Footer** — Light, links (Shop, About, Contact, Shipping, Returns), "Powered by Talam" badge
+10. **WhatsApp FAB** — Green, bottom-right (fixed on mobile, positioned absolute on desktop), always visible above bottom nav
+
+**Mobile navigation (fixed bottom):**
+Home | Shop | Wishlist | Orders | Account (5 items, 64px height)
+
+---
+
+### 4.1a Storefront — About (`/about`)
+
+**Purpose:** Build trust and connection. Show store owner story, social presence, branch locations, and key metrics.
+
+**Layout (top to bottom):**
+
+1. **Header** — Sticky, 60px height
+   - Back arrow, store name + tagline (14px muted)
+   - Share icon (for WhatsApp/social sharing)
+
+2. **Owner section** — Padding 20px
+   - Owner photo (120×120px circle, border 2px store primary, centered)
+   - Name (18px bold, centered)
+   - Title/role (13px muted, centered, e.g. "Founder & Designer")
+
+3. **Story section** — Padding 20px, border-top 1px
+   - Heading: "Our Story" or "About Us"
+   - Long-form description text (14px, line-height 1.6)
+   - Markdown/rich text support for formatting
+
+4. **Trust stats** — Padding 16px, background light
+   - 3-column grid (or flex wrap on small screens)
+   - Each stat: large number (20px bold) + label (12px muted)
+   - Examples: "₹50L+ GMV", "2K+ Customers", "98% Rated"
+
+5. **Social links section** — Padding 20px, border-top 1px
+   - Heading: "Follow Us" or "Connect"
+   - Button row (flex wrap, gap 12px):
+     - Instagram, Facebook, YouTube, Google Business
+     - Each: 40×40px circle buttons with platform icons
+     - Inactive: muted border, clickable to platform
+
+6. **Branch locations section** — Padding 20px, border-top 1px
+   - Heading: "Visit Us"
+   - Branch cards (flex column, gap 12px):
+     - **Branch card:** border 1px, border-radius 8px, padding 14px
+       - Branch name (14px bold)
+       - Address (12px muted, line-height 1.5)
+       - Phone (12px, store primary text with phone icon)
+       - Maps link button (12px, outlined border, "View on Maps →")
+
+7. **Footer** — Light, padding 16px
+   - "Powered by Talam" badge + link
+
+**Desktop layout:**
+- Same sections, centered max-width 640px
+- Owner photo 140×140px
+- Trust stats: horizontal 3-column grid
+- Branch cards: 2-column grid for 2+ branches
 
 ---
 
@@ -176,69 +295,182 @@ Built on **shadcn/ui** (Radix UI primitives + Tailwind). Designers should use sh
 
 **Routes:**
 - `/shop` — main product listing with filter controls
-- `/shop/[categorySlug]` — pre-rendered category page (e.g. `silk.mytalam.com/shop/sarees`). SEO-indexable, shareable URL. Same layout as `/shop` but pre-filtered to that category and with the category name as the page heading.
+- `/shop/[categorySlug]` — pre-rendered category page (e.g. `meenasilks.mytalam.app/shop/sarees`). Same layout, pre-filtered by category name in page heading.
 
-**Layout:**
-- Mobile: Filter button (top) → 2-column product grid
-- Desktop: Left filter sidebar (fixed) + 3-column product grid
+**Mobile layout:**
+1. **Header** — Sticky, back arrow, "Shop" title, search icon
+2. **Filter bar** — Horizontal scrollable chips
+   - Filter chip (icon + "Filters" + count badge) on left
+   - Category chips (Kurtis, Sarees, Tops)
+   - Sort chip (right-aligned, "Newest" by default)
+3. **Results bar** — "Showing X products" + filter summary
+4. **Product grid** — 2-column, 1px gap (grid background shows gap)
+   - Each card: 2:3 aspect ratio image, badges (top-left), wishlist heart (top-right), name, price, rating
+5. **Filter sheet** (bottom sheet, on demand)
+   - Handle bar at top
+   - Title: "Filters" + "Reset all" button + close button
+   - Sections: Category (buttons), Size (buttons), Price (min/max inputs), Sort (buttons)
+   - Footer: Cancel + "Show X products" apply button
+
+**Desktop layout:**
+1. **Header** — Same as above, 72px height
+2. **Shop grid** — 240px left sidebar (fixed) + main content
+3. **Sidebar** — Sections with checkboxes: Category, Size, Price range, Sort radio
+4. **Product grid** — 3-column, bordered cells
+5. **Results bar** — Above grid, "Showing X products"
 
 **Filter options:**
-- Category — dynamically populated from the tenant's `product_categories` table, ordered by `sort_order`. First option is always "All". A fashion store shows "Kurtis / Sarees / Tops"; a bakery shows "Cakes / Cookies / Bread". Hidden if tenant has no categories defined.
-- Size (XS / S / M / L / XL / XXL — multi-select)
-- Price range (slider or min/max inputs)
-- Sort (Newest / Price: Low to High / Price: High to Low)
-
-**Product card specs:**
-- Image (square, 1:1 ratio, lazy loaded)
-- Sale badge ("20% OFF") — top-left, red pill
-- "New" badge — top-left, green pill
-- "Out of stock" overlay — semi-transparent, greyed
-- Product name — 2 lines max, ellipsis
-- Price — sale price in brand colour + original strikethrough
-- Wishlist heart — top-right, toggles filled/unfilled
-- Tap card → product detail page
-- No hover effects on mobile (touch only)
+- **Category** — Dynamic from `product_categories`, ordered by `sort_order`. Shows "All" first if categories exist.
+- **Size** — XS / S / M / L / XL / XXL (multi-select buttons, greyed/strikethrough if no stock)
+- **Price range** — Min/Max number inputs
+- **Sort** — Newest First (default) / Price: Low to High / Price: High to Low
 
 ---
 
 ### 4.3 Storefront — Product Detail (`/product/[slug]`)
 
-**Purpose:** Conversion. Make the customer want to buy.
+**Purpose:** Conversion. Detailed product view with buy controls.
 
 **Mobile layout (top to bottom):**
-1. Back arrow
-2. Image gallery — full-width, swipeable, dot indicators, zoom on tap
-3. Product name (2xl, bold)
-4. Price — current + original if on sale
-5. Size selector — pill buttons row (XS S M L XL XXL). Greyed if out of stock
-6. Size guide link
-7. Description (expandable)
-8. Sticky bottom bar: "Add to Cart" (brand colour) + wishlist icon
-9. Share button (copies link / opens WhatsApp share)
+1. **Header** — Sticky, 60px height, back arrow, store brand name, share icon, cart icon (with badge)
+2. **Image gallery** — Full-width, 2:3 aspect ratio
+   - Main image area (swipeable on touch)
+   - Dot indicators below (tap to jump, active = 20px wide pill, inactive = 7px circle)
+   - Share button overlay (top-right, 36px circle, white bg, 50% opacity)
+   - Sale badge overlay (top-left, "20% OFF" style, red background)
+3. **Product info** — Padding 20px
+   - Brand name (12px uppercase, muted color, letter-spaced 0.08em)
+   - Product name (24px Playfair Display, bold, line-height 1.2)
+   - Rating (14px muted, e.g. "★★★★★ 248 reviews")
+   - Price row (gap 10px, flex-wrap)
+     - Sale price (26px bold, store primary #C2185B)
+     - Original price (16px muted, strikethrough)
+     - Off badge (12px bold, sale red background, white text, rounded 4px)
+   - Save note ("You save ₹X on this order", 12px green, bold)
+   - Tax note ("Inclusive of all taxes · Free delivery", 12px muted)
+4. **Pincode check** — Padding 16px, border-bottom
+   - Label: "Enter pincode to check delivery"
+   - Input (flex: 1) + button ("Check")
+   - Result: "Get it by Wed, 2 Jul · Standard delivery"
+   - Trust icons (11px, muted): "↩ 30-day Returns · ✓ 100% Genuine · 🔒 Secure Pay"
+5. **Size selector** — Padding 20px, border-bottom
+   - Header: "Size" + "Size Guide →" link (13px, store primary)
+   - Pill buttons (min-width 52px, height 44px, flex wrap, gap 8px)
+   - Selected: filled store primary + white text
+   - Disabled/strikethrough if out of stock
+6. **Description** — Padding 20px, border-bottom, expandable
+   - Title with chevron (toggles content, transition rotate 180°)
+   - Body: list of details (fabric, care, occasion, fit, origin)
+   - Max-height animation (0 → 300px) on open
+7. **Delivery info** — Padding 16px, margin-top 1px
+   - Icon + text rows (e.g. "Free delivery on orders over ₹500")
+   - Icons 18px, green stroke
+8. **Sticky bottom bar** (fixed, bottom 0, 80px+ clearance)
+   - Flex layout, gap 12px, padding 12px 16px
+   - Left: Wishlist button (52px square, outlined border)
+     - Toggles: border-color muted → store primary, fills on click
+   - Right: "Add to Cart" button (flex 1, 52px height, store primary, bold)
+     - Active state: scale 0.98
+
+9. **Reviews section** — Padding 20px, border-top 1px
+   - Header: "Customer Reviews" (16px bold) + rating summary (e.g. "4.6 ★ · 248 reviews")
+   - Quick rating breakdown (optional):
+     - 5-column flex: ★★★★★ (5), ★★★★ (4), ★★★ (3), ★★ (2), ★ (1) with count badges
+   - Review filters (horizontal chips):
+     - "Most Relevant", "Highest Rated", "Lowest Rated", "With Photos"
+     - Selected: store primary background + white text
+   - Review cards (flex column, gap 12px):
+     - **Individual review card:** border 1px, padding 12px, border-radius 8px
+       - Header: Rating (★★★★ 4), reviewer name (12px bold), date (11px muted, right)
+       - "Verified Purchase" badge (11px uppercase bold, green bg + dark text, border-radius 3px) — only if verified
+       - Review title (13px bold, optional)
+       - Review text (13px, line-height 1.5, truncate at 200px)
+       - "Read more" link if review longer (store primary, 12px)
+       - Images (if review has photos): 64×64 grid, 4px gap, tap to expand
+       - Helpful section (flex, gap 8px):
+         - "Helpful?" text (11px muted)
+         - Thumb up button (22px circle, outlined, muted)
+         - Count (11px muted)
+       - Report button (11px muted text, icon, hover = red)
+   - "Load more reviews" button (center, padding 12px, border 1.5px, store primary text) or pagination
+   - Empty state (if no reviews): "No reviews yet · Be the first to review!" + CTA
 
 **Desktop layout:**
-- Left: Image gallery (main + thumbnails below)
-- Right: All product info + sticky Add to Cart
+- **Product layout** — 2-column grid (1fr 1fr, gap 0, max-width 1200px, centered)
+- **Left column** — Gallery (position sticky, top 72px)
+  - Main image (max-height 560px)
+  - Thumbnail strip below (64×64 with 2px border, gap 8px)
+- **Right column** — Product info (overflow-y auto)
+  - All sections as mobile, no sticky bar at bottom
+  - Sticky "Add to Cart" bar appears on scroll
+  - Reviews section: full-width below product info
 
-**Out-of-stock state:** Size pill greyed + strikethrough. If all sizes OOS: button shows "Notify Me" (V2).
+**Cart drawer** (overlay, fixed, right 0, width min(380px, 100vw))
+- Slides from right (transform translateX(100%) → 0)
+- Header: Title "Your Cart (N)" + close button
+- Items list: thumbnail (72×72) + name + size + qty stepper + price
+- Summary: subtotal + delivery + total (border-top on total)
+- "Proceed to Checkout" CTA button (full-width, store primary)
+- "Continue Shopping" link (center, store primary text)
+
+**Out-of-stock state:** 
+- Size pill: muted color, strikethrough text, opacity 0.5, cursor not-allowed
+- If all sizes OOS: button shows "Notify Me" (V2 feature)
+
+**Report review modal:**
+- Bottom sheet on mobile, centered modal on desktop
+- Title: "Report This Review"
+- Reason radio buttons: "Spam", "Inappropriate", "Fake Review", "Other"
+- Optional text area for details (13px, border 1.5px, padding 10px 12px)
+- Cancel + Submit buttons
 
 ---
 
 ### 4.4 Storefront — Cart (`/cart`)
 
 **Two surfaces:**
-1. **CartDrawer** — slides in from right when "Add to Cart" tapped (preferred — no page navigation)
-2. **Cart page `/cart`** — full page fallback
+1. **CartDrawer** — slides from right (fixed position, 380px max width) when "Add to Cart" tapped (preferred UI)
+2. **Cart page `/cart`** — full page fallback (mobile: single column, desktop: 2-col grid layout)
 
-**Cart item row:**
-- Product thumbnail (60×60)
-- Name + size selected
-- Quantity stepper (− N +)
-- Price
-- Remove (×)
+**Header** — Sticky, 60px (mobile) / 72px (desktop)
+- Back arrow, title "My Cart (N items)", layout changes for desktop
 
-**Cart summary:**
-- Subtotal
+**Empty state:**
+- 72px circular icon placeholder, centered
+- Heading + paragraph + "Continue Shopping" CTA
+- Padding 80px 32px, min-height 60vh
+
+**Cart items list:**
+- 80×80 thumbnail (10px border-radius)
+- Item body (flex: 1)
+  - Name (15px bold, ellipsis overflow)
+  - Meta (12px muted): "Size: M", "Qty: N" (flex gap 10px)
+  - Actions (flex, space-between)
+    - Price (17px bold) + MRP (12px muted, strikethrough)
+    - Qty stepper (36px × 36px buttons, 32px value, flex gap 0, border-radius 8px)
+- Remove button (32px circle, top-right, hover = red text)
+- Removing animation: opacity 0, max-height 0 (0.3s transition)
+
+**Discount section** — Padding 16px, border-bottom
+- Label: "Have a coupon?"
+- Input (flex: 1) + Apply button
+- Applied state: input border green, text green
+- Message (12px, error red / success green)
+
+**Trust bar** — Padding 16px, margin-top 8px
+- 3 rows with icons (16px, green stroke)
+  - Lock: "Secure checkout — your data is encrypted"
+  - Check: "Easy 7-day returns on all orders"
+  - Truck: "Free delivery on this order"
+
+**Order summary** (sidebar on desktop)
+- Title: "Order Summary"
+- Rows: Items (N) | ₹X, Delivery | ₹0, Discount | −₹X, Total (bold, border-top)
+- Savings note (green bg, green text) if discount applied
+
+**Sticky checkout bar** (fixed, bottom 0, mobile) / (static, desktop)
+- "Proceed to Checkout" button (full-width, store primary, 16px padding)
+- "Continue Shopping" link (center-aligned, store primary text)
 - Discount code input (if Starter/Pro tier)
 - Total
 - "Proceed to Checkout" CTA (full-width, brand colour)
@@ -248,19 +480,89 @@ Built on **shadcn/ui** (Radix UI primitives + Tailwind). Designers should use sh
 
 ### 4.5 Storefront — Checkout (`/checkout`)
 
-**Steps (single page, scroll):**
-1. **Login / OTP** — if not logged in (inline, not redirect)
-2. **Delivery address** — Name, Phone, Address line 1, Line 2, City, State, Pincode
-3. **Order summary** — collapsible product list + total
-4. **Payment** — provider selector card:
-   - UPI QR: shows QR image + UPI ID, UTR input
-   - Instamojo / PhonePe / Razorpay: "Pay ₹X" button → opens gateway
+**Three-step wizard form:**
+1. Details (OTP login)
+2. Address
+3. Payment
 
-**Design notes:**
-- Single page scroll, not multi-step wizard
-- Progress indicator at top (3 steps: Details → Review → Payment)
-- No distractions — no header nav, minimal footer
-- Trust signals: lock icon, "Secure Checkout", payment logos
+**Header** — Sticky, 60px (mobile) / 72px (desktop)
+- Back arrow, store name (brand . with accent color on dot), "Secure Checkout" badge with lock icon (12px, green)
+
+**Progress bar** — Full-width, padding 16px
+- Horizontal step indicator (max-width 480px, centered, margin 0 auto)
+- Layout: flex gap 0, max-width 480px
+- Each step: 30px dot + label below
+  - Dot: unfilled border, done = filled with checkmark, active = border store primary
+  - Connecting line: 2px height between steps, background border color, done steps = store primary
+  - Label: 11px uppercase, letter-spaced 0.04em, text-center, white-space nowrap
+  - States: muted (unfilled) → store primary (active/done)
+
+**Section cards** — Padding 20px 16px, margin-top 8px (first: 0)
+- Mobile: single column, full-width
+- Desktop: grid 2-col (1fr 360px, gap 24px, max-width 1000px)
+
+**OTP section** — Three states: request phone, enter OTP, verified
+- Phone input:
+  - Label (13px bold)
+  - Input (13px border 1.5px, padding 13px 14px, border-radius 8px)
+  - Focus: border = store primary
+- OTP input:
+  - 4 boxes × 48×52px, gap 10px
+  - Font 22px bold, text-center
+  - Border 1.5px, focus = store primary
+  - Input type: "number" to restrict characters
+- Verified state:
+  - Green bg (rgba 16 185 129 0.08), border 1px green (0.2 opacity)
+  - Check icon (18px, green) + "Verified" text + phone number (right-aligned)
+  - Border-radius 8px, padding 12px 14px
+
+**Address section** — Form grid (grid 2-col, 12px gap)
+- Full-width fields (grid-column 1/-1):
+  - Name, Email, Phone, Address line 1, Pincode, City, State
+- Each field:
+  - Label (13px bold, letter-spaced 0.01em)
+  - Input or Select (13px, border 1.5px, padding 13px 14px, border-radius 8px)
+  - Focus: border = store primary
+  - Error state: border = red (#EF4444)
+  - Select: custom dropdown arrow icon (SVG, right-aligned)
+
+**Order summary toggle**
+- Mobile: expandable toggle row (title + total + chevron)
+- Desktop: static summary card (360px fixed sidebar)
+- Toggle: flex space-between, cursor pointer, user-select none
+- Toggle label (15px bold) | total (15px bold) | chevron icon (rotates 180° on open)
+- Items (overflow hidden, max-height 0 → 400px on open, 0.3s transition):
+  - Each item: 52×52 thumb + name (14px bold) + meta (12px muted) + price (14px bold)
+  - Item: flex gap 12px, padding 12px 0, border-top 1px
+- Summary rows (14px muted, last column bold):
+  - Items (N) | ₹X
+  - Delivery | ₹0
+  - Discount | −₹X (green text)
+  - **Total** (17px bold, border-top, margin-top 4px, padding-top 10px)
+
+**Payment options** — Flex column, gap 10px
+- Each payment card:
+  - Border 1.5px, border-radius 10px, cursor pointer
+  - Selected: border = store primary
+  - Header: radio (20px, accent store primary) + icon (40×28px, flex-shrink 0) + name (15px bold) + desc (12px muted)
+  - Body (hidden, shown if selected): payment-specific content
+- **UPI payment:**
+  - QR placeholder (120×120px, repeating grid pattern)
+  - UPI ID label (12px uppercase, muted, letter-spaced 0.04em) + ID text (15px bold, word-break)
+  - Steps text (13px muted, line-height 1.6)
+  - UTR label (13px bold) + input field (15px, border 1.5px, padding 11px 13px)
+- **Instamojo / Razorpay:**
+  - Note (13px muted, line-height 1.5)
+  - Logo badges (background light, border, padding 6px 12px, 11px text, muted)
+
+**CTAs**
+- Primary button (16px padding, store primary, 16px bold, full-width, border-radius 10px)
+  - Active: scale 0.99, darker bg
+- Secondary button (13px padding, border 1.5px, border-radius 10px, hover bg light)
+
+**Sticky pay bar** (mobile only, fixed bottom 0, desktop: none)
+- Total line: "Total" label (13px muted) + amount (20px bold)
+- Primary button below
 
 ---
 
@@ -280,179 +582,536 @@ Built on **shadcn/ui** (Radix UI primitives + Tailwind). Designers should use sh
 
 ---
 
+### 4.6a Storefront — Wishlist (`/wishlist`)
+
+**Purpose:** Customer collection. Save favorites for later purchase.
+
+**Header** — Sticky, 60px height
+- Back arrow, "Saved Items" or "Wishlist" title, cart icon (with badge)
+
+**Empty state:**
+- 64px heart icon outline (muted stroke)
+- Heading: "Your wishlist is empty"
+- Subheading: "Save items you love to view later"
+- "Continue Shopping" CTA button (store primary)
+
+**Wishlist items:**
+- Same ProductCard layout as Shop page
+- 2-col mobile grid, 4-col desktop
+- Each card: image, badges (Sale/New), heart icon (filled, store primary — toggles on click), name, price, rating
+- Swipe left or tap menu (⋯) to:
+  - "Add to Cart" button
+  - "Remove from Wishlist" option
+  - Remove animation: opacity 0, max-height 0 (0.3s transition)
+
+**Actions bar (sticky bottom, mobile only):**
+- Left: "Select All" checkbox
+- Right: "Add to Cart" button (disabled if no items selected)
+- Alternative: "Clear All" button (with confirmation)
+
+**Desktop layout:**
+- Same grid layout, 3-4 columns
+- Cards show "Add to Cart" button on hover
+- Hover menu (⋯) for additional actions
+
+---
+
 ### 4.7 Tenant Admin — Onboarding Wizard
 
 **Triggered:** First login after signup. Can be skipped and resumed.
 
-**6 steps:**
+**Header** — Sticky, 56px height
+- Logo: "talam." (brand accent on dot)
+- Skip button (right, 13px muted text, skip to step 5)
 
-```
-Step 1: Name your store
-  - Store name (text input)
-  - Store URL preview: [name].mytalam.com (auto-generated slug)
-  - Category (dropdown: Fashion / Food / Education / Beauty / Other)
+**Step indicator** — Sticky, padding 20px 16px, border-bottom
+- Horizontal dots: 32px circles, border 2px
+  - Unfilled: border light gray, white bg
+  - Active: border + bg color = brand (#4F3FF0), light bg (6% opacity)
+  - Done: filled brand bg, white text
+- Connecting lines: 2px height, max-width 32px, border color, brand color when done
+- Labels below (10px uppercase, muted text, brand when active/done)
 
-Step 2: Set up your categories
-  - Prompt: "What do you sell? Add your product categories."
-  - Tag-style input: type a category name, press Enter to add (e.g. "Cakes", "Cookies", "Bread")
-  - Pre-populated suggestions based on store type chosen in Step 1:
-    - Fashion → Kurtis, Sarees, Tops, Bottoms, Accessories
-    - Food → suggest nothing (too varied — blank slate)
-    - Beauty → Skincare, Haircare, Makeup, Wellness
-    - Education → Courses, Books, Worksheets
-    - Other → blank slate
-  - Drag to reorder (sets sort_order)
-  - Skip option: "I'll add categories later" — defaults to no categories (filter hidden on storefront)
+**Step panes** — Flex column, padding 24px 16px, fade-in animation (0.2s)
+- Mobile: full-width, desktop (max-width 480px, centered)
 
-Step 3: Brand it
-  - Upload logo (drag-drop or file pick)
-  - Pick primary colour (6 swatches + custom hex input)
-  - Live preview: shows "Add to Cart" button in chosen colour
+**Step 1: Name your store**
+- Heading (20px bold, -0.01em letter-spacing)
+- Subheading (14px muted, line-height 1.5)
+- Store name field (label 12px bold, input 15px, border 1.5px, padding 11px 13px)
+- URL preview (background light, border 1.5px, padding 10px 13px, brand text for slug)
+  - Format: "[slug].talam.app"
+- Category dropdown (label 12px bold, select field with custom arrow icon)
 
-Step 4: Add your first product
-  - Product name, price, category
-  - Upload 1-3 photos (camera roll on mobile)
-  - Select sizes available
-  - Skip option
+**Step 2: Brand your store**
+- Upload logo (drag-drop area, 1.5px dashed border, padding 32px 16px, centered)
+  - Icon (32px), label (14px), sublabel (12px, light gray)
+  - Hover: border = brand, bg light brand (3% opacity)
+- Colour swatches (flex wrap, gap 8px, 40px circles)
+  - Selected: 3px border dark, transform scale 1.1
+- Hex input: flex row, gap 8px
+  - Preview square (36×36, border 1px, border-radius 6px)
+  - Hex input (flex 1, 14px monospace, uppercase, letter-spaced 0.04em)
+- Live preview card (border 1px, border-radius 12px)
+  - Header: dark bg, 8px dot (light gray)
+  - Body: product card mockup (56×56 image, name, price, button)
+  - Button: brand bg color (live-updated)
 
-Step 5: Connect payments
-  - 3 options (radio cards):
-    ○ UPI (enter UPI ID — done instantly)
-    ○ Instamojo (enter API key — link to get it)
-    ○ Razorpay (enter key ID + secret)
+**Step 3: Add your first product**
+- Product name field
+- Price field
+- Category dropdown
+- Image upload (drag-drop area)
+- Size checkboxes (flex wrap, gap 8px)
+  - Button UI: padding 8px 14px, border 1.5px
+  - Checked: border + bg brand (6% opacity), text brand
+  - Radio input (accent = brand)
+- Skip option: "I'll add categories later"
 
-Step 6: Go live
-  - Share your store link (copy + WhatsApp share buttons)
-  - "View your store" CTA
-  - Confetti animation on completion
-```
+**Step 4: Connect payments**
+- Heading + subheading
+- Payment radio cards (flex column, gap 10px)
+  - Border 1.5px, border-radius 10px, padding 14px 16px
+  - Selected: border brand, bg brand (4% opacity)
+  - Header: radio (20px, accent brand) + icon (40×28px) + name (15px bold) + desc (12px muted)
+  - Icons:
+    - UPI: dark bg (#1A1040), amber text
+    - Instamojo: dark blue bg (#004282), white text
+    - Razorpay: dark blue bg (#072654), white text
+  - Body (hidden, shown if selected): payment-specific fields
 
-**Step indicator:** Horizontal dots at top. Current = filled brand colour, completed = checkmark, upcoming = empty.
+**Step 5: Go live**
+- Confetti area (relative, height 80px, overflow hidden)
+- Store link box (bg light, border 1.5px, border-radius 8px, padding 12px 14px)
+  - URL: 14px bold, brand color, monospace
+  - Copy button (border 1px, 12px, hover: brand border + text)
+- WhatsApp share button (#25D366, 15px bold, flex center, gap 8px with icon)
+- "View your store" button (outlined, border 1.5px, 15px bold)
+
+**Footer navigation** — Sticky, bottom 0, padding 16px, flex gap 10px
+- Back button (14px, border 1.5px, padding 14px 20px)
+- Next button (flex 1, brand bg, white text, 15px bold, letter-spaced 0.02em)
+  - Active: opacity 0.85
+- Skip button (14px muted, font-weight 500)
 
 ---
 
 ### 4.8 Tenant Admin — Dashboard (`/admin/dashboard`)
 
-**Mobile layout:**
+**Trial banner** (if applicable, sticky top) — Padding 10px 16px, brand bg
+- Text (13px bold, white) + "Upgrade" button (12px, white bg 20% opacity, border-radius 4px)
+- Example: "12 days left on your free trial"
 
-```
-[Trial banner if applicable]
+**Header** — Sticky, 56px height
+- Logo: "talam." (brand accent on dot)
+- Right: notification bell icon (36px button, muted) + avatar (32px circle, placeholder bg)
 
-Today at a glance
-┌──────────┐ ┌──────────┐
-│ ₹4,200   │ │ 3 Orders │
-│ Revenue  │ │  Today   │
-└──────────┘ └──────────┘
-┌──────────┐ ┌──────────┐
-│ 12       │ │ 45       │
-│ Products │ │ Visitors │
-└──────────┘ └──────────┘
+**Page layout** — Padding 16px
+- Mobile: single column, padding-bottom 80px (for bottom nav)
+- Desktop: max-width 960px, padding 24px 32px, centered
 
-Recent Orders
-[Order card × 5]
-[View all orders →]
+**Section labels** — 11px uppercase bold, letter-spaced 0.08em, muted, margin-bottom 12px
 
-Top Products
-[Product row × 3]
-```
+**Stat grid** — Grid layout
+- Mobile: 2-column, gap 10px
+- Desktop: 4-column, gap varies
+- Stat cards:
+  - Border 1px, border-radius 8px, padding 14px
+  - Value: 24px bold, -0.02em letter-spacing
+  - Label: 12px muted
+  - Trend: 11px bold, flex gap 3px
+    - Up arrow (12px green stroke)
+    - Up text: green, e.g. "+18% vs yesterday"
+    - Down arrow/text: red
+  - First card (Revenue): brand accent (border brand, bg brand 4% opacity, value brand color)
 
-**Design notes:**
-- Stat cards: large number, small label below, subtle trend arrow (↑ ↓)
-- 2-column grid on mobile, 4-column on desktop
-- Order cards compact: customer name | items | ₹amount | status badge | quick action chevron
+**Divider** — 8px height, light bg, margin 16px -16px (extends full-width)
+
+**Order cards** — Margin-bottom 8px
+- Border 1px, border-radius 8px, padding 12px
+- Order ID (12px bold uppercase, muted)
+- Order time (11px muted, right-aligned)
+- Customer name (14px bold)
+- Items list (13px muted)
+- Bottom row: amount (15px bold) | status badge + chevron button
+  - Status badges (11px bold uppercase, padding 3px 8px, border-radius 4px):
+    - Pending: amber bg (#FEF3C7), dark text (#92400E)
+    - Confirmed: green bg (#D1FAE5), dark text (#065F46)
+    - Shipped: blue bg (#DBEAFE), dark text (#1E3A8A)
+    - Delivered: light green bg (#F0FDF4), dark text (#14532D)
+  - Chevron button (32px square, rounded, muted text, hover = light bg)
+
+**View all orders button** — Flex center, padding 14px, border 1px, border-radius 8px, 13px bold, brand text
+- Icon (14px) + arrow right (margin-left 4px)
+
+**Product rows** — Flex gap 12px, padding 10px 0, border-bottom 1px
+- Thumbnail (40×40, border-radius 6px, 1px border, placeholder bg)
+- Product info (flex 1, min-width 0)
+  - Name (14px bold, ellipsis overflow)
+  - Sales count (12px muted)
+- Amount (14px bold, right-aligned)
+
+**Bottom navigation** (mobile only) — Fixed, bottom 0, height 64px
+- Background surface, border-top 1px
+- Flex 5 items, center-aligned
+- Each nav item: flex column center, gap 3px, 10px label, muted text
+  - Icon (22px stroke)
+  - Active: brand text, stroke-width 2.2
+  - Inactive: muted text, stroke-width 1.8
 
 ---
 
 ### 4.9 Tenant Admin — Products (`/admin/products`)
 
-**Product list:**
-- Searchable
-- Each row: thumbnail + name + price + stock badge (In Stock / Low / Out) + status toggle (Active/Hidden) + edit icon
-- "Add Product" FAB (floating action button) — bottom-right, brand colour
+**Header** — Sticky, 56px height
+- Logo + "Products" title
 
-**Product editor (modal or full page):**
-```
-[Product images — drag-drop, up to 5]
-[Product name *]
-[Description — rich text minimal]
-[Category dropdown * — pulls from tenant's product_categories; shows "Manage categories →" link if list is empty]
-[Price *] [Compare price (optional)]
-[Sizes — checkbox grid: XS S M L XL XXL]
-[Stock per size — number inputs, shown only for checked sizes]
-[Active toggle]
-[Save] [Cancel]
-```
+**Search bar** — Padding 12px 16px, border-bottom
+- Search input wrap (flex, gap 8px, background light, border 1px, padding 9px 12px, border-radius 8px)
+  - Icon (16px muted)
+  - Input (14px, transparent background, placeholder muted)
+- Filter button (border 1px, padding 9px 14px, 13px bold, gap 6px with icon)
+
+**Results bar** — Padding 10px 16px, border-bottom, 12px muted text
+- "N products" + filter summary
+
+**Product list** — Background surface, no padding
+- Each product row: flex gap 12px, padding 12px 16px, border-bottom 1px
+  - Thumbnail (52×52, border-radius 8px, placeholder bg, border 1px)
+  - Body (flex 1, min-width 0)
+    - Name (14px bold, ellipsis)
+    - Price (13px muted, with strikethrough MRP)
+    - Meta badges (flex wrap, gap 6px)
+      - Stock badge (10px uppercase bold, padding 2px 7px, border-radius 4px)
+        - In Stock: green bg + dark text
+        - Low: amber bg + dark text
+        - Out of Stock: red bg + dark text
+  - Actions (flex gap 4px, flex-shrink 0)
+    - Status toggle (44×24, rounded 12px, brand bg, white dot, transitions)
+      - Off: light gray bg, dot on left
+    - Edit icon button (36×36, rounded 6px, muted, hover = light bg)
+
+**FAB** — Fixed, bottom 80px (mobile), right 16px
+- Padding 14px 20px, border-radius 999px
+- Brand bg, white text, 14px bold, gap 8px
+- Box shadow, active = scale 0.96
+- Desktop: bottom 24px, right 24px
+
+**Product editor modal** — Mobile: bottom sheet (border-radius 20px 20px 0 0), Desktop: centered modal (border-radius 16px, max-width 560px)
+- Overlay: fixed inset, rgba 0 0 0 45%, display flex (mobile: align-items flex-end, desktop: align-items center justify-content center)
+- Handle bar (36×4, border-radius 2px, border color, margin 12px auto)
+- Header (padding 8px 20px 16px, border-bottom 1px, flex space-between)
+  - Title (17px bold)
+  - Close button (36×36 circle, muted)
+- Body (padding 20px)
+  - Image upload area (1.5px dashed border, padding 32px 16px, height 120px, flex column center)
+    - Icon (28px muted stroke), label (13px), sublabel (11px light)
+    - Hover: border brand, bg light brand
+  - Form groups (margin-bottom 14px)
+    - Label (12px bold uppercase)
+    - Input field (14px, padding 10px 12px, border 1.5px, border-radius 8px)
+    - Focus: border brand
+  - Size checkboxes (flex wrap, gap 6px)
+    - Checkbox UI (padding 6px 12px, border 1.5px, border-radius 6px, 13px bold)
+    - Checked: border brand, bg brand (6% opacity), text brand
+  - Stock inputs (flex wrap, gap 8px)
+    - Size label (11px muted) + number input (56px wide, 7px padding, border 1px)
+  - Toggle row (flex space-between, border-top 1px, padding 12px 0)
+    - Label (14px bold)
+    - Toggle switch (44×24)
+- Footer (padding 16px 20px 24px, flex gap 10px, border-top 1px)
+  - Cancel button (border 1.5px, padding 13px 20px, 15px bold)
+  - Save button (flex 1, brand bg, white text, 15px bold, active = opacity 0.85)
 
 ---
 
 ### 4.10 Tenant Admin — Categories (`/admin/categories`)
 
-**Purpose:** Let store owners define, name, and order the categories their products belong to. Replaces any hardcoded category list — a bakery defines "Cakes / Cookies / Bread", a boutique defines "Kurtis / Sarees / Tops".
+**Purpose:** Let store owners define categories for products. Drag-to-reorder sets sort order (controls home category strips and filter tabs).
 
-**Layout:**
-```
-[+ Add category]  (top-right)
+**Header** — Sticky, 56px height
+- Logo + "Categories" title
 
-┌─────────────────────────────────────┐
-│ ⠿  Kurtis                      🗑  │
-│ ⠿  Sarees                      🗑  │
-│ ⠿  Tops                        🗑  │
-└─────────────────────────────────────┘
-```
+**Empty state** — Centered, padding 64px 32px, min-height 60vh
+- Icon (64×64 circle, border 1px, background light, muted stroke)
+- Heading (16px bold)
+- Paragraph (14px muted, line-height 1.5)
+- "Add Category" CTA button (brand bg, white text, padding 13px)
 
-- Each row: drag handle (⠿) + category name (inline editable on tap) + delete icon
-- Drag-to-reorder sets `sort_order` — this order controls the home category strips and filter tab sequence
-- "Add category" opens a bottom sheet / inline input: type name → Save
-- Delete: confirm dialog if any products are assigned to that category ("3 products use this category. Reassign before deleting.")
-- Empty state: "You haven't added any categories yet. Add one to organise your products." + Add CTA
+**Category list** — Background surface
+- Each category row: flex gap 12px, padding 16px, border-bottom 1px
+  - Drag handle (icon, 18px muted stroke)
+  - Category name (flex 1, 14px bold, editable on tap)
+    - Edit mode: becomes input field (border 1.5px, padding 10px 12px)
+    - Blur/Enter to save
+  - Delete button (32px square, rounded, muted, hover = red text)
+    - Icon (16px stroke)
 
-**Design notes:**
-- Inline rename: tap category name → becomes an input field, blur/Enter to save
-- No nested categories (flat list only in V1)
-- Max 20 categories per tenant (enforced, with a friendly nudge at 18)
+**Add category bottom sheet** — Mobile: align-items flex-end, Desktop: align-items center justify-content center
+- Handle bar (36×4, margin 12px auto)
+- Header (padding 8px 20px 16px, border-bottom 1px)
+  - Title (17px bold)
+  - Close button (36×36 circle)
+- Body (padding 20px)
+  - Label (12px bold)
+  - Input field (14px, padding 10px 12px, border 1.5px, border-radius 8px)
+  - Focus: border brand
+- Footer (padding 16px 20px 24px, flex gap 10px)
+  - Cancel button (border 1.5px, padding 13px 20px)
+  - Save button (flex 1, brand bg, white text, 15px bold)
+
+**Delete confirmation dialog** — Modal overlay
+- Message: "X products use this category. Reassign before deleting."
+- Buttons: Cancel | Delete (red, danger text)
 
 ---
 
 ### 4.11 Tenant Admin — Orders (`/admin/orders`)
 
-**Filter tabs:** All | Pending | Confirmed | Shipped | Delivered
+**Header** — Sticky, 56px height
+- Logo + "Orders" title + search button (36px, muted)
 
-**Order card:**
-```
-#ORD-1234 · 23 Jun · 10:32am
-Priya Rajan — 2 items
-Kurti (M) + Saree (Free)          ₹1,850
-[Confirmed ▾]  [Enter tracking ID]
-```
+**Filter tabs** — Sticky, background surface, border-bottom 1px, horizontal scroll
+- Tab items: flex-shrink 0, padding 12px 16px, 14px bold, muted text
+  - Border-bottom 2px transparent, transition
+  - Active: border-bottom brand, text brand
+  - Count badge (18px min-width, height 18px, padding 0 4px, border-radius 999px)
+    - Active tab: brand bg, white text
+    - Inactive tab: light gray bg, muted text
 
-**Status update:** Tap status badge → bottom sheet with options (Confirm / Mark Shipped / Mark Delivered / Cancel)
+**Orders list** — Padding 12px 16px, flex column gap 10px
 
-**Tracking ID:** Inline input field, shows when status = Shipped
+**Order card** — Border 1px, border-radius 10px, padding 14px, background surface
+- Top row: order ID (12px bold, muted) | time (11px muted, right-aligned)
+- Customer name (15px bold)
+- Items (13px muted, line-height 1.4)
+- Bottom row: amount (16px bold, font-variant-numeric tabular-nums) | actions (flex gap 8px)
+  - Status button (flex gap 4px, padding 6px 10px, border 1.5px, border-radius 6px, 12px uppercase bold, cursor pointer)
+    - Pending: amber bg (#FFFBEB), border #FDE68A, text #92400E
+    - Confirmed: green bg (#ECFDF5), border #A7F3D0, text #065F46
+    - Shipped: blue bg (#EFF6FF), border #BFDBFE, text #1E3A8A
+    - Delivered: light green bg (#F0FDF4), border #BBF7D0, text #14532D
+    - Cancelled: light red bg (#FEF2F2), border #FECACA, text #991B1B
+    - Chevron icon (12px)
+  - On click: opens bottom sheet with status options
+
+**Status update sheet** — Mobile: bottom sheet, Desktop: centered modal (max-width 400px)
+- Handle bar (36×4)
+- Title (14px uppercase, muted)
+- Options (flex column, gap 4px)
+  - Each option: padding 15px 16px, border-radius 10px, 16px bold, flex space-between, cursor pointer
+  - Hover: bg light
+  - Active: brand text, bold
+  - Danger (Cancel): red text
+  - Icon (18px stroke)
+- Cancel button (margin 8px 16px 24px, padding 15px, border 1.5px, 16px bold, muted text, width calc 100% - 32px)
+
+**Tracking input** (shown for Shipped status)
+- Margin-top 10px, padding-top 10px, border-top 1px
+- Flex gap 8px
+- Input (flex 1, padding 9px 12px, border 1.5px, border-radius 8px, 13px)
+  - Focus: border brand
+  - Background: light
+- Save button (padding 9px 14px, brand bg, white text, 13px bold)
+
+**Empty state** — Padding 64px 32px, text-align center
+- Icon (64×64 circle, border 1px)
+- Heading (16px bold)
+- Paragraph (14px muted)
 
 ---
 
 ### 4.12 Tenant Admin — Settings (`/admin/settings`)
 
-**Sections:**
+**Header** — Sticky, 56px height
+- Back button + "Settings" title + "Save" button (right, 14px brand text)
 
-**Store details**
-- Store name, tagline, about text, contact phone, contact email
+**Settings sections** — Background surface, border-top + border-bottom 1px, margin-top 16px
+- Desktop: max-width 640px, centered
 
-**Brand**
-- Logo upload
-- Primary colour picker (live preview button)
+**Section labels** — 11px uppercase bold, letter-spaced 0.08em, muted, padding 16px 16px 8px
 
-**Payment gateway**
-- Current provider shown
-- Change provider flow (same as onboarding step 4)
+**Store details section**
+- Field rows (flex column, gap 4px, padding 0 16px 16px)
+  - Label (12px bold, letter-spaced 0.02em)
+  - Input field (15px, padding 10px 12px, border 1.5px, border-radius 8px)
+  - Focus: border brand
+- Dividers (1px height, background border, margin 0 16px)
+- Fields: Store name, Tagline, About text (textarea, min-height 80px, resize vertical), Contact phone, Contact email
 
-**WhatsApp**
-- Phone number input
-- Toggle: show WhatsApp button on storefront
+**Brand section**
+- Logo upload row (flex gap 14px, padding 14px 16px)
+  - Logo preview (56×56, border-radius 10px, border 1px, placeholder: initials 11px uppercase)
+  - Upload info (flex 1)
+    - Name (14px bold)
+    - Sublabel (12px muted)
+  - Change button (padding 8px 14px, border 1.5px, 13px bold, hover: border brand, text brand)
+- Divider
+- Primary colour section
+  - Label (11px uppercase)
+  - Colour swatches (flex wrap, gap 8px, 36px circles)
+    - Selected: 3px border dark, scale 1.1
+  - Preview button (padding 8px 14px, border 1.5px, 13px bold)
 
-**Notifications**
-- Toggle: email me on new order
-- Toggle: (V1.5) WhatsApp me on new order
+**Payment gateways section**
+- Gateway rows (flex space-between, padding 14px 16px)
+  - Gateway info (flex gap 12px)
+    - Icon (44×30, border-radius 5px, dark bg, amber text, 10px bold)
+    - Name (14px bold)
+    - Status (12px green text, bold)
+  - Change button (padding 8px 14px, border 1.5px, 13px bold)
+
+**Notifications section**
+- Toggle rows (flex space-between, padding 14px 16px)
+  - Toggle info (flex 1, margin-right 16px)
+    - Label (14px bold)
+    - Sublabel (12px muted)
+  - Toggle switch (48×26, border-radius 13px, brand bg)
+    - Off: light gray bg
+    - White dot (20×20, position absolute, top 3px right 3px, box-shadow, transition)
+    - Off state: dot moves to left 3px
+
+**Danger zone** — Margin-top 16px, padding 16px
+- Delete store button (width 100%, padding 13px, border 1.5px light red, border-radius 8px, 14px bold, red text)
+  - Background: light red (4% opacity)
+  - Hover: light red (8% opacity)
+
+---
+
+### 4.13 Tenant Admin — Store About (`/admin/about`)
+
+**Purpose:** Let store owners tell their story, add social links, and manage branch locations.
+
+**Header** — Sticky, 56px height
+- Logo + "Store About" title
+- "Save" button (right, 14px brand text, disabled until changes)
+
+**Page layout** — Padding 16px (mobile) / 24px 32px (desktop), max-width 640px centered
+
+**Store story section** — Margin-bottom 24px
+- Label: "Your Story" (11px uppercase bold, muted)
+- Description: "Tell customers about your brand" (12px muted)
+- Text editor area (border 1.5px, padding 14px, min-height 120px, resize vertical)
+  - 14px, placeholder: "E.g. 'I started this in my home studio...'"
+  - Supports markdown or rich text (bold, italic, links)
+- Character counter (12px muted, right-aligned, e.g. "245/1000")
+
+**Owner photo section** — Margin-bottom 24px
+- Label: "Your Photo" (11px uppercase bold)
+- Image upload area
+  - If no image: dashed border (1.5px), 120px height, centered
+    - Upload icon (28px muted stroke)
+    - "Upload photo" label (13px bold)
+    - "JPG or PNG, max 5MB" sublabel (11px muted)
+  - If image uploaded: preview (120×120px, border-radius 8px)
+    - Change button (padding 8px 14px, border 1.5px, 13px bold)
+    - Remove button (12px red text, hover)
+
+**Social links section** — Margin-bottom 24px
+- Label: "Follow Us" (11px uppercase bold, muted)
+- Input rows (flex column, gap 12px):
+  - Each row: platform icon (18px) + input field (flex 1)
+    - Placeholder: "https://instagram.com/yourhandle"
+    - Platforms: Instagram, Facebook, YouTube, Google Business
+  - Optional: add more links button
+
+**Branch locations section** — Margin-bottom 24px
+- Label: "Visit Our Locations" (11px uppercase bold)
+- Instruction: "Add your physical store locations" (12px muted)
+- Branch list (flex column, gap 8px)
+  - Each branch row: flex gap 8px, padding 12px, border 1px, border-radius 8px
+    - Drag handle icon (18px muted stroke, left)
+    - Branch info (flex 1, min-width 0)
+      - Name (14px bold, editable on click → becomes input)
+      - Address (12px muted)
+      - Phone link (12px, store primary)
+    - Actions (flex gap 4px, flex-shrink 0)
+      - Edit icon button (32px square, muted, hover = light bg)
+      - Delete icon button (32px square, muted, hover = red text)
+  - "Add Location" button (flex center, padding 14px, border 1px dashed, border-radius 8px, 13px bold, store primary text)
+
+**Branch editor modal** — Bottom sheet on mobile, centered modal on desktop
+- Handle bar (36×4)
+- Header: "Add/Edit Location" (14px bold) + close button
+- Form fields (padding 20px, flex column, gap 12px):
+  - Name input (label + field)
+  - Address textarea (label + field)
+  - City input
+  - Phone input
+  - Maps URL input (label + field, e.g. "https://maps.google.com/...")
+  - Preview: Map embed or "View on Maps" link button
+- Footer: Cancel + Save buttons
+
+**Save/Cancel buttons** — Sticky bottom (mobile) / static (desktop)
+- Flex gap 10px, padding 16px
+- Cancel button (border 1.5px, padding 13px 20px, 15px bold)
+- Save button (flex 1, brand bg, white text, 15px bold, disabled if no changes)
+
+---
+
+### 4.14 Tenant Admin — Reviews (`/admin/reviews`)
+
+**Purpose:** Moderate product reviews, handle reports, manage reputation.
+
+**Header** — Sticky, 56px height
+- Logo + "Reviews" title + unread count badge (right, brand bg)
+
+**Filter tabs** — Sticky, background surface, border-bottom 1px, horizontal scroll
+- Tab items: flex-shrink 0, padding 12px 16px, 14px bold, muted text
+  - "All Reviews" (default)
+  - "Reported" (with count badge)
+  - "Pending" (awaiting moderation — V2 feature)
+- Active: border-bottom 2px brand, text brand
+
+**Page layout** — Padding 12px 16px, flex column gap 10px
+
+**Review cards** — Flex column, gap 10px
+- Each card: border 1px, border-radius 10px, padding 14px, background surface
+- Header row: flex space-between
+  - Left:
+    - Rating (★★★★ 4) + reviewer name (12px bold) + date (11px muted)
+    - "Verified Purchase" badge (11px, green bg)
+  - Right: actions menu (⋯ icon, 32px circle button)
+- Product info: "Reviewed on: [Product Name]" (12px muted, click → product detail)
+- Review content:
+  - Title (13px bold, optional)
+  - Text (13px, line-height 1.5, max 300px before truncation)
+  - "Read more" link if longer
+  - Images: 64×64 grid (4px gap) if review has photos
+- Action bar:
+  - Helpful count: (11px muted) "X found helpful"
+  - Moderation actions:
+    - Delete icon (muted, hover = red)
+    - Pin/feature icon (muted, toggle)
+    - Flag/mark icon (muted, for reported reviews)
+
+**Report card** (shown in "Reported" tab) — Same as above, plus:
+- Red border indicator (left 4px)
+- Report section (border-top 1px, margin-top 12px):
+  - Report count: "Reported X times" (12px bold, red text)
+  - Reason breakdown: "Spam (3), Inappropriate (2)" (11px muted)
+  - Actions:
+    - "Dismiss" button (outlined, 12px, muted border)
+    - "Delete" button (outlined, 12px, red border + text)
+    - "Contact reporter" option (V2)
+
+**Action menu (⋯ dropdown):**
+- "Hide from public" (toggle)
+- "Delete review"
+- "Mark as verified purchase"
+- "Pin to top" (feature review)
+- "Contact reviewer" (V2)
+
+**Bulk actions** — Bottom bar when reviews selected
+- Checkbox in review card header (36×36)
+- Sticky bottom (mobile):
+  - Left: "X selected" text
+  - Right: Delete button (red), More actions (⋯)
+
+**Empty state:**
+- Icon (64×64 circle, border 1px)
+- Heading: "No reviews yet"
+- Paragraph: "Reviews will appear here once customers start rating your products"
 
 ---
 
