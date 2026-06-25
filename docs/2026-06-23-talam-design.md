@@ -1,17 +1,23 @@
 # Talam — Full Product Design Spec
 
 **Date:** 2026-06-23  
-**Last updated:** 2026-06-24  
-**Status:** Approved — v1.1  
+**Last updated:** 2026-06-25  
+**Status:** Approved — v1.1 Final  
 **Author:** Surya Prakash  
-**Version:** 1.1
+**Version:** 1.1 (consolidated with gap resolution)
 
-**Changelog v1.1 (2026-06-24)**
-- Domain changed from `talam.app` (unavailable) to `mytalam.com`
-- Added `product_categories` table — dynamic, per-tenant, ordered categories replacing free-text `category` field on products
-- Added `/admin/categories` route and `/shop/[categorySlug]` SEO-friendly category pages
-- Expanded GTM section: ICP definition, referral attribution, email nurture sequences, pricing page
-- Added product count enforcement per tier, missing env vars, promotions admin page
+**Changelog v1.1 Final (2026-06-25)**
+- **Domain:** Changed from `talam.app` (unavailable) to `mytalam.com`
+- **Product categories:** Added `product_categories` table — dynamic, per-tenant, ordered categories
+- **Store identity:** Added `/about` storefront route + `/admin/about` admin route for store story, social links, branch locations
+- **Product reviews:** Added 5-star review system with verified purchase badges, moderation, and report mechanism. New tables: `product_reviews`, `review_reports`
+- **Delivery & trust:** Added trust badges (free delivery, return window, custom trust text), pincode delivery check, size guide upload
+- **Admin restructure:** Settings becomes a hub with sub-navigation (13 routes nested under Settings). Bottom nav reduced to 4 items: Dashboard, Products, Orders, Settings
+- **Onboarding:** Reduced to 5 steps (Store → Brand → Product → Payment → Go Live), with categories moved to post-onboarding `/admin/categories`
+- **Database:** Added 4 new tables (store_about, store_branches, product_reviews, review_reports) + 13 new columns on tenants table
+- **Payment providers:** Confirmed V1 scope = UPI Manual + Instamojo + Razorpay only (PhonePe moved to V2)
+- **GTM:** Expanded ICP definition, referral attribution, email nurture sequences, pricing page
+- **Timeline:** Adjusted to 9 weeks (accounts for reviews, about page, delivery/trust features)
 
 ---
 
@@ -85,11 +91,12 @@ admin.mytalam.com/                 → Super admin (platform owner)
 **Storefront routes:**
 ```
 /                         Home — hero, collections, sale banner
+/about                    Store about page — owner story, social links, trust stats, branch locations
 /shop                     Product listing + filters (category, size, price)
 /shop/[categorySlug]      Category-specific listing — SEO-indexable, pre-rendered (ISR 30 min)
-/product/[slug]           Product detail — images, size picker, add to cart
+/product/[slug]           Product detail — images, size picker, reviews, trust badges, add to cart
 /cart                     Shopping cart (Zustand + localStorage)
-/checkout                 Address + payment gateway
+/checkout                 Address + payment gateway (pincode auto-fill, delivery estimate)
 /orders                   Order history + tracking
 /orders/[id]              Single order detail + status
 /wishlist                 Saved products
@@ -99,16 +106,25 @@ admin.mytalam.com/                 → Super admin (platform owner)
 
 **Tenant admin routes:**
 ```
-/admin/dashboard     Sales stats, revenue, active orders
-/admin/products      Add / edit / delete products
-/admin/categories    Create / reorder / delete product categories (per tenant)
-/admin/orders        Order list, status updates, tracking ID entry
-/admin/customers     Customer list, contact details
-/admin/promotions    Discount codes, sale banners
-/admin/settings      Brand (logo, colors), payment gateway, WhatsApp number
-/admin/payouts       Settlement history from payment gateway
-/admin/billing       Subscription plan, upgrade, payment history
-/admin/onboarding    First-run setup wizard (store name → brand → payment)
+/admin/dashboard     Sales stats, revenue, active orders, trial banner, notifications bell
+/admin/products      Add / edit / delete products, low stock badges
+/admin/orders        Order list, status updates, tracking ID entry, search filter
+/admin/settings      Hub page linking to:
+  ├── /admin/settings/store       Store name, tagline, contact phone/email
+  ├── /admin/settings/brand       Logo, primary color
+  ├── /admin/settings/payment     Payment gateway config
+  ├── /admin/settings/whatsapp    Phone, toggle button visibility
+  ├── /admin/settings/delivery    Free delivery above, shipping fee, delivery estimate, return window, trust badges, size guide
+  ├── /admin/settings/notifications  Email & order alerts
+  ├── /admin/about                Store story, social links, branch locations
+  ├── /admin/reviews              Product reviews moderation (all + reported)
+  ├── /admin/categories           Create / reorder / delete product categories
+  ├── /admin/customers            Customer list, contact details
+  ├── /admin/promotions           Discount codes, sale banners
+  ├── /admin/payouts              Settlement history from payment gateway
+  ├── /admin/billing              Subscription plan, upgrade, payment history
+  └── Danger Zone                 Delete store (soft-delete)
+/admin/onboarding    First-run setup wizard (5 steps: Store → Brand → Product → Payment → Go Live)
 ```
 
 **Super admin routes:**
@@ -131,9 +147,10 @@ mytalam.com/join     Referral landing page — captures utm_campaign={slug} for 
 | Page | Strategy | Revalidation |
 |---|---|---|
 | Storefront home | ISR | 1 hour |
+| `/about` | ISR | 1 hour (on-demand on admin save) |
 | Shop / filters | ISR | 30 minutes |
 | Shop / [categorySlug] | ISR + generateStaticParams | 30 minutes |
-| Product detail | ISR + on-demand | On admin product edit via `/api/revalidate` |
+| Product detail | ISR + on-demand | On admin product edit OR new review via `/api/revalidate` |
 | Cart | Client (Zustand) | — |
 | Checkout | SSR dynamic | Every request |
 | Orders | SSR dynamic | Every request |
@@ -214,13 +231,25 @@ tenants
   name text
   tier enum('trial','starter','pro')
   trial_ends_at timestamptz
+  tagline text                   -- "Handpicked Indian Fashion for Every Occasion"
   brand_color text               -- CSS hex
   logo_url text                  -- Cloudinary URL
   whatsapp_number text
-  payment_provider enum('upi_manual','instamojo','phonepe','razorpay')
+  contact_phone text             -- public store phone (separate from whatsapp_number)
+  contact_email text             -- public store email; shown on /about only
+  show_whatsapp_button boolean DEFAULT true
+  notify_email_on_order boolean DEFAULT true
+  payment_provider enum('upi_manual','instamojo','razorpay')  -- V1: PhonePe in V2
   payment_config jsonb           -- encrypted gateway keys
   store_type text                -- 'ethnic_wear' | 'bakery' | 'salon' | 'handicrafts' | 'other'
                                  -- captured at onboarding, used for PostHog segmentation
+  free_delivery_above numeric    -- NULL = shipping_fee always applies
+  shipping_fee numeric DEFAULT 0 -- flat fee when order doesn't qualify
+  delivery_estimate_text text    -- "5–7 business days"
+  return_window_days int         -- NULL = no return policy shown
+  trust_badge_text text          -- custom line e.g. "100% authentic, handpicked by Meena"
+  size_guide_url text            -- Cloudinary URL; NULL = platform fallback chart
+  deleted_at timestamptz         -- soft delete; NULL = active; hard-delete after 30 days
   created_at timestamptz
 
 product_categories
@@ -298,6 +327,51 @@ discount_codes
   expires_at timestamptz
   is_active boolean
   ── UNIQUE(tenant_id, code)
+
+store_about
+  id uuid PK
+  tenant_id uuid FK → tenants UNIQUE   -- one row per store
+  story_title text                     -- "Our Story", "About D'Mystique"
+  description text                     -- long-form markdown / plain text
+  owner_photo_url text                 -- Cloudinary URL, nullable
+  instagram_url text
+  facebook_url text
+  youtube_url text
+  google_business_url text
+  created_at timestamptz
+  updated_at timestamptz
+
+store_branches
+  id uuid PK
+  tenant_id uuid FK → tenants
+  name text                            -- "Main Store", "Anna Nagar Branch"
+  address text
+  city text
+  phone text
+  maps_url text                        -- Google Maps link
+  sort_order int
+  created_at timestamptz
+
+product_reviews
+  id uuid PK
+  tenant_id uuid FK → tenants
+  product_id uuid FK → products
+  customer_id uuid FK → customers
+  rating int NOT NULL                  -- 1–5
+  comment text                         -- nullable
+  is_verified_purchase boolean         -- set at write time: check order_items
+  is_deleted boolean DEFAULT false     -- soft delete by owner
+  created_at timestamptz
+  ── UNIQUE(tenant_id, product_id, customer_id)
+
+review_reports
+  id uuid PK
+  tenant_id uuid FK → tenants
+  review_id uuid FK → product_reviews
+  reporter_id uuid FK → customers
+  reason enum('spam','inappropriate','fake','other')
+  created_at timestamptz
+  ── UNIQUE(tenant_id, review_id, reporter_id)   -- one report per person per review
 ```
 
 **RLS policy pattern (applied to every table including `product_categories`):**
@@ -324,21 +398,24 @@ type CheckoutData = {
   qrCode?: string          // UPI QR code image URL
 }
 
-// Implementations
+// V1 Implementations
 class UpiManualProvider implements PaymentProvider { ... }
 class InstamojoProvider implements PaymentProvider { ... }
-class PhonePeProvider implements PaymentProvider { ... }
 class RazorpayProvider implements PaymentProvider { ... }
+
+// V2+
+class PhonePeProvider implements PaymentProvider { ... }  // V2
 ```
 
-### Payment Options for Tenants
+### Payment Options for Tenants (V1)
 
 | Provider | KYC Required | Fee | Best For |
 |---|---|---|---|
 | UPI Manual | UPI ID only | 0% | Anyone, manual confirm |
 | Instamojo ← Recommended | PAN + savings account | 2% + ₹3 | Individual sellers |
-| PhonePe PG | PAN + current account | 0% UPI, ~2% cards | Sellers with current account |
 | Razorpay | Existing account | 2% | Already registered businesses |
+
+**V2 additions:** PhonePe (0% UPI, ~2% cards) — requires current account
 
 ### Money Flow
 ```
@@ -486,36 +563,37 @@ Triggered by Vercel Cron — checks tenant state daily:
 
 | Week | Focus |
 |---|---|
-| 1 | Project init, Supabase setup, Prisma schema (incl. `product_categories`), auth flow (OTP + Google) |
-| 2 | Storefront — home, shop, `/shop/[categorySlug]`, product detail pages |
-| 3 | Cart, checkout, payment gateway integration (UPI Manual + Instamojo) |
-| 4 | Orders, account, wishlist |
-| 5 | Tenant admin — dashboard, **categories CRUD**, products CRUD, orders management, promotions |
-| 6 | Super admin, onboarding wizard (incl. store_type question), trial/subscription billing |
-| 7 | OG cards, PostHog analytics, Resend emails + **nurture sequences**, rate limiting, pricing page |
-| 8 | D'Mystique goes live as Store #1, QA, Lighthouse performance audit, security headers, go-live |
+| 1 | Project init, Supabase setup, Prisma schema (incl. `product_categories`, `store_about`, `store_branches`, `product_reviews`, `review_reports`), auth flow (OTP + Google) |
+| 2 | Storefront — home, shop, `/shop/[categorySlug]`, product detail pages + reviews section |
+| 3 | Cart, checkout (with pincode auto-fill + delivery estimate), payment gateway integration (UPI Manual + Instamojo + Razorpay) |
+| 4 | Orders, account, wishlist, `/about` storefront page with trust stats + branches |
+| 5 | Tenant admin — dashboard (trial banner, notifications, trends), products CRUD, orders management, categories CRUD |
+| 6 | Admin settings hub (Store Details, Brand, Payment, WhatsApp, Delivery & Trust, Notifications, Danger Zone), `/admin/about` (story, social, branches), `/admin/reviews` moderation |
+| 7 | Onboarding wizard (5 steps: Store → Brand → Product → Payment → Go Live), trust badges, size guide, review reporting, OG cards |
+| 8 | Super admin, PostHog analytics, Resend emails + nurture sequences, rate limiting |
+| 9 | D'Mystique goes live as Store #1, QA, Lighthouse performance audit, security headers, go-live |
 
-**Target launch: August 18, 2026** (8 weeks from June 23, 2026)
+**Target launch: September 1, 2026** (9 weeks from June 23, 2026)
 
-> D'Mystique launches as Store #1 at Week 8, completing both the Talam platform and the boutique's online presence simultaneously.
+> D'Mystique launches as Store #1 at Week 9, completing both the Talam platform and the boutique's online presence simultaneously.
 
 ---
 
 ## 12. Open Questions / V2 Backlog
 
 **V2 Features:**
-- Custom domain per Pro tenant (Vercel Domains API integration)
-- Razorpay Route for automated platform fee deduction (requires 50+ stores for FLDG)
-- MSG91 WhatsApp order notifications to store owner
-- Tamil language UI toggle
-- Vyapar CSV export for accounting sync
-- Drag-to-reorder categories in admin (sort_order already in schema — just needs UI)
-- Multi-image upload with drag-drop reorder on product form
-- COD (cash on delivery) support
-- Referral dashboard for store owners (track how many stores they've referred)
-- International shipping / currency
+- **Payment:** PhonePe PG integration (0% UPI, ~2% cards), Razorpay Route for automated platform fee deduction (requires 50+ stores for FLDG)
+- **Reviews:** Review response by store owner, review helpfulness voting ("Was this helpful?")
+- **Store:** Tamil language UI toggle, referral dashboard for store owners (track how many stores they've referred)
+- **Inventory:** Drag-to-reorder categories in admin (sort_order already in schema — just needs UI), multi-image upload with drag-drop reorder on product form, returned stock restoration (prompt to restock when order marked Returned)
+- **Logistics:** COD (cash on delivery) support, international shipping / currency, real-time courier serviceability check
+- **Admin:** PostHog analytics dashboard page (`/admin/analytics` — beyond dashboard stat cards), GST-compliant invoice PDF generation for registered sellers
+- **Integrations:** MSG91 WhatsApp order notifications to store owner, Vyapar CSV export for accounting sync, custom domain per Pro tenant (Vercel Domains API)
 
 **Resolved questions (moved from backlog):**
-- ~~Domain `talam.app`~~ → **`mytalam.com`** (registered)
+- ~~Domain `talam.app`~~ → **`mytalam.com`** (registered) — v1.1
 - ~~Free-text category field~~ → **`product_categories` FK table** (v1.1)
 - ~~No referral tracking~~ → **UTM + `/join` page** (v1.1)
+- ~~No social proof / reviews~~ → **Product reviews + verified purchase badges** (v1.1)
+- ~~No store identity~~ → **Store About page + owner photo + social links + branch locations** (v1.1)
+- ~~No delivery/trust signals~~ → **Trust badges + delivery estimate + return window** (v1.1)
