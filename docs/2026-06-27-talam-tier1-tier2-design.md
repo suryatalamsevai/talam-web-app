@@ -10,7 +10,17 @@
 
 ## Overview
 
-This spec defines the wireframe design for three high-priority screens across the Talam platform. We will design mobile-first (390px), then add desktop layouts (1440px), extracting reusable components as needed.
+This spec defines the process for extracting design tokens and components from existing Paper designs (Home, Product Detail), then using them to design three high-priority new screens.
+
+**Session Flow:**
+1. **Extract** design tokens and components from current Home + Product Detail designs
+2. **Formalize** extracted components as reusable library in Paper
+3. **Design** Admin Dashboard, Onboarding, Checkout using those components
+
+**Why this approach:**
+- Ensures consistency across all designs (existing + new)
+- Reuses work already done (don't redesign the wheel)
+- Builds a living component library as we go
 
 **Why these three screens:**
 - **Admin Dashboard (Tier 1):** Most-used screen by store owners; highest impact on retention
@@ -19,13 +29,25 @@ This spec defines the wireframe design for three high-priority screens across th
 
 ---
 
-## Design System (Page 1)
+## Phase 1: Extract Tokens & Components from Existing Designs
 
-A reference page documenting all design tokens used across wireframes.
+Before designing new screens, we extract design system from Home + Product Detail (already in Paper).
 
-### Color Tokens
+### Step 1A: Analyze Current Designs
+**In Paper, inspect Home + Product Detail:**
+- Note all colors used (extract hex values)
+- Identify typography (font families, sizes, weights, line-heights)
+- Document spacing values between elements
+- List border radius values
+- Capture component patterns (buttons, inputs, cards, etc.)
+
+### Step 1B: Create Design System Page (Page 1)
+
+A reference page documenting extracted design tokens.
+
+#### Extracted Color Tokens
 ```
-Platform:
+Platform (from product detail/admin):
   --brand-primary:       #4F3FF0 (Deep indigo)
   --brand-secondary:     #F59E0B (Warm amber)
 
@@ -43,18 +65,18 @@ Neutral:
   --border:              #E5E7EB (Border color)
   --ph:                  #D1D5DB (Placeholder)
 
-Store-customizable:
+Store-customizable (from storefront):
   --store-primary:       #C2185B (Example: rose, set per tenant)
   --store-primary-hover: #9A1248
 ```
 
-### Typography Tokens
-**Families:**
+#### Extracted Typography Tokens
+**Families (from Paper file):**
 - Admin/Platform: System Sans-Serif
 - Storefront headings: Playfair Display
 - Storefront body: DM Sans
 
-**Scale (px):**
+**Scale (px, extracted from existing designs):**
 - 12px (labels, captions, badges — font-weight 600–700)
 - 13px (button text, filter labels — 500–600)
 - 14px (body text, card headings — 400–500)
@@ -65,18 +87,18 @@ Store-customizable:
 - 24px (modal headings — 600–700)
 - 26px+ (hero titles, clamp() on mobile — 700)
 
-**Line heights:**
+**Line heights (extracted):**
 - 1.3 (tight: headings, product names)
 - 1.4 (normal: labels, captions)
 - 1.5 (readable: body text, descriptions)
 - 1.6 (loose: multi-line input, long-form text)
 
-### Spacing Scale (4px base)
+#### Extracted Spacing Scale (4px base)
 ```
 4px, 6px, 8px, 10px, 12px, 14px, 16px, 20px, 24px, 32px, 40px
 ```
 
-### Border Radius
+#### Extracted Border Radius Values
 ```
 4px   (minimal, small elements)
 6px   (compact form controls)
@@ -88,9 +110,9 @@ Store-customizable:
 999px (pills, avatars)
 ```
 
-### Layout Constants
-- **Mobile viewport:** 390px (target: iPhone 14)
-- **Desktop viewport:** 1440px
+#### Layout Constants (extracted from current designs)
+- **Mobile viewport:** 390px (from Home/Product Detail mobile artboards)
+- **Desktop viewport:** 1440px (from Home/Product Detail desktop artboards)
 - **Max content width:** 480px (mobile), 1200px (desktop)
 - **Header height:** 60px (mobile), 72px (desktop)
 - **Bottom nav height:** 64px (mobile only)
@@ -98,7 +120,56 @@ Store-customizable:
 
 ---
 
-## Page 2: Admin Dashboard
+## Phase 2: Formalize Component Library (Page 2)
+
+Extract reusable components from Home + Product Detail into a dedicated Components Library page.
+
+### Components to Extract & Formalize
+
+**From Product Detail:**
+- ProductCard (image, badge, wishlist, name, price, rating)
+- SizeSelector (pill buttons with stock states)
+- ImageGallery (mobile swipe, desktop thumbnail strip)
+- CartDrawer (slides from right, item list, checkout button)
+- PriceDisplay (sale + original + discount badge)
+- RatingDisplay (stars + count)
+
+**From Home:**
+- Header (sticky, logo, icons, search)
+- BottomNav (5-item mobile navigation)
+- SaleBanner (dismissable countdown timer)
+- ProductCard (already extracted above, reused)
+- CategoryChips (horizontal scrollable filters)
+- StatCard (number + label + trend)
+
+**Foundational Components (create in library):**
+- Button (primary, secondary, danger, all states)
+- IconButton (circular, outlined/filled)
+- Input (text, email, phone, number, with label, focus, error)
+- Select (dropdown with custom arrow)
+- Checkbox (20px, checked/unchecked/indeterminate)
+- Radio (20px, checked/unchecked)
+- Toggle (44×24 switch)
+- Badge (small labels)
+- StatusBadge (Pending/Confirmed/Shipped/Delivered)
+- Card (generic container)
+- Modal/BottomSheet (centered dialog, mobile sheet)
+- StepIndicator (wizard dots)
+- FormGroup (label + input wrapper)
+
+### Organization in Paper
+- Each component as a separate artboard or grouped section
+- Show all variants (hover, active, disabled, error, etc.)
+- Include usage notes/dimensions for reference
+- Name consistently: `Component / [Variant] / [State]`
+
+---
+
+## Phase 3: Design New Screens Using Extracted Components
+
+Now design three high-priority screens (Pages 3, 4, 5) using components from Phase 2.
+
+### Page 3: Admin Dashboard
 
 **Purpose:** Store owner dashboard for at-a-glance metrics, recent orders, top products.
 
@@ -163,7 +234,7 @@ Store-customizable:
 
 ---
 
-## Page 3: Onboarding Wizard
+### Page 4: Onboarding Wizard
 
 **Purpose:** 5-step setup flow for new store owners (name, brand, product, payment, launch).
 
@@ -241,7 +312,7 @@ Store-customizable:
 
 ---
 
-## Page 4: Checkout Flow
+### Page 5: Checkout Flow
 
 **Purpose:** 3-step wizard for order completion (OTP → Address → Payment).
 
@@ -316,21 +387,28 @@ Store-customizable:
 
 ---
 
-## Component Extraction Strategy
+## Workflow Summary
 
-**During Design:**
-As we wireframe these three screens, we'll identify and extract reusable components:
+**Phase 1:** Extract design tokens & components from existing Home + Product Detail designs (10-15 min)
+- Inspect current artboards in Paper
+- Document all colors, typography, spacing, border radius values
+- Identify existing component patterns
 
-**From Admin Dashboard:**
-- StatCard, OrderCard, Header, BottomNav, TabBar, Badge, StatusBadge, Card
+**Phase 2:** Formalize extracted components (20-30 min)
+- Create Design System reference page (Page 1) with tokens
+- Create Component Library page (Page 2) with all extracted + foundational components
+- Organize components with variants and usage notes
 
-**From Onboarding:**
-- StepIndicator, Input, Select, Button, Radio, Checkbox, Modal (bottom sheet), ColorSwatch, FileUpload
+**Phase 3:** Design three new screens using extracted components (ongoing)
+- Admin Dashboard (Page 3): mobile + desktop, reuse extracted components
+- Onboarding Wizard (Page 4): mobile + desktop, reuse + extend components
+- Checkout Flow (Page 5): mobile + desktop, finalize component library
 
-**From Checkout:**
-- StepIndicator (reuse), Input, Select, RadioCard (payment), ToggleRow, OrderSummaryPanel, Button variants
-
-**Library will emerge naturally** as we build. No predefined component list — extract what we use.
+**Benefits:**
+- ✅ Consistency across all designs (old + new share same system)
+- ✅ No rework (reuse components already designed)
+- ✅ Living component library (evolves as we design)
+- ✅ Faster implementation (developers have reference components)
 
 ---
 
@@ -348,22 +426,45 @@ As we wireframe these three screens, we'll identify and extract reusable compone
 
 ## Success Criteria
 
-✅ Design System page created with all tokens  
-✅ Admin Dashboard: mobile + desktop, all sections visible  
-✅ Onboarding Wizard: all 5 steps, mobile + desktop  
-✅ Checkout Flow: all 3 steps, mobile + desktop  
-✅ Components extracted and organized as we build  
+**Phase 1 (Extract):**
+✅ All colors from existing designs documented  
+✅ Typography scale extracted and verified  
+✅ Spacing/border-radius values identified  
+✅ Component patterns catalogued  
+
+**Phase 2 (Formalize):**
+✅ Design System page (Page 1) created with all tokens  
+✅ Component Library page (Page 2) created with extracted + foundational components  
+✅ All components have variants (hover, active, disabled, error, etc.)  
+✅ Usage notes and dimensions documented  
+
+**Phase 3 (Design):**
+✅ Admin Dashboard (Page 3): mobile + desktop, all sections visible  
+✅ Onboarding Wizard (Page 4): all 5 steps, mobile + desktop  
+✅ Checkout Flow (Page 5): all 3 steps, mobile + desktop  
+✅ All screens use components from library (no new custom elements)  
 ✅ Frame naming consistent: `[Section] / [Page] / [State]`  
-✅ All text uses tokens from design system  
 ✅ Responsive layouts verified (390px, 1440px)
 
 ---
 
-## Next Steps
+## Implementation Steps
 
-1. Create Paper design file structure (5 pages)
-2. Build Design System page (Page 1)
-3. Design Admin Dashboard (Page 2)
-4. Design Onboarding Wizard (Page 3)
-5. Design Checkout Flow (Page 4)
-6. Extract and organize component library
+### Phase 1: Extract (10-15 min)
+1. Open Paper file with Home + Product Detail
+2. Inspect each artboard (note colors, typography, spacing)
+3. Document findings in a text/notes section
+
+### Phase 2: Formalize (20-30 min)
+1. Create **Page 1: Design System** with token reference
+2. Create **Page 2: Component Library** 
+   - Extract existing components from Home/Product Detail as artboards
+   - Create foundational components (Button, Input, Select, etc.)
+   - Organize all with variants and labels
+
+### Phase 3: Design (ongoing)
+1. Create **Page 3: Admin Dashboard** (mobile → desktop)
+2. Create **Page 4: Onboarding Wizard** (mobile → desktop)
+3. Create **Page 5: Checkout Flow** (mobile → desktop)
+4. Use only components from Library (Page 2)
+5. Add new component variants to Library as needed
