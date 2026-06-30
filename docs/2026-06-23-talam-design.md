@@ -1,10 +1,15 @@
 # Talam — Full Product Design Spec
 
 **Date:** 2026-06-23  
-**Last updated:** 2026-06-25  
-**Status:** Approved — v1.1 Final  
+**Last updated:** 2026-06-30  
+**Status:** Approved — v1.2  
 **Author:** Surya Prakash  
-**Version:** 1.1 (consolidated with gap resolution)
+**Version:** 1.2 (admin nav restructure synced from Paper design + admin dashboard spec)
+
+**Changelog v1.2 (2026-06-30)**
+- **Admin nav restructure:** Customers promoted from a Settings sub-route to a top-level nav item. Bottom nav (mobile) is now 5 items: Dashboard, Orders, Products, Customers, Settings — not 4. Desktop drops the top header nav in favor of a fixed left sidebar (icon-only, expandable), with Settings subsections nested under it. See `docs/superpowers/specs/2026-06-27-admin-dashboard-design.md` for full spec.
+- **Trial banner:** Removed from the admin dashboard UI spec (the read-only-on-expiry *behavior* in §2 is unchanged — only the dashboard banner component was cut).
+- **Settings hub:** Now 12 routes nested under Settings (Customers moved out; see above).
 
 **Changelog v1.1 Final (2026-06-25)**
 - **Domain:** Changed from `talam.app` (unavailable) to `mytalam.com`
@@ -106,9 +111,10 @@ admin.mytalam.com/                 → Super admin (platform owner)
 
 **Tenant admin routes:**
 ```
-/admin/dashboard     Sales stats, revenue, active orders, trial banner, notifications bell
+/admin/dashboard     Sales stats (Revenue, Orders, Customers, Avg Order Value), notifications bell; desktop sidebar nav label: "Overview"
 /admin/products      Add / edit / delete products, low stock badges
 /admin/orders        Order list, status updates, tracking ID entry, search filter
+/admin/customers     Customer list, contact details, order history per customer (top-level nav item — not under Settings)
 /admin/settings      Hub page linking to:
   ├── /admin/settings/store       Store name, tagline, contact phone/email
   ├── /admin/settings/brand       Logo, primary color
@@ -119,12 +125,14 @@ admin.mytalam.com/                 → Super admin (platform owner)
   ├── /admin/about                Store story, social links, branch locations
   ├── /admin/reviews              Product reviews moderation (all + reported)
   ├── /admin/categories           Create / reorder / delete product categories
-  ├── /admin/customers            Customer list, contact details
   ├── /admin/promotions           Discount codes, sale banners
   ├── /admin/payouts              Settlement history from payment gateway
   ├── /admin/billing              Subscription plan, upgrade, payment history
   └── Danger Zone                 Delete store (soft-delete)
 /admin/onboarding    First-run setup wizard (5 steps: Store → Brand → Product → Payment → Go Live)
+
+Mobile bottom nav (5 items): Dashboard, Products, Orders, Customers, Settings.
+Desktop: fixed left sidebar nav (icon-only, expandable), not a top header nav — see `docs/superpowers/specs/2026-06-27-admin-dashboard-design.md`.
 ```
 
 **Super admin routes:**
@@ -567,7 +575,7 @@ Triggered by Vercel Cron — checks tenant state daily:
 | 2 | Storefront — home, shop, `/shop/[categorySlug]`, product detail pages + reviews section |
 | 3 | Cart, checkout (with pincode auto-fill + delivery estimate), payment gateway integration (UPI Manual + Instamojo + Razorpay) |
 | 4 | Orders, account, wishlist, `/about` storefront page with trust stats + branches |
-| 5 | Tenant admin — dashboard (trial banner, notifications, trends), products CRUD, orders management, categories CRUD |
+| 5 | Tenant admin — dashboard (notifications, trends), products CRUD, orders management, customers tab, categories CRUD |
 | 6 | Admin settings hub (Store Details, Brand, Payment, WhatsApp, Delivery & Trust, Notifications, Danger Zone), `/admin/about` (story, social, branches), `/admin/reviews` moderation |
 | 7 | Onboarding wizard (5 steps: Store → Brand → Product → Payment → Go Live), trust badges, size guide, review reporting, OG cards |
 | 8 | Super admin, PostHog analytics, Resend emails + nurture sequences, rate limiting |

@@ -132,12 +132,14 @@ import { cn } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
 
-// Bottom nav: 4 items per spec §1 changelog. Secondary pages (categories, customers,
-// promotions, payouts, about, reviews) are accessed via Settings hub sub-navigation.
+// Bottom nav: 5 items per spec §1 changelog v1.2 (Customers promoted to top-level).
+// Remaining secondary pages (categories, promotions, payouts, about, reviews) are
+// accessed via Settings hub sub-navigation.
 const BOTTOM_NAV = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/products', label: 'Products', icon: Package },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
+  { href: '/admin/customers', label: 'Customers', icon: Users },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ]
 
@@ -146,13 +148,13 @@ const SIDEBAR_NAV = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/products', label: 'Products', icon: Package },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
+  { href: '/admin/customers', label: 'Customers', icon: Users },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
   { href: '/admin/settings/store', label: 'Store Details', icon: Settings, indent: true },
   { href: '/admin/settings/brand', label: 'Brand', icon: Settings, indent: true },
   { href: '/admin/settings/payment', label: 'Payment', icon: DollarSign, indent: true },
   { href: '/admin/about', label: 'About Page', icon: Users, indent: true },
   { href: '/admin/categories', label: 'Categories', icon: Tag, indent: true },
-  { href: '/admin/customers', label: 'Customers', icon: Users, indent: true },
   { href: '/admin/promotions', label: 'Promotions', icon: Tag, indent: true },
   { href: '/admin/reviews', label: 'Reviews', icon: Tag, indent: true },
   { href: '/admin/billing', label: 'Billing', icon: DollarSign, indent: true },
@@ -1328,7 +1330,7 @@ git commit -m "feat: add admin customers list"
 
 ### Task 5.5: Settings Hub + Sub-Pages
 
-> Per spec §3.2 and §1 changelog: Settings is a hub page linking to 13 sub-routes. All secondary admin features are accessed through Settings, keeping the bottom nav to 4 items.
+> Per spec §3.2 and §1 changelog v1.2: Settings is a hub page linking to 12 sub-routes (Customers moved out to a top-level bottom nav item — see Task 1 and Task 5). Remaining secondary admin features are accessed through Settings.
 
 **Files:**
 - Create: `app/store/admin/settings/page.tsx` (hub)
@@ -1345,7 +1347,7 @@ Create `app/store/admin/settings/page.tsx`:
 ```typescript
 import { requireOwner } from '@/lib/admin-guard'
 import Link from 'next/link'
-import { ChevronRight, Store, Palette, CreditCard, MessageCircle, Truck, Bell, BookOpen, Star, Tag, Users, DollarSign, CreditCard as BillingIcon, AlertTriangle } from 'lucide-react'
+import { ChevronRight, Store, Palette, CreditCard, MessageCircle, Truck, Bell, BookOpen, Star, Tag, DollarSign, CreditCard as BillingIcon, AlertTriangle } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -1372,7 +1374,6 @@ const SETTINGS_SECTIONS = [
   {
     title: 'Business',
     items: [
-      { href: '/admin/customers', label: 'Customers', desc: 'Customer list and contacts', icon: Users },
       { href: '/admin/promotions', label: 'Promotions', desc: 'Discount codes and sale banners', icon: Tag },
       { href: '/admin/payouts', label: 'Payouts', desc: 'Settlement history', icon: DollarSign },
       { href: '/admin/billing', label: 'Billing', desc: 'Subscription plan and payment history', icon: BillingIcon },
