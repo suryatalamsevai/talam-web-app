@@ -18,6 +18,85 @@ The layout leads with metrics (numbers set context), then surfaces actions (now 
 
 ---
 
+## Admin Dashboard Structure (Unified Hub)
+
+**Overview (Aimee's Direction):**
+All admin functions consolidated into a single Dashboard with multi-level navigation:
+- **Mobile:** Tab navigation at top (Overview, Orders, Products, Customers, Settings)
+- **Desktop:** Left sidebar navigation (icon-only by default, expandable) with nested Settings subsections
+
+---
+
+## Desktop Layout — Left Sidebar Navigation (1440px)
+
+**Sidebar (Fixed, 80px icon-only by default, expandable to 280px):**
+- Position: Fixed left, top 0, height 100vh
+- Background: #1F2937 (dark gray)
+- Icon color: #9CA3AF (muted)
+- Active icon color: #4F3FF0 (brand indigo)
+- Expandable: Click logo or hamburger icon to expand/collapse
+- Smooth transition: width 80px ↔ 280px (0.3s ease)
+
+**Sidebar navigation items (icon + label on expand):**
+```
+[icon] Overview
+[icon] Orders
+[icon] Products
+[icon] Customers
+[icon] Settings
+        ├── Store
+        ├── Brand
+        ├── Payment
+        ├── WhatsApp
+        ├── Delivery
+        ├── Notifications
+        ├── Store About
+        ├── Reviews
+        ├── Categories
+        ├── Billing
+        └── Danger Zone
+```
+
+**Main content area:**
+- Margin-left: 80px (icon-only) or 280px (expanded)
+- Header: 72px sticky (logo on desktop when sidebar expanded, breadcrumb when Settings nested)
+- Content: Full-width minus sidebar, padding 32px
+
+**Sidebar styling:**
+- Item height: 48px (icon centered in 80px, flex start in 280px)
+- Icon size: 24px
+- Label font: 14px, font-weight 500
+- Active state: Icon = brand indigo, label = brand indigo, item bg = brand indigo at 10% opacity
+- Hover state: Item bg = brand indigo at 6% opacity
+- Nested items (Settings subsections): Padding-left 40px, font-size 13px, muted color (until active)
+
+---
+
+## Mobile Bottom Navigation (390px)
+
+**Purpose:** Navigate between Dashboard sections (Overview, Orders, Products, Customers, Settings) on mobile.
+
+**Bottom Nav Bar (Fixed, 64px height):**
+- Position: Fixed bottom, 0
+- Background: #fff, border-top 1px `--border`
+- Items: 5 nav items (Dashboard, Orders, Products, Customers, Settings)
+- Layout: Flex, space-around, center-aligned
+- Each item: Icon (22px) + Label (10px below icon, uppercase)
+- Icon color: `--muted` (#6B7280) — inactive, `--brand-primary` (#4F3FF0) — active
+- Icon stroke-width: 1.8px (inactive) / 2.2px (active)
+- Active item bg: brand indigo at 6% opacity (light background highlight)
+
+**Tab Content (Main area, padding-bottom 80px for nav clearance):**
+- **Dashboard (default):** Overview — stats grid, revenue trend chart, recent orders preview, top products preview
+- **Orders:** Full orders list, filtering, status updates, tracking ID entry
+- **Products:** Product CRUD, inventory management, stock alerts
+- **Customers:** Customer list, contact details, order history per customer, communication options
+- **Settings:** Settings subsection list (Store, Brand, Payment, WhatsApp, Delivery, Notifications, Store About, Reviews, Categories, Billing, Danger Zone) — tap each to view/edit in modal/sheet
+
+**Note:** Desktop (1440px) does NOT use bottom nav — uses left sidebar navigation instead.
+
+---
+
 ## Mobile Layout (390px) — Scroll Order
 
 ```
@@ -39,23 +118,112 @@ Bottom Nav (fixed, 64px)
 
 ---
 
-## Desktop Layout (1440px, max-content 1200px, padding 32px)
+## Desktop Layout (1440px, with Left Sidebar Navigation)
 
 ```
-Header (sticky, 72px)
-Time Filter Row
-Stats Grid (4 columns)
+Left Sidebar (80px icon-only / 280px expanded, fixed)
+├─ [icon] Overview
+├─ [icon] Orders
+├─ [icon] Products
+├─ [icon] Customers
+└─ [icon] Settings
+      ├── Store
+      ├── Brand
+      ├── Payment
+      ├── etc.
 
-[Chart + Metric Toggle  |  Action Required Strip]
-[     1fr (~65%)        |       360px (~35%)    ]
-[     gap: 24px                                 ]
-
-[Recent Orders          |  Top Products         ]
-[     1fr (~60%)        |       360px (~40%)    ]
-[     gap: 24px                                 ]
+Main Content Area (margin-left: 80px or 280px)
+│
+├─ Header (sticky, 72px) — logo (if sidebar expanded), breadcrumb for nested Settings
+├─ Time Filter Row
+├─ Stats Grid (4 columns)
+│
+├─ [Chart + Metric Toggle  |  Action Required Strip]
+│  [     1fr (~65%)        |       360px (~35%)    ]
+│  [     gap: 24px                                 ]
+│
+└─ [Recent Orders          |  Top Products         ]
+   [     1fr (~60%)        |       360px (~40%)    ]
+   [     gap: 24px                                 ]
 ```
+
+**Content rendering by tab/sidebar item:**
+- **Overview:** Displays dashboard overview (stats, chart, recent orders, top products)
+- **Orders:** Displays full orders management interface
+- **Products:** Displays product management interface
+- **Customers:** Displays customer list with order history
+- **Settings (with nested items):** Each Settings subsection (Store, Brand, etc.) loads in the main content area
 
 On desktop, Top Products renders as a **vertical list** (not horizontal scroll).
+
+---
+
+## Dashboard Tab/Section Content Specifications
+
+### Overview Tab (Default)
+**Mobile & Desktop:** Same content, layout adapts to space available
+- Stats grid (2×2 mobile, 4-col desktop)
+- Revenue trend chart with metric toggle
+- Action Required alerts section
+- Recent orders preview (top 3)
+- Top products preview (top 5)
+- Time filter row affects all sections
+
+### Orders Tab
+**Content:** Full order management interface
+- Filters: All, Pending, Confirmed, Shipped, Delivered, Cancelled
+- Order cards with: ID, customer name, items, amount, status, actions
+- Status update button → opens modal/sheet
+- Tracking ID input field for shipped orders
+- Search/filter by order ID or customer name
+- Empty state when no orders
+
+### Products Tab
+**Content:** Product management (CRUD)
+- Product list: thumbnail, name, price, stock status, actions
+- Search bar with filter button
+- Results bar: "N products" + filter summary
+- Add Product FAB (floating action button)
+- Edit/toggle visibility per product
+- Stock status badges: In Stock, Low, Out of Stock
+- Product editor modal/sheet on create/edit
+
+### Customers Tab
+**Content:** Customer management with order history
+- Customer list: name, phone, email, last order date, order count
+- Tap customer → opens customer detail sheet
+- **Customer detail:**
+  - Customer info: name, phone, email, joined date
+  - Order history: list of all orders (date, items, amount, status)
+  - Communication options:
+    - WhatsApp button (if store has WhatsApp number)
+    - Email button
+    - Phone call button
+  - Actions: View orders, send message (V2)
+- Search/filter by name or phone
+- Empty state when no customers
+
+### Settings Tab (with nested subsections)
+**Mobile:** Tab opens Settings, which shows:
+- List of Settings subsections: Store, Brand, Payment, WhatsApp, Delivery, Notifications, Store About, Reviews, Categories, Billing, Danger Zone
+- Tap each to view/edit
+
+**Desktop (Sidebar expand):** Shows nested items under Settings
+- Click subsection → loads form in main content area
+- Breadcrumb at top: "Settings > Store" (for navigation context)
+
+**Settings subsections:**
+- **Store:** Name, tagline, contact phone, contact email
+- **Brand:** Logo upload, primary color picker
+- **Payment:** Payment gateway selection and configuration (UPI/Instamojo/Razorpay)
+- **WhatsApp:** Phone number, toggle button visibility
+- **Delivery:** Free delivery threshold, shipping fee, delivery estimate, return window, trust badges
+- **Notifications:** Email alerts on new order, order alerts toggle
+- **Store About:** Owner story, owner photo, social links, branch locations
+- **Reviews:** Review moderation dashboard (all reviews + reported reviews tabs)
+- **Categories:** Create/reorder/delete product categories
+- **Billing:** Subscription plan, upgrade CTA, payment history
+- **Danger Zone:** Delete store confirmation
 
 ---
 
