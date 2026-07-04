@@ -1580,10 +1580,14 @@ npm run build
 Expected: Build succeeds, no TypeScript errors
 
 Manual smoke test (after Vercel deployment):
-- [ ] `https://{YOUR_DOMAIN}` loads marketing placeholder
-- [ ] `https://test.{YOUR_DOMAIN}` serves 404 "Store not found" (unknown tenant)
-- [ ] `https://silk.{YOUR_DOMAIN}/auth` shows OTP login form
+- [x] `https://{YOUR_DOMAIN}` loads marketing placeholder
+- [x] `https://test.{YOUR_DOMAIN}` serves 404 "Store not found" (unknown tenant)
+- [x] `https://silk.{YOUR_DOMAIN}/auth` shows OTP login form
 - [ ] Phone OTP flow: number → SMS → OTP input → session created
 - [ ] Google Sign-In redirects correctly
 
-> Not yet run — no tenant seeded locally and no Vercel deployment exists yet (`/store/*` 404s on `localhost` by design since middleware requires a real subdomain + seeded tenant). Do this smoke test once a tenant row exists and staging is deployed.
+> Routing + auth-page checks verified locally on 2026-07-04 via `curl -H "Host: <subdomain>.mytalam.com" http://localhost:3000/...` against a seeded test tenant (`silk`) — no `/etc/hosts` edit or deployment needed for these three, since the middleware only reads the `Host` header. All three returned the expected status/content.
+>
+> While seeding the test tenant, found and fixed a real bug: `service_role` had zero table grants on any Prisma-created table (`GRANT SELECT ON public.tenants TO service_role` etc. were never run — Supabase's auto-grants only happen for tables created via its own table editor, not via `prisma migrate`). This silently 404'd every tenant lookup in `getTenantBySlug`, not just this one. Fixed with `GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO service_role;` applied directly via Supabase migration — RLS policies from Task 2 Step 8 were already correct and unaffected.
+>
+> The remaining two checks (real OTP SMS delivery, Google OAuth redirect) genuinely require a live Vercel deployment and a real phone number — not verifiable from local dev. Needs a staging deploy + manual test on a real device.
