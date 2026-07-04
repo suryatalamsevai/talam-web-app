@@ -3,10 +3,13 @@
 **Date:** 2026-06-23
 **Last updated:** 2026-07-04
 **Status:** Open for Contribution
-**Version:** 1.4 (Account Menu split into logged-out/logged-in states)
+**Version:** 1.5 (Admin Dashboard re-verified against live Paper artboards)
 **For:** UI/UX designers contributing to the Talam open source project
 
-> **Design source of truth:** Real design work now happens in a Paper Design file (`Talam Design`, ~74 artboards across 5 pages — Store Front page now has 27 after the 2026-07-04 additions). This document's brand/typography/spacing/radius tokens (§2) and the design tokens reference (§10) have been re-synced to that file's live token set as of 2026-06-30. Sections 4.1–4.14 (page-by-page layout specs) are the original written brief and have **not** been individually re-verified against each Paper artboard this pass — treat them as design intent, not a guaranteed pixel match. For current per-screen build status, see [`docs/2026-06-28-PAPER-DESIGN-INVENTORY.md`](../2026-06-28-PAPER-DESIGN-INVENTORY.md).
+> **Design source of truth:** Real design work now happens in a Paper Design file (`Talam Design`, 6 pages: Store Front, Marketing, Checkout Flow, Design Library, Admin Dashboard, Onboarding). The Admin Dashboard page alone has grown to 22 artboards (Dashboard, Products, Orders + order details/action menu, Settings + 7 Store Settings sub-pages, Product Editor, filter/modal overlays) — far more than §4.8–4.12 below describe. This document's brand/typography/spacing/radius tokens (§2) and the design tokens reference (§10) have been re-synced to that file's live token set as of 2026-06-30. §4.8 was re-verified against the live artboards on 2026-07-04 (see its changelog note); §4.1–4.7 and §4.9–4.14 are still the original written brief and have **not** been individually re-verified against each Paper artboard — treat them as design intent, not a guaranteed pixel match. For current per-screen build status, see [`docs/2026-06-28-PAPER-DESIGN-INVENTORY.md`](../2026-06-28-PAPER-DESIGN-INVENTORY.md) (**note: this file does not currently exist in the repo** — recreate it before relying on it).
+
+**Changelog v1.5 (2026-07-04)**
+- **REWROTE:** §4.8 Admin Dashboard re-verified against the live `Admin Dashboard / Mobile` and `Admin Dashboard / Desktop` Paper artboards. Several sections existed in the design but were never specced: a **Today/Yesterday/This Week/This Month time filter row**, an **Action Required alerts section** (pending orders, low stock, failed payments), and a **Revenue Trend chart** with a Revenue/Orders/Customers series toggle. The desktop layout was corrected from "max-width 960px, centered" to a **persistent left sidebar app shell** (Overview/Orders/Products/Customers/Settings) with a 2-column content split — desktop has no bottom nav. The flat "Product rows" list was replaced with the actual "Top Products" card row design.
 
 **Changelog v1.4 (2026-07-04)**
 - **CHANGED:** Account Menu logged-out state simplified from two rows ("Log In" / "Sign Up") to a single "Log in / Sign up" row — both led to the same `Auth` screen, so the second row was redundant.
@@ -759,21 +762,34 @@ Both states are live in Paper as `Account Menu — Mobile`, `Account Menu — De
 
 ### 4.8 Tenant Admin — Dashboard (`/admin/dashboard`)
 
+> **Re-verified against live Paper artboards 2026-07-04** (`Admin Dashboard / Mobile`, `Admin Dashboard / Desktop`). The dashboard is significantly more built out than this section previously described — a date-range filter, an alerts section, and a revenue chart all exist in Paper with no corresponding spec text until now. The desktop layout in particular was wrong: it is **not** a centered 960px column, it's a persistent sidebar app shell. Rewritten below to match.
+>
 > **Removed (2026-06-28):** the trial banner that previously appeared here was cut from spec. Do not design or build it.
 
-**Header** — Sticky, 56px height
+**Header** — Sticky, 56px (mobile) / 72px (desktop)
 - Logo: "talam." (brand accent on dot)
-- Right: notification bell icon (36px button, muted) + avatar (32px circle, placeholder bg)
+- Right: notification bell icon (unread-count red dot) + avatar (circle, brand-indigo fill, owner's first-initial — not a generic placeholder)
 
-**Page layout** — Padding 16px
-- Mobile: single column, padding-bottom 80px (for bottom nav)
-- Desktop: max-width 960px, padding 24px 32px, centered
+**Time filter row** *(new — not previously specced)* — Horizontal pill tabs directly under the header: **Today / Yesterday / This Week / This Month**. Active tab: filled brand-indigo background, white text. Inactive: outlined, muted text. Scopes every stat, the chart, and "vs yesterday" trend copy below it.
+
+**Page layout**
+- Mobile: single column, padding 16px, padding-bottom 80px (for bottom nav)
+- Desktop: **persistent left sidebar app shell**, not a centered column
+  - Sidebar: fixed, dark (`--color-bg-dark`), ~240px wide, full viewport height
+    - Small brand mark (indigo square + dot) at top
+    - Nav items (icon + label): Overview (active, brand-indigo text), Orders, Products, Customers, Settings
+  - Content area: remaining width, `--color-bg` background, header + time filter + stat grid full-width, then a **2-column split** below: left column (Revenue Trend chart, Recent Orders) is flexible width, right column (Action Required, Top Products) is a fixed ~360px sidebar
 
 **Section labels** — 11px uppercase bold, letter-spaced 0.08em, muted, margin-bottom 12px
 
-**Stat grid** — Grid layout
+**Action Required section** *(new — not previously specced)* — Shown only when there's something needing attention; stacked alert rows, each: left accent bar + icon, bold title, muted subtext, chevron. Three severities seen in the live design:
+  - Amber (clock icon): "N orders awaiting confirmation" / "Pending for over 2 hours"
+  - Amber (low-stock icon): "N items running low" / "Less than 5 units remaining"
+  - Red (warning icon): "Payment failed — [provider]" / "Order #[id] · ₹[amount]"
+
+**Stat grid** — Grid layout, 4 cards: **Revenue, Orders, Customers, Avg Order Value** (previously unspecified which four)
 - Mobile: 2-column, gap 10px
-- Desktop: 4-column, gap varies
+- Desktop: 4-column, full-width row above the 2-column split
 - Stat cards:
   - Border 1px, border-radius 8px, padding 14px
   - Value: 24px bold, -0.02em letter-spacing
@@ -784,31 +800,25 @@ Both states are live in Paper as `Account Menu — Mobile`, `Account Menu — De
     - Down arrow/text: red
   - First card (Revenue): brand accent (border brand, bg brand 4% opacity, value brand color)
 
-**Divider** — 8px height, light bg, margin 16px -16px (extends full-width)
+**Revenue Trend chart** *(new — not previously specced)* — Line/area chart, Mon–Sun x-axis, ₹ y-axis gridlines (0/10k/20k/30k). Segmented control above the chart to switch series: **Revenue / Orders / Customers** (Revenue selected by default, filled brand-indigo pill). Line stroke + area fill in brand indigo, with data-point dots on each day.
 
-**Order cards** — Margin-bottom 8px
+**Divider** (mobile only) — 8px height, light bg, margin 16px -16px (extends full-width). Not used on desktop, where the 2-column split provides separation instead.
+
+**Recent Orders** — Section header ("Recent Orders" + "View all" link), then order cards, margin-bottom 8px each:
 - Border 1px, border-radius 8px, padding 12px
 - Order ID (12px bold uppercase, muted)
-- Order time (11px muted, right-aligned)
+- Order time (11px muted, right-aligned, e.g. "3h ago", "Yesterday")
 - Customer name (14px bold)
-- Items list (13px muted)
-- Bottom row: amount (15px bold) | status badge + chevron button
+- Items list (13px muted, e.g. "2× Kurta Set, 1× Dupatta")
+- Bottom row: amount (15px bold) | status badge
   - Status badges (11px bold uppercase, padding 3px 8px, border-radius 4px):
     - Pending: amber bg (#FEF3C7), dark text (#92400E)
     - Confirmed: green bg (#D1FAE5), dark text (#065F46)
     - Shipped: blue bg (#DBEAFE), dark text (#1E3A8A)
     - Delivered: light green bg (#F0FDF4), dark text (#14532D)
-  - Chevron button (32px square, rounded, muted text, hover = light bg)
 
-**View all orders button** — Flex center, padding 14px, border 1px, border-radius 8px, 13px bold, brand text
-- Icon (14px) + arrow right (margin-left 4px)
-
-**Product rows** — Flex gap 12px, padding 10px 0, border-bottom 1px
-- Thumbnail (40×40, border-radius 6px, 1px border, placeholder bg)
-- Product info (flex 1, min-width 0)
-  - Name (14px bold, ellipsis overflow)
-  - Sales count (12px muted)
-- Amount (14px bold, right-aligned)
+**Top Products** *(replaces the previously-specced flat "Product rows" list)* — Section header ("Top Products" + "View all" link), then a horizontal row of cards (3 on both mobile and desktop, no wrap):
+- Each card: coloured icon tile (tag/label glyph, tinted background unique per card — lilac/amber/mint seen in the live design), product name (14px bold), sales count (12px muted, e.g. "24 sold"), stock note (12px, coloured — green "In stock", amber "Low (N left)")
 
 **Bottom navigation** (mobile only) — Fixed, bottom 0, height 64px
 - Background surface, border-top 1px
@@ -817,6 +827,7 @@ Both states are live in Paper as `Account Menu — Mobile`, `Account Menu — De
   - Icon (22px stroke)
   - Active: brand text, stroke-width 2.2
   - Inactive: muted text, stroke-width 1.8
+- **Desktop has no bottom nav** — its 5 destinations (Dashboard/Overview, Orders, Products, Customers, Settings) live in the sidebar instead.
 
 ---
 
