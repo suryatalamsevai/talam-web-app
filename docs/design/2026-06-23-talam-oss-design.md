@@ -3,10 +3,14 @@
 **Date:** 2026-06-23
 **Last updated:** 2026-07-04
 **Status:** Open for Contribution
-**Version:** 1.5 (Admin Dashboard re-verified against live Paper artboards)
+**Version:** 1.6 (Checkout Flow re-verified against live Paper artboards; new Order Confirmed screen documented)
 **For:** UI/UX designers contributing to the Talam open source project
 
-> **Design source of truth:** Real design work now happens in a Paper Design file (`Talam Design`, 6 pages: Store Front, Marketing, Checkout Flow, Design Library, Admin Dashboard, Onboarding). The Admin Dashboard page alone has grown to 22 artboards (Dashboard, Products, Orders + order details/action menu, Settings + 7 Store Settings sub-pages, Product Editor, filter/modal overlays) — far more than §4.8–4.12 below describe. This document's brand/typography/spacing/radius tokens (§2) and the design tokens reference (§10) have been re-synced to that file's live token set as of 2026-06-30. §4.8 was re-verified against the live artboards on 2026-07-04 (see its changelog note); §4.1–4.7 and §4.9–4.14 are still the original written brief and have **not** been individually re-verified against each Paper artboard — treat them as design intent, not a guaranteed pixel match. For current per-screen build status, see [`docs/2026-06-28-PAPER-DESIGN-INVENTORY.md`](../2026-06-28-PAPER-DESIGN-INVENTORY.md) (**note: this file does not currently exist in the repo** — recreate it before relying on it).
+> **Design source of truth:** Real design work now happens in a Paper Design file (`Talam Design`, 6 pages: Store Front, Marketing, Checkout Flow, Design Library, Admin Dashboard, Onboarding). The Admin Dashboard page alone has grown to 22 artboards (Dashboard, Products, Orders + order details/action menu, Settings + 7 Store Settings sub-pages, Product Editor, filter/modal overlays) — far more than §4.8–4.12 below describe; the Checkout Flow page has 7 (3 steps × mobile/desktop + a mobile-only Order Confirmed screen). This document's brand/typography/spacing/radius tokens (§2) and the design tokens reference (§10) have been re-synced to that file's live token set as of 2026-06-30. §4.5 and §4.8 have been re-verified against their live artboards (2026-07-04, see changelog notes); §4.1–4.4, §4.6–4.7, and §4.9–4.14 are still the original written brief and have **not** been individually re-verified against each Paper artboard — treat them as design intent, not a guaranteed pixel match. For current per-screen build status, see [`docs/2026-06-28-PAPER-DESIGN-INVENTORY.md`](../2026-06-28-PAPER-DESIGN-INVENTORY.md) (**note: this file does not currently exist in the repo** — recreate it before relying on it).
+
+**Changelog v1.6 (2026-07-04)**
+- **REWROTE:** §4.5 Checkout re-verified against the live `Step 1/2/3 — Mobile/Desktop` Paper artboards. Corrections: the order summary, coupon field, and trust bar are **always visible on every step** (not a collapsible toggle confined to Address); the OTP step also offers **"Continue with Google"** (previously undocumented); the Address form has **no Email field** in the live design; Payment shows a non-editable Delivery Address recap card; and there are two distinct CTAs (the UPI card's own "Confirm Payment" vs. the page-level "Place Order").
+- **NEW:** §4.5a Order Confirmed screen documented — this whole post-payment screen (order ID, delivery estimate, order recap, Track/Share/Continue CTAs) existed in Paper with zero spec coverage until now. Mobile-only artboard; no desktop version exists yet. Flagged a copy inconsistency: this screen says "30-day hassle-free return" while the checkout trust bar says "Easy 7-day returns."
 
 **Changelog v1.5 (2026-07-04)**
 - **REWROTE:** §4.8 Admin Dashboard re-verified against the live `Admin Dashboard / Mobile` and `Admin Dashboard / Desktop` Paper artboards. Several sections existed in the design but were never specced: a **Today/Yesterday/This Week/This Month time filter row**, an **Action Required alerts section** (pending orders, low stock, failed payments), and a **Revenue Trend chart** with a Revenue/Orders/Customers series toggle. The desktop layout was corrected from "max-width 960px, centered" to a **persistent left sidebar app shell** (Overview/Orders/Products/Customers/Settings) with a 2-column content split — desktop has no bottom nav. The flat "Product rows" list was replaced with the actual "Top Products" card row design.
@@ -543,89 +547,117 @@ Both states are live in Paper as `Account Menu — Mobile`, `Account Menu — De
 
 ### 4.5 Storefront — Checkout (`/checkout`)
 
+> **Re-verified against live Paper artboards 2026-07-04** (`Step 1/2/3 — Mobile/Desktop`, `Order Confirmed — Mobile`). Mostly matches the written brief below, with a few corrections: the order summary is **always visible**, not a collapsible toggle confined to the Address step; the OTP step also offers **Google sign-in** as a fallback (previously undocumented); the Address form has **no Email field** in the live design; and there's a whole **Order Confirmed** screen after payment that had no spec at all — see new §4.5a.
+
 **Three-step wizard form:**
 1. Details (OTP login)
 2. Address
 3. Payment
 
 **Header** — Sticky, 60px (mobile) / 72px (desktop)
-- Back arrow, store name (brand . with accent color on dot), "Secure Checkout" badge with lock icon (12px, green)
+- Back arrow, store name, "Secure Checkout" badge with lock icon (12px, green)
 
 **Progress bar** — Full-width, padding 16px
 - Horizontal step indicator (max-width 480px, centered, margin 0 auto)
 - Layout: flex gap 0, max-width 480px
-- Each step: 30px dot + label below
-  - Dot: unfilled border, done = filled with checkmark, active = border store primary
+- Each step: 30px dot (numbered "2"/"3" when not yet reached) + label below
+  - Dot: unfilled border with step number, done = filled store-primary with checkmark, active = store-primary outline with step number
   - Connecting line: 2px height between steps, background border color, done steps = store primary
   - Label: 11px uppercase, letter-spaced 0.04em, text-center, white-space nowrap
   - States: muted (unfilled) → store primary (active/done)
 
 **Section cards** — Padding 20px 16px, margin-top 8px (first: 0)
-- Mobile: single column, full-width
-- Desktop: grid 2-col (1fr 360px, gap 24px, max-width 1000px)
+- Mobile: single column, full-width — **order summary card, coupon field, and trust bar appear on every step** (Details/Address/Payment), not just Address
+- Desktop: grid 2-col (main column + 360px fixed sidebar, gap 24px) — sidebar holds the order summary across all three steps
 
-**OTP section** — Three states: request phone, enter OTP, verified
+**OTP section** *(only the request-phone and verified states are designed — the OTP-entry step itself has no artboard, same gap noted in §4.1b)*:
 - Phone input:
   - Label (13px bold)
-  - Input (13px border 1.5px, padding 13px 14px, border-radius 8px)
+  - Input (13px border 1.5px, padding 13px 14px, border-radius 8px), "+91" prefix chip on the left like the storefront Auth form
+  - Helper text below: "We'll send a 4-digit OTP to verify your number"
   - Focus: border = store primary
-- OTP input:
-  - 4 boxes × 48×52px, gap 10px
-  - Font 22px bold, text-center
-  - Border 1.5px, focus = store primary
-  - Input type: "number" to restrict characters
-- Verified state:
+- **"or continue with" divider + "Continue with Google" button** *(new — not previously specced)*, styled like the storefront Auth screen's Google button, directly below "Send OTP"
+- Verified state (shown on Address and Payment steps once phone is confirmed):
   - Green bg (rgba 16 185 129 0.08), border 1px green (0.2 opacity)
   - Check icon (18px, green) + "Verified" text + phone number (right-aligned)
   - Border-radius 8px, padding 12px 14px
 
 **Address section** — Form grid (grid 2-col, 12px gap)
 - Full-width fields (grid-column 1/-1):
-  - Name, Email, Phone, Address line 1, Pincode, City, State
+  - Name, Phone, Address line 1, Address line 2 (optional), Pincode, City, State — **no Email field** in the live design (written brief's "Email" was never built; drop it from scope)
 - Each field:
-  - Label (13px bold, letter-spaced 0.01em)
+  - Label (13px bold, letter-spaced 0.01em), required fields marked with `*`
   - Input or Select (13px, border 1.5px, padding 13px 14px, border-radius 8px)
   - Focus: border = store primary
   - Error state: border = red (#EF4444)
   - Select: custom dropdown arrow icon (SVG, right-aligned)
 
-**Order summary toggle**
-- Mobile: expandable toggle row (title + total + chevron)
-- Desktop: static summary card (360px fixed sidebar)
-- Toggle: flex space-between, cursor pointer, user-select none
-- Toggle label (15px bold) | total (15px bold) | chevron icon (rotates 180° on open)
-- Items (overflow hidden, max-height 0 → 400px on open, 0.3s transition):
-  - Each item: 52×52 thumb + name (14px bold) + meta (12px muted) + price (14px bold)
-  - Item: flex gap 12px, padding 12px 0, border-top 1px
+**Payment section — Delivery Address recap card** *(new — not previously specced)*: once past the Address step, Payment shows a compact non-editable card (name, full address, phone) with an "Edit" link (store-primary text, top-right) that returns to Step 2.
+
+**Order summary** — **Always visible, not a collapsible toggle** (correcting the written brief)
+- Mobile: static card, same position/order on every step (Details → Address → Payment)
+- Desktop: static summary card in the fixed 360px sidebar, present on every step
+- Items: 52×52 thumb + name (14px bold) + meta (12px muted, e.g. "Size: M · Qty: 1") + price (14px bold)
 - Summary rows (14px muted, last column bold):
-  - Items (N) | ₹X
-  - Delivery | ₹0
-  - Discount | −₹X (green text)
+  - Subtotal | ₹X
+  - Discount (MRP) | −₹X (green text)
+  - Delivery | Free / ₹X
   - **Total** (17px bold, border-top, margin-top 4px, padding-top 10px)
+- **Coupon field** ("Have a coupon?" label + input + "Apply" button) directly below the summary, on every step
+- **Trust bar** (3 rows, icon + text, seen on every step): "Secure checkout — your data is encrypted", "Easy 7-day returns on all orders", "Free delivery on this order"
 
 **Payment options** — Flex column, gap 10px
 - Each payment card:
   - Border 1.5px, border-radius 10px, cursor pointer
   - Selected: border = store primary
-  - Header: radio (20px, accent store primary) + icon (40×28px, flex-shrink 0) + name (15px bold) + desc (12px muted)
+  - Header: radio (20px, accent store primary) + icon badge (40×28px, flex-shrink 0, provider initials — "UPI"/"IM"/"RZ") + name (15px bold) + desc (12px muted)
   - Body (hidden, shown if selected): payment-specific content
-- **UPI payment:**
+- **UPI payment** (selected by default):
   - QR placeholder (120×120px, repeating grid pattern)
   - UPI ID label (12px uppercase, muted, letter-spaced 0.04em) + ID text (15px bold, word-break)
-  - Steps text (13px muted, line-height 1.6)
-  - UTR label (13px bold) + input field (15px, border 1.5px, padding 11px 13px)
+  - Steps text (13px muted, line-height 1.6, numbered 1-2-3)
+  - UTR label (13px bold) + input field (15px, border 1.5px, padding 11px 13px) + helper text ("12-digit reference number from your payment app")
+  - Its own **"Confirm Payment"** button inside the card (store primary, full-width) — distinct from the page-level "Place Order" CTA below
 - **Instamojo / Razorpay:**
   - Note (13px muted, line-height 1.5)
-  - Logo badges (background light, border, padding 6px 12px, 11px text, muted)
+  - Icon badge (dark background, coloured initials, 11px bold — "IM" navy, "RZ" dark navy)
 
 **CTAs**
 - Primary button (16px padding, store primary, 16px bold, full-width, border-radius 10px)
   - Active: scale 0.99, darker bg
 - Secondary button (13px padding, border 1.5px, border-radius 10px, hover bg light)
+- **Page-level "Place Order" button** sits below the payment-method list (separate from the UPI card's own "Confirm Payment" button)
 
-**Sticky pay bar** (mobile only, fixed bottom 0, desktop: none)
-- Total line: "Total" label (13px muted) + amount (20px bold)
-- Primary button below
+**Sticky pay bar** (mobile only, fixed bottom 0, desktop: none) — present on the Details step too, not just Payment
+- Total line: "Order Total" label (13px muted) + amount (20px bold)
+- Primary button below (label changes per step: "Pay ₹X" / "Confirm Payment" / "Place Order")
+
+---
+
+### 4.5a Storefront — Order Confirmed (`/checkout/confirmed`)
+
+**Purpose:** Post-payment confirmation. Reassure the customer and hand off to order tracking. *(New section — this screen existed in Paper with no corresponding spec until now.)*
+
+**Layout (top to bottom), mobile only artboard so far:**
+1. **Header** — Non-sticky, simple: store name (left), "Secure Checkout" badge with lock icon (right, green) — no back arrow (checkout is complete)
+2. **Progress bar** — Same 3-step indicator as checkout, all three steps shown Done (filled store-primary, checkmarks)
+3. **Success hero** — Centered, light green-tinted background band with scattered confetti-dot decorations
+   - Large circular green checkmark badge (store-neutral green, not store-primary)
+   - Heading: "Order Confirmed! 🎉" (20px bold)
+   - Subtext: personalized, e.g. "Thanks [Name]! Your [product] is packed and on its way."
+4. **Order ID card** — Bordered, centered text: "ORDER ID" label (11px uppercase muted) + order number (bold, e.g. "#ORD-2649"), divider, "ESTIMATED DELIVERY" label + date + delivery speed (green text, e.g. "Wed, 2 Jul · Standard delivery")
+5. **Order Summary** — Same card as checkout (item thumbnails, name, size/qty, price), header shows item count on the right (e.g. "2 items")
+6. **Totals** — Subtotal, Discount, Delivery, **Total Paid** (bold, border-top) — note "Total Paid" replaces checkout's "Total" label now that payment is done
+7. **Delivering To card** — Bordered, label + name + full address (no edit action — order is placed)
+8. **Payment card** — Bordered, label + payment method (icon badge + UPI ID) + amount paid + green "Verified" checkmark badge
+9. **CTA stack** (full-width, stacked, gap ~10px):
+   - "Track My Order" — store primary bg, clock icon
+   - "Share on WhatsApp" — WhatsApp green (#25D366) bg, WhatsApp icon
+   - "Continue Shopping" — outlined, no fill
+10. **Reassurance note** — Light green bg card, two rows with icons: "You'll get a call from [Store Name] to confirm your order.", "30-day hassle-free return if you're not satisfied." *(Note: 30-day window shown here vs. the 7-day return mentioned in the checkout trust bar — inconsistent copy, worth flagging to whoever owns the copy.)*
+11. **Footer** — "Powered by talam" badge, centered
+
+**Not yet designed:** a desktop artboard for this screen — only `Order Confirmed — Mobile` exists in Paper today.
 
 ---
 
