@@ -680,7 +680,7 @@ git commit -m "feat: add Prisma schema with all tables and RLS-aware withTenant 
 - Produces: `createAdminClient()` — service role client (server only)
 - Produces: `updateSession(request)` — call from middleware to refresh auth
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 Create `lib/supabase/client.test.ts`:
 ```typescript
@@ -700,7 +700,7 @@ describe('Supabase browser client', () => {
 })
 ```
 
-- [ ] **Step 2: Run test — verify it fails**
+- [x] **Step 2: Run test — verify it fails**
 
 ```bash
 npm test -- --run lib/supabase/client.test.ts
@@ -708,7 +708,7 @@ npm test -- --run lib/supabase/client.test.ts
 
 Expected: FAIL — `Cannot find module './client'`
 
-- [ ] **Step 3: Create browser client**
+- [x] **Step 3: Create browser client**
 
 Create `lib/supabase/client.ts`:
 ```typescript
@@ -722,7 +722,7 @@ export function createBrowserClient() {
 }
 ```
 
-- [ ] **Step 4: Create server client**
+- [x] **Step 4: Create server client**
 
 Create `lib/supabase/server.ts`:
 ```typescript
@@ -755,7 +755,7 @@ export async function createServerClient() {
 }
 ```
 
-- [ ] **Step 5: Create admin client**
+- [x] **Step 5: Create admin client**
 
 Create `lib/supabase/admin.ts`:
 ```typescript
@@ -778,7 +778,7 @@ export function createAdminClient() {
 }
 ```
 
-- [ ] **Step 6: Create middleware session helper**
+- [x] **Step 6: Create middleware session helper**
 
 Create `lib/supabase/middleware.ts`:
 ```typescript
@@ -816,7 +816,7 @@ export async function updateSession(request: NextRequest) {
 }
 ```
 
-- [ ] **Step 7: Run test — verify it passes**
+- [x] **Step 7: Run test — verify it passes**
 
 ```bash
 npm test -- --run lib/supabase/client.test.ts
@@ -824,12 +824,14 @@ npm test -- --run lib/supabase/client.test.ts
 
 Expected: PASS — 1 test passes
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add lib/supabase/
 git commit -m "feat: add Supabase browser, server, admin clients and middleware session helper"
 ```
+
+> Commit `2e561cf`. `tsc --noEmit` shows one pre-existing error in `lib/prisma.ts` (Prisma 7.8 client export path, from Task 2) — unrelated to this task's four files, which typecheck clean.
 
 ---
 
