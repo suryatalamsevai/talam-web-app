@@ -36,7 +36,7 @@
 **Interfaces:**
 - Produces: working `npm run dev`, `npm test`, `npm run build` commands
 
-- [ ] **Step 1: Scaffold Next.js project**
+- [x] **Step 1: Scaffold Next.js project**
 
 ```bash
 cd "F:\Product\Talam\Web App\Source"
@@ -50,7 +50,7 @@ npx create-next-app@latest talam-web-app \
 cd talam-web-app
 ```
 
-- [ ] **Step 2: Install core dependencies**
+- [x] **Step 2: Install core dependencies**
 
 ```bash
 npm install \
@@ -77,7 +77,7 @@ npm install -D \
   @types/node
 ```
 
-- [ ] **Step 3: Initialize shadcn/ui**
+- [x] **Step 3: Initialize shadcn/ui**
 
 ```bash
 npx shadcn@latest init
@@ -93,7 +93,7 @@ Then add essential components:
 npx shadcn@latest add button input label card tabs form toast badge separator
 ```
 
-- [ ] **Step 4: Create vitest config**
+- [x] **Step 4: Create vitest config**
 
 Create `vitest.config.ts`:
 ```typescript
@@ -133,7 +133,7 @@ Add to `package.json` scripts:
 }
 ```
 
-- [ ] **Step 5: Create environment template**
+- [x] **Step 5: Create environment template**
 
 Create `.env.example`:
 ```bash
@@ -162,7 +162,7 @@ TALAM_RAZORPAY_KEY_SECRET=
 
 Copy to `.env.local` and fill in values from the config checklist.
 
-- [ ] **Step 6: Add ESLint rule to block NEXT_PUBLIC_ on secrets**
+- [x] **Step 6: Add ESLint rule to block NEXT_PUBLIC_ on secrets**
 
 In `eslint.config.mjs`, add:
 ```javascript
@@ -179,7 +179,7 @@ In `eslint.config.mjs`, add:
 }
 ```
 
-- [ ] **Step 7: Verify dev server starts**
+- [x] **Step 7: Verify dev server starts**
 
 ```bash
 npm run dev
@@ -187,7 +187,7 @@ npm run dev
 
 Expected: `✓ Ready in ~2s` at `http://localhost:3000`
 
-- [ ] **Step 8: Verify tests run**
+- [x] **Step 8: Verify tests run**
 
 ```bash
 npm test -- --run
@@ -195,12 +195,14 @@ npm test -- --run
 
 Expected: `0 tests` (no tests yet) with no errors.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add -A
 git commit -m "feat: initialize Next.js 15 project with Tailwind, shadcn, Vitest"
 ```
+
+> Actually shipped as Next.js 16 / Tailwind 4 (user-approved deviation) — commit `7624ac7`.
 
 ---
 
