@@ -20,24 +20,116 @@
 
 ### Task 1: Storefront Header & Navigation
 
+> **Synced to Paper design 2026-07-04:** the header's profile icon is not a plain "Account" text link — it opens an `AccountMenu` dropdown. Logged out: single "Log in / Sign up" row → `/auth`. Logged in: avatar with the customer's initial, then Profile / Settings / Log Out. See `docs/design/2026-06-23-talam-oss-design.md` §4.1b for both states.
+
 **Files:**
 - Create: `components/store/store-header.tsx`
+- Create: `components/store/account-menu.tsx`
 - Create: `components/store/mobile-nav.tsx`
 - Modify: `app/store/layout.tsx` (add header)
 
 **Interfaces:**
 - Consumes: `x-tenant-id`, `x-subdomain`, `x-tenant-tier` from headers
 - Consumes: `useCartStore` for cart count badge
-- Produces: sticky header with logo, nav links, cart icon with count
+- Consumes: `createServerClient().auth.getUser()` for the account menu's signed-in state
+- Produces: sticky header with logo, nav links, cart icon with count, and the `AccountMenu` profile icon (both breakpoints)
 
-- [ ] **Step 1: Create store header component**
+- [ ] **Step 1: Create account menu component**
 
-Create `components/store/store-header.tsx`:
+Create `components/store/account-menu.tsx` (Server Component fetches the user, a small client dropdown handles open/close):
+```typescript
+'use client'
+
+import Link from 'next/link'
+import { useState, useRef, useEffect } from 'react'
+import { User, LogIn, Settings, LogOut } from 'lucide-react'
+
+type AccountMenuProps = {
+  user: { displayName: string; phone: string | null; initial: string } | null
+  onSignOut: () => Promise<void>
+}
+
+export function AccountMenu({ user, onSignOut }: AccountMenuProps) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [])
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        aria-label="Account"
+        className={`h-9 w-9 rounded-full flex items-center justify-center transition-colors ${
+          open ? 'bg-pink-100' : 'hover:bg-muted'
+        }`}
+      >
+        {user ? (
+          <span className="h-7 w-7 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">
+            {user.initial}
+          </span>
+        ) : (
+          <User className="h-5 w-5 text-muted-foreground" />
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-11 w-56 rounded-lg border bg-background shadow-lg overflow-hidden z-50">
+          {user ? (
+            <>
+              <div className="flex items-center gap-2.5 px-4 py-3">
+                <span className="h-8 w-8 rounded-full bg-primary text-primary-foreground text-sm font-bold flex items-center justify-center shrink-0">
+                  {user.initial}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold truncate">{user.displayName}</p>
+                  {user.phone && <p className="text-xs text-muted-foreground truncate">{user.phone}</p>}
+                </div>
+              </div>
+              <div className="border-t" />
+              <Link href="/account" className="flex items-center gap-2.5 px-4 py-3 text-sm hover:bg-muted transition-colors">
+                <User className="h-4 w-4" /> Profile
+              </Link>
+              {/* Settings is folded into /account (decided 2026-07-04) — no separate route.
+                  Deep-links to the settings section added on that page in Phase 4, Task 3. */}
+              <Link href="/account#settings" className="flex items-center gap-2.5 px-4 py-3 text-sm hover:bg-muted transition-colors">
+                <Settings className="h-4 w-4" /> Settings
+              </Link>
+              <div className="border-t" />
+              <form action={onSignOut}>
+                <button type="submit" className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-destructive hover:bg-destructive/5 transition-colors">
+                  <LogOut className="h-4 w-4" /> Log Out
+                </button>
+              </form>
+            </>
+          ) : (
+            <Link href="/auth" className="flex items-center gap-2.5 px-4 py-3 text-sm hover:bg-muted transition-colors">
+              <LogIn className="h-4 w-4" /> Log in / Sign up
+            </Link>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+- [ ] **Step 2: Create store header component**
+
+Create `components/store/store-header.tsx` (fetches the current user server-side and passes it into `AccountMenu`; the profile icon replaces the old plain "Account" text link and sits in the always-visible icon cluster, so it shows on mobile too — not just inside the `hidden sm:flex` desktop nav):
 ```typescript
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import { getTenantStorefront } from '@/lib/data/tenant'
+import { createServerClient } from '@/lib/supabase/server'
 import { CartBadge } from './cart-badge'
+import { AccountMenu } from './account-menu'
 import { ShoppingBag, Menu } from 'lucide-react'
 
 export async function StoreHeader() {
@@ -46,6 +138,19 @@ export async function StoreHeader() {
   const subdomain = headersList.get('x-subdomain') ?? ''
 
   const tenant = tenantId ? await getTenantStorefront(tenantId) : null
+
+  const supabase = await createServerClient()
+  const { data: { user: authUser } } = await supabase.auth.getUser()
+  const displayName = authUser?.user_metadata?.full_name ?? authUser?.phone ?? authUser?.email ?? 'Customer'
+  const accountUser = authUser
+    ? { displayName, phone: authUser.phone ?? null, initial: displayName.slice(0, 1).toUpperCase() }
+    : null
+
+  async function signOut() {
+    'use server'
+    const supabase = await createServerClient()
+    await supabase.auth.signOut()
+  }
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
@@ -70,15 +175,15 @@ export async function StoreHeader() {
           <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">Home</Link>
           <Link href="/shop" className="text-muted-foreground hover:text-foreground transition-colors">Shop</Link>
           <Link href="/orders" className="text-muted-foreground hover:text-foreground transition-colors">Orders</Link>
-          <Link href="/account" className="text-muted-foreground hover:text-foreground transition-colors">Account</Link>
         </nav>
 
-        {/* Cart */}
+        {/* Cart + Account — always visible (mobile and desktop) */}
         <div className="flex items-center gap-2">
           <Link href="/cart" className="relative p-2 rounded-md hover:bg-muted transition-colors" aria-label="Cart">
             <ShoppingBag className="h-5 w-5" />
             <CartBadge />
           </Link>
+          <AccountMenu user={accountUser} onSignOut={signOut} />
           {/* Mobile menu button */}
           <button className="sm:hidden p-2 rounded-md hover:bg-muted" aria-label="Menu">
             <Menu className="h-5 w-5" />
@@ -90,7 +195,7 @@ export async function StoreHeader() {
 }
 ```
 
-- [ ] **Step 2: Create cart badge (client component)**
+- [ ] **Step 3: Create cart badge (client component)**
 
 Create `components/store/cart-badge.tsx`:
 ```typescript
@@ -110,7 +215,7 @@ export function CartBadge() {
 }
 ```
 
-- [ ] **Step 3: Update store layout to include header**
+- [ ] **Step 4: Update store layout to include header**
 
 Replace `app/store/layout.tsx`:
 ```typescript
@@ -137,7 +242,7 @@ export default async function StoreLayout({
 }
 ```
 
-- [ ] **Step 4: Build check**
+- [ ] **Step 5: Build check**
 
 ```bash
 npm run build
@@ -145,11 +250,11 @@ npm run build
 
 Expected: No TypeScript errors
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add components/store/store-header.tsx components/store/cart-badge.tsx app/store/layout.tsx
-git commit -m "feat: add storefront header with logo, nav links, and cart count badge"
+git add components/store/store-header.tsx components/store/account-menu.tsx components/store/cart-badge.tsx app/store/layout.tsx
+git commit -m "feat: add storefront header with account menu, nav links, and cart count badge"
 ```
 
 ---

@@ -1,12 +1,16 @@
 # Talam — Open Source Design Spec
 
 **Date:** 2026-06-23
-**Last updated:** 2026-07-03
+**Last updated:** 2026-07-04
 **Status:** Open for Contribution
-**Version:** 1.3 (Auth flow added, Wishlist/Store About desktop parity fixed, delivery-timeline widget removed from Product Detail)
+**Version:** 1.4 (Account Menu split into logged-out/logged-in states)
 **For:** UI/UX designers contributing to the Talam open source project
 
-> **Design source of truth:** Real design work now happens in a Paper Design file (`Talam Design`, ~72 artboards across 5 pages — Store Front page now has 25 after the 2026-07-03 additions). This document's brand/typography/spacing/radius tokens (§2) and the design tokens reference (§10) have been re-synced to that file's live token set as of 2026-06-30. Sections 4.1–4.14 (page-by-page layout specs) are the original written brief and have **not** been individually re-verified against each Paper artboard this pass — treat them as design intent, not a guaranteed pixel match. For current per-screen build status, see [`docs/2026-06-28-PAPER-DESIGN-INVENTORY.md`](../2026-06-28-PAPER-DESIGN-INVENTORY.md).
+> **Design source of truth:** Real design work now happens in a Paper Design file (`Talam Design`, ~74 artboards across 5 pages — Store Front page now has 27 after the 2026-07-04 additions). This document's brand/typography/spacing/radius tokens (§2) and the design tokens reference (§10) have been re-synced to that file's live token set as of 2026-06-30. Sections 4.1–4.14 (page-by-page layout specs) are the original written brief and have **not** been individually re-verified against each Paper artboard this pass — treat them as design intent, not a guaranteed pixel match. For current per-screen build status, see [`docs/2026-06-28-PAPER-DESIGN-INVENTORY.md`](../2026-06-28-PAPER-DESIGN-INVENTORY.md).
+
+**Changelog v1.4 (2026-07-04)**
+- **CHANGED:** Account Menu logged-out state simplified from two rows ("Log In" / "Sign Up") to a single "Log in / Sign up" row — both led to the same `Auth` screen, so the second row was redundant.
+- **NEW:** Account Menu logged-in state designed — profile icon becomes an initial avatar; dropdown shows an identity header (name + phone) followed by Profile, Settings, and Log Out (danger colour) rows. New artboards: `Account Menu (Signed In) — Mobile`, `Account Menu (Signed In) — Desktop`. See updated §4.1b.
 
 **Changelog v1.3 (2026-07-03)**
 - **NEW:** Auth / Login flow designed and added to the Store Front page — clicking the profile icon in the header opens an `Account Menu` dropdown (Log In / Sign Up), which leads to a single unified `Auth` screen (mobile number field + "Continue" OTP CTA + "Continue with Google"), matching Myntra/Flipkart-style phone-first login. Built for both mobile and desktop (4 new artboards: `Account Menu — Mobile`, `Account Menu — Desktop`, `Auth — Mobile`, `Auth — Desktop`). This closes the `/auth` gap flagged in the 2026-07-03 design audit. See new §4.1b.
@@ -317,16 +321,24 @@ Home | Shop | Wishlist | Orders | Account (5 items, 64px height)
 
 **Purpose:** Let a visitor log in or create an account without leaving the current page context. Added 2026-07-03 to close a gap where no auth screens existed in the Paper file.
 
-**Trigger:** Tapping/clicking the profile icon in the storefront header (mobile bottom-nav "Account" tab or desktop header icon) while logged out.
+**Trigger:** Tapping/clicking the profile icon in the storefront header (top-header icon on both mobile and desktop). The icon and menu contents differ by session state — see below.
 
-**Account Menu (dropdown/popover):**
+**Account Menu — logged-out state:**
 - Anchored under the profile icon, right-aligned
 - Card: white surface, 1px border, `--radius-lg`, subtle drop shadow
-- Two rows, divided by a 1px hairline:
-  - "Log In" — icon (arrow into door), 14px medium text
-  - "Sign Up" — icon (person with plus), 14px medium text
+- Profile icon: generic person-outline glyph, muted grey chip background
+- **Single row** (updated 2026-07-04 — previously two separate "Log In" / "Sign Up" rows): "Log in / Sign up", arrow-into-door icon, 14px medium text. One row instead of two because both destinations are the same `Auth` screen (see below) — no reason to make the visitor pick a label before they've even seen the form
 - Profile icon shows an active/highlighted background (light store-primary tint) while the menu is open
-- Mobile and desktop use the same card, anchored to each header's own icon position
+
+**Account Menu — logged-in state (new 2026-07-04):**
+- Profile icon becomes a filled avatar: store-primary circle with the customer's first-initial, replacing the outline glyph
+- Card is taller, three sections top to bottom:
+  1. Identity header — small avatar (initial) + customer name (14px semibold) + phone number (12px muted), non-interactive
+  2. Hairline divider, then two rows: **"Profile"** (person icon) and **"Settings"** (gear icon), 14px medium text, `--color-fg` — both rows route into the single `/account` page (decided 2026-07-04: Settings is a section within `/account`, not a separate route), matching the combined `Account & Settings — Mobile` / `Settings — Desktop` artboards
+  3. Hairline divider, then **"Log Out"** row — same row styling but icon + text in `--color-danger` to visually separate it as the exiting action
+- Mobile and desktop use the same card structure, anchored to each header's own icon position
+
+Both states are live in Paper as `Account Menu — Mobile`, `Account Menu — Desktop`, `Account Menu (Signed In) — Mobile`, and `Account Menu (Signed In) — Desktop`.
 
 **Auth screen (single screen for both Log In and Sign Up):**
 - Rationale: the product spec's OTP flow (mobile number → OTP → session) doesn't distinguish new vs. returning users until after the phone number is verified, so one screen covers both entry points — avoids building near-duplicate Log In / Sign Up screens

@@ -1054,21 +1054,22 @@ git commit -m "feat: add multi-tenant middleware with subdomain routing and tena
 
 ---
 
-### Task 5: Auth Flow (OTP + Google + Email)
+### Task 5: Auth Flow (OTP + Google)
+
+> **Synced to Paper design 2026-07-04:** the `/auth` page is a single unified "Log in or Sign up" screen — phone number form first, then a divider, then "Continue with Google" below it. There is no tabbed UI and no email fallback in the current design (Paper never designed an email tab or a separate signup screen — one phone-based flow covers both). `email-form.tsx` and the `Tabs` wrapper below are **not** part of the current design; do not build them. See `docs/design/2026-06-23-talam-oss-design.md` §4.1b for the reference layout.
 
 **Files:**
 - Create: `app/store/auth/page.tsx`
 - Create: `app/store/auth/actions.ts`
 - Create: `components/auth/otp-form.tsx`
 - Create: `components/auth/google-button.tsx`
-- Create: `components/auth/email-form.tsx`
 - Create: `supabase/functions/msg91-sms-hook/index.ts`
 - Create: `components/auth/otp-form.test.tsx`
 
 **Interfaces:**
 - Consumes: `createBrowserClient()` from `lib/supabase/client`
 - Consumes: `createServerClient()` from `lib/supabase/server`
-- Produces: `/store/auth` page with three-tab auth (OTP primary, Google, Email fallback)
+- Produces: `/store/auth` page — single phone-first form (OTP) with Google as a secondary option; matches the Account Menu's single "Log in / Sign up" entry point (no separate login vs. signup screen)
 
 - [ ] **Step 1: Write failing component test**
 
@@ -1303,9 +1304,8 @@ export function GoogleButton() {
 
 - [ ] **Step 6: Create auth page**
 
-Create `app/store/auth/page.tsx`:
+Create `app/store/auth/page.tsx` (single phone-first form, Google as secondary option — matches the Paper `Auth — Mobile` / `Auth — Desktop` artboards, no tabs):
 ```typescript
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { OtpForm } from '@/components/auth/otp-form'
 import { GoogleButton } from '@/components/auth/google-button'
@@ -1319,13 +1319,13 @@ export default async function AuthPage() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Sign in</CardTitle>
+          <CardTitle className="text-xl">Log in or Sign up</CardTitle>
           <p className="text-sm text-muted-foreground">
-            to continue to your order
+            Enter your mobile number — we&apos;ll text you a one-time code to continue.
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
-          <GoogleButton />
+          <OtpForm />
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t" />
@@ -1334,18 +1334,7 @@ export default async function AuthPage() {
               <span className="bg-background px-2 text-muted-foreground">or</span>
             </div>
           </div>
-          <Tabs defaultValue="otp">
-            <TabsList className="w-full">
-              <TabsTrigger value="otp" className="flex-1">Mobile OTP</TabsTrigger>
-              <TabsTrigger value="email" className="flex-1">Email</TabsTrigger>
-            </TabsList>
-            <TabsContent value="otp" className="mt-4">
-              <OtpForm />
-            </TabsContent>
-            <TabsContent value="email" className="mt-4">
-              <p className="text-sm text-muted-foreground text-center">Email login coming soon</p>
-            </TabsContent>
-          </Tabs>
+          <GoogleButton />
         </CardContent>
       </Card>
     </div>

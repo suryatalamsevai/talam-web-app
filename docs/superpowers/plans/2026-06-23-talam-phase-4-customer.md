@@ -358,9 +358,11 @@ git commit -m "feat: add orders list and order detail pages with status timeline
 - Create: `app/store/account/page.tsx`
 - Create: `app/store/account/actions.ts`
 
+> **Synced to Paper design 2026-07-04:** Settings is folded into this page as a `#settings` section — not a separate `/account/settings` route. The header `AccountMenu`'s "Settings" row deep-links to `/account#settings`.
+
 **Interfaces:**
 - Consumes: `requireAuth()`, `requireTenant()`, Supabase `auth.getUser()`
-- Produces: `/account` — customer profile with name/email display and sign out
+- Produces: `/account` — customer profile with name/email display, a `#settings` section (order/promo notification toggles), and sign out
 
 - [ ] **Step 1: Create account server action**
 
@@ -386,6 +388,7 @@ import { requireAuth, requireTenant } from '@/lib/auth-guard'
 import { signOut } from './actions'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { Switch } from '@/components/ui/switch'
 import Link from 'next/link'
 import { Package, LogOut } from 'lucide-react'
 
@@ -425,6 +428,29 @@ export default async function AccountPage() {
 
       <Separator />
 
+      {/* Static for now — no customer-level notification-preference columns exist in the schema yet
+          (only tenant.notify_email_on_order, which is the store owner's setting, not the customer's).
+          Wire these to real Server Actions once that table/columns are scoped. */}
+      <section id="settings" className="space-y-4 scroll-mt-20">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Settings</h2>
+        <div className="flex items-center justify-between px-3 py-3 rounded-lg border">
+          <div>
+            <p className="text-sm font-medium">Order updates</p>
+            <p className="text-xs text-muted-foreground">Email me when my order status changes</p>
+          </div>
+          <Switch defaultChecked name="notify_order_updates" />
+        </div>
+        <div className="flex items-center justify-between px-3 py-3 rounded-lg border">
+          <div>
+            <p className="text-sm font-medium">Promotions</p>
+            <p className="text-xs text-muted-foreground">Sale alerts and offers from this store</p>
+          </div>
+          <Switch name="notify_promotions" />
+        </div>
+      </section>
+
+      <Separator />
+
       <form action={signOut}>
         <Button type="submit" variant="outline" className="w-full gap-2">
           <LogOut className="h-4 w-4" />
@@ -440,7 +466,7 @@ export default async function AccountPage() {
 
 ```bash
 git add app/store/account/
-git commit -m "feat: add account page with profile display and sign-out"
+git commit -m "feat: add account page with profile display, settings section, and sign-out"
 ```
 
 ---
@@ -709,7 +735,8 @@ Manual smoke test:
 - [ ] Unauthenticated visit to `/orders` → redirected to `/auth?next=/orders`
 - [ ] After login → `/orders` shows order history
 - [ ] Click order → detail page with status timeline and items
-- [ ] `/account` shows user name/email and sign-out button
+- [ ] `/account` shows user name/email, a Settings section (`#settings`), and sign-out button
+- [ ] `/account#settings` scrolls to the Settings section (deep-link target for the header Account Menu)
 - [ ] Sign out → redirected to `/auth`, session cleared
 - [ ] Trial store: wishlist button hidden on product cards
 - [ ] Starter store: wishlist button visible, toggles heart fill on click

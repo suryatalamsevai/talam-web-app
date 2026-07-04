@@ -1,10 +1,23 @@
 # Talam — Full Product Design Spec
 
 **Date:** 2026-06-23  
-**Last updated:** 2026-06-30  
-**Status:** Approved — v1.2  
+**Last updated:** 2026-07-04  
+**Status:** Approved — v1.4  
 **Author:** Surya Prakash  
-**Version:** 1.2 (admin nav restructure synced from Paper design + admin dashboard spec)
+**Version:** 1.4 (OTP channel confirmed SMS-only via MSG91; WhatsApp scoped to alerts-with-email-fallback, not login)
+
+**Changelog v1.4 (2026-07-04)**
+- **OTP stays SMS-only, DLT fee now budgeted:** Considered switching Phone OTP delivery to WhatsApp (via Supabase + Twilio) to dodge MSG91's ₹5,900 one-time DLT Principal Entity registration fee. Confirmed the fee is a TRAI regulatory requirement that applies to *any* SMS gateway sending OTPs to Indian numbers (Twilio, Fast2SMS, 2Factor, etc. all require it) — switching providers doesn't avoid it. Also, ~25% of Indian smartphone users don't have WhatsApp, so it can't be the sole phone-based login channel without a fallback. **Decision: keep §5 Phone OTP as SMS-only via MSG91, treat the ₹5,900 DLT fee as a one-time setup cost** (in addition to the ₹1,890/mo recurring infra cost in §4).
+- **WhatsApp scoped to alerts, not auth:** The "(V1.5) MSG91 WhatsApp: order alert to store owner" line in §3.4 is now a defined flow: before sending, run a WhatsApp Business API contact-check on the number; if the number isn't on WhatsApp, **fall back to email (Resend)** — not SMS. SMS-as-alert-fallback is deferred to V2 (see §12) since it adds per-message cost the email fallback avoids. Because MSG91 offers both SMS and WhatsApp Business API under one account, no second vendor is needed for this.
+
+**Changelog v1.3 (2026-07-04)**
+- **`/auth` finalized in Paper:** Single unified screen serves both login and signup — mobile number field (+91 prefix) → "Continue" → OTP (OTP-entry step not yet designed) → session, with "Continue with Google" as a secondary option below a divider. No separate signup screen exists; the OTP flow doesn't distinguish new vs. returning users until the number is verified, so one screen covers both. Email/password (§5 priority 3) remains unbuilt in the UI — Phone OTP and Google are the only two options designed so far.
+- **`/account` header entry point defined:** Clicking the profile icon in the storefront header opens an `Account Menu` dropdown. Logged-out: single "Log in / Sign up" row → `/auth`. Logged-in: profile icon becomes an initial avatar; dropdown shows name + phone, then Profile / Settings / Log Out (Log Out styled in the danger colour). This is the header-level entry point that complements the full `/account` page.
+- **Settings folded into `/account` (decided 2026-07-04):** no separate `/account/settings` route. "Settings" in the Account Menu deep-links to a settings section within the same `/account` page (Paper already designs it this way — the `Account & Settings — Mobile` / `Settings — Desktop` artboards are one combined page, not two).
+- **Storefront `/about` desktop parity:** `/about` now has a designed desktop layout (two-column: profile/stats + story/branches), matching the rest of the desktop storefront. Previously mobile-only.
+- **`/wishlist` desktop parity:** Desktop wishlist now includes the same filter controls (In Stock / Price / On Sale) and a Share action that were previously mobile-only.
+- **Product detail delivery estimate cut:** The pincode "Check Delivery Date" widget on `/product/[slug]` (distinct from the `/checkout` pincode auto-fill in §3.2, which is unaffected) was removed from the mobile design — it was never built for desktop, so the two are now aligned. If delivery-estimate-on-PDP is still wanted, it needs to be re-scoped and re-designed, not just re-added as-is.
+- See `docs/design/2026-06-23-talam-oss-design.md` §4.1b for full Account Menu / Auth design detail, and `docs/2026-06-28-PAPER-DESIGN-INVENTORY.md` for per-screen build status.
 
 **Changelog v1.2 (2026-06-30)**
 - **Admin nav restructure:** Customers promoted from a Settings sub-route to a top-level nav item. Bottom nav (mobile) is now 5 items: Dashboard, Orders, Products, Customers, Settings — not 4. Desktop drops the top header nav in favor of a fixed left sidebar (icon-only, expandable), with Settings subsections nested under it. See `docs/superpowers/specs/2026-06-27-admin-dashboard-design.md` for full spec.
@@ -105,7 +118,7 @@ admin.mytalam.com/                 → Super admin (platform owner)
 /orders                   Order history + tracking
 /orders/[id]              Single order detail + status
 /wishlist                 Saved products
-/account                  Profile, saved addresses
+/account                  Profile, saved addresses, and settings (preferences, notifications) — one page, no separate /account/settings route
 /auth                     OTP / Google / Email login
 ```
 
@@ -173,7 +186,8 @@ Payment webhook received → verify signature → mark order PAID
     ├── Resend: order confirmation email to customer
     ├── Resend: "New order ₹X from {name}" to store owner (fetched via Supabase admin)
     ├── PostHog: order_paid event tracked (user_id, tenant_id, amount — no PII)
-    └── (V1.5) MSG91 WhatsApp: order alert to store owner
+    └── (V1.5) WhatsApp order alert to store owner via MSG91 WhatsApp Business API
+        — contact-check first; if number isn't on WhatsApp, fall back to Resend email (not SMS — see §12)
 ```
 
 ---
@@ -193,7 +207,8 @@ Payment webhook received → verify signature → mark order PAID
 | ORM | Prisma (non-superuser role) | 5.x | Free |
 | Database | Supabase PostgreSQL | — | Free (500MB) |
 | Auth | Supabase Auth | — | Free (50K MAU) |
-| OTP delivery | MSG91 via Supabase SMS Hook | — | ₹0.12/SMS |
+| OTP delivery | MSG91 via Supabase SMS Hook (SMS only — no WhatsApp OTP) | — | ₹0.12/SMS + ₹5,900 one-time DLT registration |
+| Order/owner alerts (V1.5) | MSG91 WhatsApp Business API, contact-check + email fallback | — | ~₹0.30–0.50/alert (WhatsApp), else free via Resend |
 | Image storage | Cloudinary | — | Free (25GB) |
 | Email | Resend | — | Free (3K/mo) |
 | Background jobs | Vercel `after()` | Next.js 15.1 | Free |
@@ -211,7 +226,7 @@ Payment webhook received → verify signature → mark order PAID
 ## 5. Authentication
 
 **Providers (in priority order):**
-1. **Phone OTP** — primary, matches Myntra/Flipkart UX, via Supabase Auth + SMS Hook + MSG91
+1. **Phone OTP** — primary, matches Myntra/Flipkart UX, via Supabase Auth + SMS Hook + MSG91. **SMS only** — WhatsApp is not used as a login channel (see Changelog v1.4); the ₹5,900 one-time MSG91 DLT registration fee is a required regulatory cost, not MSG91-specific.
 2. **Google Sign-In** — one-tap alternative
 3. **Email + Password** — fallback
 
@@ -596,7 +611,7 @@ Triggered by Vercel Cron — checks tenant state daily:
 - **Inventory:** Drag-to-reorder categories in admin (sort_order already in schema — just needs UI), multi-image upload with drag-drop reorder on product form, returned stock restoration (prompt to restock when order marked Returned)
 - **Logistics:** COD (cash on delivery) support, international shipping / currency, real-time courier serviceability check
 - **Admin:** PostHog analytics dashboard page (`/admin/analytics` — beyond dashboard stat cards), GST-compliant invoice PDF generation for registered sellers
-- **Integrations:** MSG91 WhatsApp order notifications to store owner, Vyapar CSV export for accounting sync, custom domain per Pro tenant (Vercel Domains API)
+- **Integrations:** SMS fallback for owner/customer alerts when WhatsApp contact-check fails (V1 fallback is email-only, see §3.4/§4/Changelog v1.4), Vyapar CSV export for accounting sync, custom domain per Pro tenant (Vercel Domains API)
 
 **Resolved questions (moved from backlog):**
 - ~~Domain `talam.app`~~ → **`mytalam.com`** (registered) — v1.1
