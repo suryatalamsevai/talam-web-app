@@ -1,5 +1,4 @@
 import { withTenant } from '@/lib/prisma'
-import type { Product } from '@prisma/client'
 
 export type ProductFilters = {
   categoryId?: string // UUID — not a name string
@@ -9,7 +8,7 @@ export type ProductFilters = {
 
 export type CategoryMeta = { id: string; name: string; slug: string }
 
-export async function getProducts(tenantId: string, filters?: ProductFilters): Promise<Product[]> {
+export async function getProducts(tenantId: string, filters?: ProductFilters) {
   return withTenant(tenantId, (db) =>
     db.product.findMany({
       where: {
@@ -20,6 +19,7 @@ export async function getProducts(tenantId: string, filters?: ProductFilters): P
         ...(filters?.maxPrice ? { price: { lte: filters.maxPrice } } : {}),
       },
       orderBy: { createdAt: 'desc' },
+      include: { category: { select: { name: true } } },
     })
   )
 }
