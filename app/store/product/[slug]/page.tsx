@@ -89,7 +89,7 @@ export default async function ProductPage({ params }: Props) {
           <div>
             {product.category && (
               <Link
-                href={`/shop?category=${product.category.id}`}
+                href={`/?category=${product.category.id}`}
                 className="mb-1 block font-body text-xs font-semibold tracking-wide text-muted-warm uppercase"
               >
                 {product.category.name}

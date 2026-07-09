@@ -634,7 +634,7 @@ git commit -m "feat: wire order confirmation and owner alert emails into payment
 
 **Files:**
 - Create: `app/store/og/route.tsx`
-- Modify: `app/store/page.tsx` (add `generateMetadata` — only if this file already exists from an earlier phase; verify before editing)
+- Modify: `app/store/page.tsx` (add `generateMetadata`) — `/shop`'s content was merged into `app/store/page.tsx` (the `/` route) as of design doc v1.5; there is no separate `/shop` file anymore
 
 **Interfaces:**
 - Produces: `GET /og?title=...&subtitle=...&image=...&color=...` → 1200×630 PNG via `@vercel/og`, edge runtime
@@ -707,7 +707,7 @@ git commit -m "feat: add @vercel/og social card route for WhatsApp/social sharin
 
 - [ ] **Step 5: Wire OG metadata into the store home page**
 
-Check whether `app/store/page.tsx` already exists (it should, from an earlier storefront phase per the git log's "add store home page with hero banner and product grid" commit) before editing. Read it first. Add a `generateMetadata` export that reads the tenant (`x-tenant-id` header, same pattern as every other tenant-scoped page in this codebase) and builds:
+Read `app/store/page.tsx` first — this is the tenant home route as of design doc v1.5 (the old hero-banner store home was retired and `/shop`'s content merged directly into this file; there is no separate `/shop` route). Add a `generateMetadata` export that reads the tenant (`x-tenant-id` header, same pattern as every other tenant-scoped page in this codebase) and builds:
 ```typescript
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
@@ -741,7 +741,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 - [ ] **Step 6: Verify and commit**
 
-Start the dev server, view page source on the store home route, confirm `<meta property="og:image">` points at the `/store/og` route with the real tenant name/color. Confirm zero console/network errors.
+Start the dev server, view page source on the tenant home route (`/`, served by `app/store/page.tsx`), confirm `<meta property="og:image">` points at the `/store/og` route with the real tenant name/color. Confirm zero console/network errors.
 
 ```bash
 git add app/store/page.tsx

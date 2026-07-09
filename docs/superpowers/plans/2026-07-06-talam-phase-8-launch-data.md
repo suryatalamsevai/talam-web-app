@@ -119,7 +119,7 @@ git commit -m "fix: gate storefront WhatsApp FAB on Tenant.showWhatsappButton, n
 **Files:**
 - Create: `app/sitemap.ts`
 - Create: `app/robots.ts`
-- Modify: `app/store/page.tsx` (add `generateMetadata`)
+- Modify: `app/store/page.tsx` (add `generateMetadata`) — `/shop`'s content was merged into `app/store/page.tsx` (the `/` route) as of design doc v1.5; there is no separate `/shop` file
 
 **Interfaces:**
 - Produces: `GET /sitemap.xml` via Next's `MetadataRoute.Sitemap` convention
@@ -130,7 +130,7 @@ No Paper artboard applies (sitemap/robots aren't rendered app screens) — downg
 
 - [ ] **Step 1: Add store home page metadata, following the product page's exact pattern**
 
-Read `app/store/product/[slug]/page.tsx` again for the precise shape (already done during planning — its `generateMetadata` reads `x-tenant-id` from `headers()`, returns `{}` early if absent, fetches via an existing `lib/data/*` function, and returns `title`/`description`/`openGraph`). Modify `app/store/page.tsx`:
+Read `app/store/product/[slug]/page.tsx` again for the precise shape (already done during planning — its `generateMetadata` reads `x-tenant-id` from `headers()`, returns `{}` early if absent, fetches via an existing `lib/data/*` function, and returns `title`/`description`/`openGraph`). Modify `app/store/page.tsx` (the tenant home route — see design doc §3.2 changelog v1.5):
 ```typescript
 import type { Metadata } from 'next'
 
@@ -157,7 +157,7 @@ Add the `import type { Metadata } from 'next'` alongside the existing imports; `
 
 - [ ] **Step 2: Verify metadata renders**
 
-Start the dev server, view page source on the seeded `silk` store home route, confirm `<title>` and `<meta property="og:title">` show "Meena Silks" (or whatever `tenant.name` is), not a hardcoded string. Zero console errors.
+Start the dev server, view page source on the seeded `silk` store's home route (`/`), confirm `<title>` and `<meta property="og:title">` show "Meena Silks" (or whatever `tenant.name` is), not a hardcoded string. Zero console errors.
 
 - [ ] **Step 3: Commit store home metadata**
 
@@ -237,7 +237,7 @@ No Paper artboard applies (performance isn't a visual spec). Verification is Lig
 
 - [ ] **Step 1: Audit above-the-fold images across the storefront**
 
-Read `components/store/hero-banner.tsx`, `app/store/page.tsx`, `app/store/product/[slug]/page.tsx` (already confirmed to have `priority` on its main image, per the earlier read in this plan's research), and `app/shop/page.tsx` (if it exists — check first). For each hero/first-visible image, confirm `priority` is set and `sizes` matches the actual rendered width at each breakpoint (not a blanket `100vw` if the image is never full-width). Fix any found missing `priority` on a genuine LCP candidate — do not add `priority` to every image (that defeats its purpose; only the single largest above-the-fold image per page should have it).
+Read `app/store/page.tsx` (the tenant home route as of design doc v1.5 — the old hero-driven home design and `components/store/hero-banner.tsx` were retired; `/shop`'s content was merged directly into this file) and `app/store/product/[slug]/page.tsx` (already confirmed to have `priority` on its main image, per the earlier read in this plan's research). For each hero/first-visible image, confirm `priority` is set and `sizes` matches the actual rendered width at each breakpoint (not a blanket `100vw` if the image is never full-width). Fix any found missing `priority` on a genuine LCP candidate — do not add `priority` to every image (that defeats its purpose; only the single largest above-the-fold image per page should have it).
 
 - [ ] **Step 2: Run Lighthouse manually against the production build**
 

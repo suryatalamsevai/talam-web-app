@@ -25,6 +25,7 @@
   --color-muted-warm: #8b7d7a;
   --color-surface: #ffffff;
   --color-bg: #f9f9f9;
+  --color-bg-dark: #1a1a1a;
   --color-border-light: #f0f0f0;
   --color-store-primary: #e8577e;
   --color-amber: #f59e0b;
@@ -156,6 +157,15 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
 }
 
 @layer base {

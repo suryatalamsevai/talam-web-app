@@ -1,4 +1,4 @@
-import { withTenant } from '@/lib/prisma'
+import { prisma, withTenant } from '@/lib/prisma'
 
 export type TenantStorefront = {
   id: string
@@ -77,4 +77,16 @@ export async function getTenantStorefront(tenantId: string): Promise<TenantStore
     freeDeliveryAbove: rest.freeDeliveryAbove ? Number(rest.freeDeliveryAbove) : null,
     shippingFee: Number(rest.shippingFee),
   }
+}
+
+// ponytail: no subdomain-resolution middleware exists yet (design doc §3.1
+// wildcard routing is unimplemented), so x-tenant-id is never set on
+// localhost. Dev-only fallback resolves a seeded tenant by slug so /store
+// renders without simulating a subdomain. Real middleware, when built,
+// makes this dead in production (NODE_ENV check) and unnecessary in dev.
+export async function getDevTenantId(): Promise<string | null> {
+  if (process.env.NODE_ENV !== 'development') return null
+  const slug = process.env.TALAM_DEV_TENANT_SLUG ?? 'silk'
+  const tenant = await prisma.tenant.findUnique({ where: { slug }, select: { id: true } })
+  return tenant?.id ?? null
 }

@@ -20,8 +20,10 @@
 
 ### Task 1: Rebuild Shop Page to Match Paper (Data)
 
+> **Amendment (design doc v1.5, 2026-07-09):** `/shop` no longer exists as a route — its content was merged into `app/store/page.tsx` (the `/` route), which is now the tenant default/home. `app/store/shop/page.tsx` references below mean `app/store/page.tsx`.
+
 **Files:**
-- Modify: `app/store/shop/page.tsx` (swap `MOCK_PRODUCTS`/`MOCK_CATEGORIES` for real calls)
+- Modify: `app/store/page.tsx` (swap `MOCK_PRODUCTS`/`MOCK_CATEGORIES` for real calls)
 - Delete (once unused): `components/store/__mocks__/shop-mock-data.ts`
 
 **Interfaces:**
@@ -247,10 +249,12 @@ git commit -m "feat: wire /about page to real tenant storefront and branch data"
 
 ---
 
-### Task 5: Category SEO Pages (`/shop/[categorySlug]`) (Data)
+### Task 5: Category SEO Pages (`/category/[categorySlug]`) (Data)
+
+> **Amendment (design doc v1.5, 2026-07-09):** route moved from `/shop/[categorySlug]` to `/category/[categorySlug]` — see UI-track sibling task for why.
 
 **Files:**
-- Modify: `app/store/shop/[categorySlug]/page.tsx` (swap `MOCK_CATEGORIES`/`MOCK_PRODUCTS` for real calls)
+- Modify: `app/store/category/[categorySlug]/page.tsx` (swap `MOCK_CATEGORIES`/`MOCK_PRODUCTS` for real calls)
 
 **Interfaces:**
 - Consumes: `getCategories(tenantId)` (existing), `getProducts(tenantId, { categoryId })` (existing).

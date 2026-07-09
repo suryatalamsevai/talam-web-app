@@ -29,8 +29,22 @@ export function StoreHeader({ tenant }: Props) {
       </Link>
 
       <nav className="hidden gap-12 sm:flex">
-        <Link href="/shop" className="font-body font-medium text-fg text-md/snug">
-          Shop
+        {/* ponytail: Women/Men have no product data dimension yet (no gender
+            field on products) — link home unfiltered until schema supports
+            it. Festive maps to the real `occasion` filter; New Arrivals maps
+            to the Newest First sort. "Shop" is dropped since Home now serves
+            that role. */}
+        <Link href="/" className="font-body font-medium text-fg text-md/snug">
+          Women
+        </Link>
+        <Link href="/" className="font-body font-medium text-fg text-md/snug">
+          Men
+        </Link>
+        <Link href="/?occasion=Festive" className="font-body font-medium text-fg text-md/snug">
+          Festive
+        </Link>
+        <Link href="/?sort=newest" className="font-body font-medium text-fg text-md/snug">
+          New Arrivals
         </Link>
         <Link href="/about" className="font-body font-medium text-fg text-md/snug">
           About
@@ -38,7 +52,7 @@ export function StoreHeader({ tenant }: Props) {
       </nav>
 
       <div className="flex gap-2.5 sm:gap-4">
-        <IconButton href="/shop">
+        <IconButton href="/">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
             <circle cx="11" cy="11" r="8" stroke="#8B7D7A" strokeWidth="2" />
             <path d="m21 21-4.35-4.35" stroke="#8B7D7A" strokeWidth="2" />

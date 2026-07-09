@@ -1,27 +1,45 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
+
 export default function MarketingHome() {
+  const blobRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (prefersReducedMotion || !blobRef.current) return
+
+    const blob = blobRef.current
+    let ticking = false
+
+    function onScroll() {
+      if (ticking) return
+      ticking = true
+      requestAnimationFrame(() => {
+        // Background shape scrolls at 40% of page speed, creating depth.
+        blob.style.transform = `translateY(${window.scrollY * 0.4}px)`
+        ticking = false
+      })
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
   return (
-    <main className="relative w-full min-h-screen overflow-auto bg-surface">
-      {/* Parallax Background Layer */}
+    <main className="relative w-full min-h-screen overflow-hidden bg-surface">
+      {/* Background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-bg to-surface" style={{ zIndex: 0 }} />
+
+      {/* Parallax accent shape — moves at a different rate than content on scroll */}
       <div
-        className="fixed inset-0 bg-gradient-to-br from-bg to-surface"
-        style={{ zIndex: 0, pointerEvents: 'none' }}
+        ref={blobRef}
+        className="absolute -top-[150px] -right-[200px] md:-right-[300px] w-[600px] h-[600px] md:w-[800px] md:h-[800px] rounded-full bg-brand-primary"
+        style={{ zIndex: 1, opacity: 0.08, willChange: 'transform', pointerEvents: 'none' }}
       />
 
-      {/* Parallax Accent Shape (moves slower) */}
-      <div
-        className="fixed -top-[150px] -right-[200px] md:-right-[300px] w-[600px] h-[600px] md:w-[800px] md:h-[800px] rounded-full bg-brand-primary"
-        style={{
-          zIndex: 1,
-          opacity: 0.08,
-          willChange: 'transform',
-          pointerEvents: 'none',
-        }}
-      />
-
-      {/* Content Layer (moves at normal scroll speed) */}
-      <div className="relative z-10 flex flex-col w-full min-h-screen" style={{ zIndex: 10 }}>
+      {/* Content Layer (normal scroll speed) */}
+      <div className="relative z-10 flex flex-col w-full min-h-screen">
         {/* Navigation */}
         <nav className="flex items-center justify-between px-6 py-4 md:px-[60px] md:py-6 flex-shrink-0">
           <div className="text-lg md:text-xl font-bold text-fg font-heading">

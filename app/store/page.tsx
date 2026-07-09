@@ -1,58 +1,629 @@
-import { headers } from 'next/headers'
-import { notFound } from 'next/navigation'
-import Link from 'next/link'
-import { getTenantStorefront } from '@/lib/data/tenant'
-import { getProducts, getCategories } from '@/lib/data/products'
-import { HeroBanner } from '@/components/store/hero-banner'
-import { CategoryPills } from '@/components/store/category-pills'
-import { ProductGrid } from '@/components/store/product-grid'
-import { FestivalEdit } from '@/components/store/festival-edit'
-import { OurStory } from '@/components/store/our-story'
+'use client'
 
-export const revalidate = 3600 // 1 hour ISR
+import { Suspense, useState, useEffect, useCallback, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { ChevronLeft, ChevronRight, ChevronDown, SlidersHorizontal, X } from 'lucide-react'
 
-export default async function StorePage() {
-  const headersList = await headers()
-  const tenantId = headersList.get('x-tenant-id')
+const heroProducts = [
+  { name: 'Kanjivaram\nSilk Saree', price: 2499, originalPrice: 3299, rating: 4.9, reviews: 248, category: 'Handwoven Silk · Kanjivaram', badge: 'Only 3 left', discount: '24% OFF', savings: 800, sizes: ['XS', 'S', 'M', 'L', 'XL'] },
+  { name: 'Block Print\nKurti Set', price: 1299, originalPrice: 1899, rating: 4.2, reviews: 152, category: 'Embroidered Cotton', badge: null, discount: null, savings: 600, sizes: ['S', 'M', 'L', 'XL'] },
+  { name: 'Zari Border\nDupatta', price: 699, originalPrice: 999, rating: 4.7, reviews: 89, category: 'Chanderi Silk', badge: null, discount: '30% OFF', savings: 300, sizes: ['Free Size'] },
+]
 
-  if (!tenantId) notFound()
+const allProductsData = [
+  { name: 'Kanjivaram Silk Saree', price: 2499, originalPrice: 3299, rating: 4.9, reviews: 248, category: 'Sarees', categoryLabel: 'HANDWOVEN SILK', discount: '24% OFF', badge: 'Only 3 left!', gradient: 'linear-gradient(145deg, #c2185b, #880e4f)', sizes: ['XS', 'S', 'M', 'L', 'XL'], occasion: 'Festive' },
+  { name: 'Block Print Kurti Set', price: 1299, originalPrice: null, rating: 4.2, reviews: 152, category: 'Kurtis', categoryLabel: 'EMBROIDERED COTTON', discount: null, badge: 'NEW', gradient: 'linear-gradient(145deg, oklab(55.6% 0.009 -0.132), oklab(32.1% .0008 -0.151))', sizes: ['S', 'M', 'L', 'XL'], occasion: 'Casual' },
+  { name: 'Zari Border Dupatta', price: 699, originalPrice: null, rating: 4.7, reviews: 89, category: 'Dupattas', categoryLabel: 'CHANDERI SILK', discount: null, badge: null, gradient: 'linear-gradient(145deg, #e65100, #bf360c)', sizes: ['Free Size'], occasion: 'Festive' },
+  { name: 'Anarkali Suit Set', price: 2099, originalPrice: 2499, rating: 4.4, reviews: 67, category: 'Sets & Suits', categoryLabel: 'GEORGETTE', discount: '15% OFF', badge: null, gradient: 'linear-gradient(145deg, #1565c0, #0d47a1)', sizes: ['S', 'M', 'L'], occasion: 'Wedding' },
+  { name: 'Pochampally Ikat Saree', price: 1899, originalPrice: null, rating: 4.8, reviews: 38, category: 'Sarees', categoryLabel: 'IKAT WEAVE', discount: null, badge: '2 days ago', gradient: 'linear-gradient(145deg, #7b1fa2, #4a148c)', sizes: ['M', 'L', 'XL'], occasion: 'Casual' },
+  { name: 'Printed Salwar Kameez', price: 1099, originalPrice: null, rating: 4.3, reviews: 44, category: 'Sets & Suits', categoryLabel: 'COTTON LAWN', discount: null, badge: null, gradient: 'linear-gradient(145deg, #2e7d32, #1b5e20)', sizes: ['S', 'M', 'L', 'XL'], occasion: 'Office' },
+  { name: 'Banarasi Silk Dupatta', price: 899, originalPrice: 1299, rating: 4.1, reviews: 22, category: 'Dupattas', categoryLabel: 'BANARASI SILK', discount: '30% OFF', badge: null, gradient: 'linear-gradient(145deg, #ad1457, #880e4f)', sizes: ['Free Size'], occasion: 'Wedding' },
+  { name: 'Teal Chanderi Set', price: 2199, originalPrice: 2899, rating: 4.5, reviews: 28, category: 'Sets & Suits', categoryLabel: 'CHANDERI COTTON', discount: '24% OFF', badge: 'NEW', gradient: 'linear-gradient(145deg, #00695c, #004d40)', sizes: ['XS', 'S', 'M'], occasion: 'Festive' },
+  { name: 'Embroidered Kurti', price: 999, originalPrice: null, rating: 4.6, reviews: 112, category: 'Kurtis', categoryLabel: 'COTTON VOILE', discount: null, badge: null, gradient: 'linear-gradient(145deg, #e65100, #bf360c)', sizes: ['S', 'M', 'L', 'XL', 'XXL'], occasion: 'Daily' },
+  { name: 'Silk Chiffon Dupatta', price: 599, originalPrice: 799, rating: 4.0, reviews: 67, category: 'Dupattas', categoryLabel: 'SILK CHIFFON', discount: '25% OFF', badge: null, gradient: 'linear-gradient(145deg, #283593, #1a237e)', sizes: ['Free Size'], occasion: 'Party' },
+  { name: 'Patola Silk Saree', price: 3499, originalPrice: 4299, rating: 4.9, reviews: 315, category: 'Sarees', categoryLabel: 'PATOLA SILK', discount: '18% OFF', badge: null, gradient: 'linear-gradient(145deg, #b71c1c, #880e4f)', sizes: ['M', 'L'], occasion: 'Wedding' },
+  { name: 'Palazzo Kurti Set', price: 1599, originalPrice: null, rating: 4.3, reviews: 89, category: 'Sets & Suits', categoryLabel: 'RAYON BLEND', discount: null, badge: 'NEW', gradient: 'linear-gradient(145deg, #4527a0, #311b92)', sizes: ['S', 'M', 'L', 'XL'], occasion: 'Casual' },
+]
 
-  const [tenant, products, categories] = await Promise.all([
-    getTenantStorefront(tenantId),
-    getProducts(tenantId),
-    getCategories(tenantId),
-  ])
+const newThisWeek = [
+  { name: 'Block Print Kurti Set', price: 1299, rating: 4.2, reviews: 152, badge: 'NEW', gradient: 'linear-gradient(145deg, oklab(55.6% 0.009 -0.132), oklab(32.1% .0008 -0.151))' },
+  { name: 'Pochampally Ikat Saree', price: 1899, rating: 4.8, reviews: 38, badge: 'NEW', gradient: 'linear-gradient(145deg, #c2185b, #880e4f)' },
+  { name: 'Printed Salwar Kameez', price: 1099, rating: 4.3, reviews: 44, badge: 'NEW', gradient: 'linear-gradient(145deg, #7b1fa2, #4a148c)' },
+  { name: 'Teal Chanderi Set', price: 2199, rating: 4.5, reviews: 28, badge: 'NEW', gradient: 'linear-gradient(145deg, #1565c0, #0d47a1)' },
+  { name: 'Banarasi Silk Dupatta', price: 899, rating: 4.1, reviews: 22, badge: 'NEW', gradient: 'linear-gradient(145deg, #e65100, #bf360c)' },
+]
 
-  if (!tenant) notFound()
+const occasions = [
+  { name: 'Festive', count: 48, emoji: '🎉' },
+  { name: 'Wedding', count: 32, emoji: '💍' },
+  { name: 'Casual', count: 56, emoji: '☀️' },
+  { name: 'Office', count: 24, emoji: '💼' },
+  { name: 'Daily', count: 61, emoji: '🌿' },
+  { name: 'Party', count: 19, emoji: '🎊' },
+  { name: 'Travel', count: 15, emoji: '✈️' },
+]
+
+const categoryCards = [
+  { name: 'Sarees', count: '48 styles', gradient: 'linear-gradient(135deg, oklab(53.1% 0.201 0.020), oklab(41.5% 0.160 -0.012))' },
+  { name: 'Kurtis', count: '36 styles', gradient: 'linear-gradient(135deg, #1565c0, #0d47a1)' },
+  { name: 'Dupattas', count: '22 styles', gradient: 'linear-gradient(135deg, #e65100, #bf360c)' },
+  { name: 'Sets & Suits', count: '29 styles', gradient: 'linear-gradient(135deg, #2e7d32, #1b5e20)' },
+  { name: 'Lehengas', count: '18 styles', gradient: 'linear-gradient(135deg, #1565c0, #283593)' },
+  { name: 'Accessories', count: '15 styles', gradient: 'linear-gradient(135deg, #4a148c, #311b92)' },
+]
+
+const CATEGORY_OPTIONS = ['Sarees', 'Kurtis', 'Dupattas', 'Sets & Suits'] as const
+const SIZE_OPTIONS = ['M', 'XS', 'S', 'L', 'XL', 'XXL'] as const
+const OCCASION_OPTIONS = ['Festive', 'Wedding', 'Casual'] as const
+const SORT_OPTIONS = ['Newest First', 'Price: Low to High', 'Price: High to Low', 'Rating'] as const
+
+const deals = [
+  { offer: 'Upto 50% off', sub: 'Sarees' },
+  { offer: 'Buy 2 Get 1', sub: 'Dupattas' },
+  { offer: 'Flat ₹200 off', sub: '₹1000+' },
+  { offer: 'Free Shipping', sub: '₹599+' },
+]
+
+const PRODUCTS_PER_PAGE = 6
+
+function CheckIcon() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg">
+      <polyline points="2,6 5,9 10,3" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function HeartIcon({ size = 12, color = '#8B7D7A' }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="none" stroke={color} strokeWidth="1.8" />
+    </svg>
+  )
+}
+
+function CartIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="9" cy="21" r="1" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="20" cy="21" r="1" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
+      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function ImagePlaceholder() {
+  return (
+    <svg width="64" height="64" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke="rgb(255 255 255 / 20%)" />
+      <circle cx="8.5" cy="8.5" r="1.5" fill="none" stroke="rgb(255 255 255 / 20%)" />
+      <path d="M21 15l-5-5L5 21" fill="none" stroke="rgb(255 255 255 / 20%)" />
+    </svg>
+  )
+}
+
+function Stars({ rating }: { rating: number }) {
+  const full = Math.floor(rating)
+  const empty = 5 - full
+  return <span className="text-success">{'★'.repeat(full)}{'☆'.repeat(empty)}</span>
+}
+
+function useCountdown(initialSeconds: number) {
+  const [seconds, setSeconds] = useState(initialSeconds)
+  useEffect(() => {
+    const id = setInterval(() => setSeconds(s => (s <= 0 ? initialSeconds : s - 1)), 1000)
+    return () => clearInterval(id)
+  }, [initialSeconds])
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  const s = seconds % 60
+  return [String(h).padStart(2, '0'), String(m).padStart(2, '0'), String(s).padStart(2, '0')] as const
+}
+
+function toggle<T>(set: Set<T>, val: T): Set<T> {
+  const next = new Set(set)
+  next.has(val) ? next.delete(val) : next.add(val)
+  return next
+}
+
+export default function StorePage() {
+  return (
+    <Suspense fallback={null}>
+      <StorePageInner />
+    </Suspense>
+  )
+}
+
+function StorePageInner() {
+  // ── Header nav filter params (Women/Men/Festive/New Arrivals — see StoreHeader) ──
+  const searchParams = useSearchParams()
+
+  // ── Carousel ──
+  const [heroIndex, setHeroIndex] = useState(0)
+  const [activeSize, setActiveSize] = useState('XS')
+  const autoplayRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const hero = heroProducts[heroIndex]
+
+  const resetAutoplay = useCallback(() => {
+    if (autoplayRef.current) clearInterval(autoplayRef.current)
+    autoplayRef.current = setInterval(() => setHeroIndex(i => (i + 1) % heroProducts.length), 5000)
+  }, [])
+
+  useEffect(() => {
+    resetAutoplay()
+    return () => { if (autoplayRef.current) clearInterval(autoplayRef.current) }
+  }, [resetAutoplay])
+
+  const goTo = (i: number) => { setHeroIndex(i); resetAutoplay() }
+  const prevHero = () => goTo((heroIndex - 1 + heroProducts.length) % heroProducts.length)
+  const nextHero = () => goTo((heroIndex + 1) % heroProducts.length)
+
+  // ── Timer ──
+  const [hours, minutes, secs] = useCountdown(2 * 3600 + 45 * 60 + 30)
+
+  // ── Filters ──
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set(['Sarees']))
+  const [selectedSizes, setSelectedSizes] = useState<Set<string>>(new Set(['M']))
+  const [selectedOccasions, setSelectedOccasions] = useState<Set<string>>(new Set(['Festive']))
+  const [priceMin, setPriceMin] = useState('500')
+  const [priceMax, setPriceMax] = useState('5000')
+  const [sortBy, setSortBy] = useState<string>('Newest First')
+  const [showSortMenu, setShowSortMenu] = useState(false)
+  const [showMobileFilters, setShowMobileFilters] = useState(false)
+  const [visibleCount, setVisibleCount] = useState(PRODUCTS_PER_PAGE)
+
+  useEffect(() => {
+    const occasion = searchParams.get('occasion')
+    if (occasion) setSelectedOccasions(new Set([occasion]))
+    if (searchParams.get('sort') === 'newest') setSortBy('Newest First')
+  }, [searchParams])
+
+  const activeFilterCount = (selectedCategories.size > 0 ? 1 : 0) + (selectedSizes.size > 0 ? 1 : 0) + (selectedOccasions.size > 0 ? 1 : 0)
+
+  const filteredProducts = allProductsData.filter(p => {
+    if (selectedCategories.size > 0 && !selectedCategories.has(p.category)) return false
+    if (selectedSizes.size > 0 && !p.sizes.some(s => selectedSizes.has(s))) return false
+    if (selectedOccasions.size > 0 && !selectedOccasions.has(p.occasion)) return false
+    const min = Number(priceMin) || 0
+    const max = Number(priceMax) || Infinity
+    if (p.price < min || p.price > max) return false
+    return true
+  }).sort((a, b) => {
+    if (sortBy === 'Price: Low to High') return a.price - b.price
+    if (sortBy === 'Price: High to Low') return b.price - a.price
+    if (sortBy === 'Rating') return b.rating - a.rating
+    return 0
+  })
+
+  const visibleProducts = filteredProducts.slice(0, visibleCount)
+  const hasMore = visibleCount < filteredProducts.length
+
+  const handleReset = () => {
+    setSelectedCategories(new Set())
+    setSelectedSizes(new Set())
+    setSelectedOccasions(new Set())
+    setPriceMin('500')
+    setPriceMax('5000')
+    setVisibleCount(PRODUCTS_PER_PAGE)
+  }
+
+  const removeFilterChip = (type: 'category' | 'size' | 'occasion', val: string) => {
+    if (type === 'category') setSelectedCategories(s => { const n = new Set(s); n.delete(val); return n })
+    if (type === 'size') setSelectedSizes(s => { const n = new Set(s); n.delete(val); return n })
+    if (type === 'occasion') setSelectedOccasions(s => { const n = new Set(s); n.delete(val); return n })
+  }
+
+  const activeChips: { type: 'category' | 'size' | 'occasion'; label: string; value: string }[] = [
+    ...[...selectedCategories].map(v => ({ type: 'category' as const, label: v, value: v })),
+    ...[...selectedSizes].map(v => ({ type: 'size' as const, label: `Size ${v}`, value: v })),
+    ...[...selectedOccasions].map(v => ({ type: 'occasion' as const, label: v, value: v })),
+  ]
+
+  // ── Filter sidebar (shared between desktop and mobile sheet) ──
+  const filterPanel = (
+    <>
+      <p className="text-fg text-base font-bold font-body leading-5 mb-5">Filters</p>
+
+      {/* Category */}
+      <div className="border-b border-[#F0E8D8] mb-5 pb-5">
+        <p className="text-[#8B7D7A] text-[11px] font-bold font-body uppercase tracking-[0.08em] leading-[14px] mb-3">Category</p>
+        <div className="flex flex-col gap-2">
+          {CATEGORY_OPTIONS.map(c => {
+            const checked = selectedCategories.has(c)
+            return (
+              <label key={c} className="flex items-center gap-2 cursor-pointer" onClick={() => setSelectedCategories(s => toggle(s, c))}>
+                <span className={`w-4 h-4 rounded shrink-0 border-[1.5px] flex items-center justify-center transition-colors ${checked ? 'bg-store-primary border-store-primary' : 'bg-white border-border'}`}>
+                  {checked && <CheckIcon />}
+                </span>
+                <span className="text-fg text-[13px] font-body leading-4">{c}</span>
+                <span className="text-[#B0A090] text-[11px] font-body ml-auto">({allProductsData.filter(p => p.category === c).length})</span>
+              </label>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Size */}
+      <div className="border-b border-[#F0E8D8] mb-5 pb-5">
+        <p className="text-[#8B7D7A] text-[11px] font-bold font-body uppercase tracking-[0.08em] leading-[14px] mb-3">Size</p>
+        <div className="flex flex-wrap gap-1.5">
+          {SIZE_OPTIONS.map(s => {
+            const active = selectedSizes.has(s)
+            return (
+              <button key={s} onClick={() => setSelectedSizes(set => toggle(set, s))} className={`px-3 py-1.5 rounded-md border-[1.5px] text-[12px] font-body leading-4 transition-colors ${active ? 'bg-store-primary/6 border-store-primary text-store-primary font-semibold' : 'border-border text-[#8B7D7A] hover:border-[#8B7D7A]'}`}>
+                {s}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Price Range */}
+      <div className="border-b border-[#F0E8D8] mb-5 pb-5">
+        <p className="text-[#8B7D7A] text-[11px] font-bold font-body uppercase tracking-[0.08em] leading-[14px] mb-3">Price Range</p>
+        <div className="flex items-center gap-2">
+          <div className="flex-1 border-[1.5px] border-border rounded-md px-2.5 py-[7px] focus-within:border-store-primary transition-colors">
+            <input type="number" value={priceMin} onChange={e => setPriceMin(e.target.value)} className="text-fg text-[12px] font-body bg-transparent outline-none w-full" placeholder="Min" />
+          </div>
+          <span className="text-[#B0A090] text-[12px] font-body">–</span>
+          <div className="flex-1 border-[1.5px] border-border rounded-md px-2.5 py-[7px] focus-within:border-store-primary transition-colors">
+            <input type="number" value={priceMax} onChange={e => setPriceMax(e.target.value)} className="text-fg text-[12px] font-body bg-transparent outline-none w-full" placeholder="Max" />
+          </div>
+        </div>
+        {Number(priceMin) > Number(priceMax) && Number(priceMax) > 0 && (
+          <p className="text-danger text-[10px] font-body mt-1">Min price cannot exceed max price</p>
+        )}
+      </div>
+
+      {/* Occasion */}
+      <div className="mb-5">
+        <p className="text-[#8B7D7A] text-[11px] font-bold font-body uppercase tracking-[0.08em] leading-[14px] mb-3">Occasion</p>
+        <div className="flex flex-col gap-2">
+          {OCCASION_OPTIONS.map(o => {
+            const checked = selectedOccasions.has(o)
+            return (
+              <label key={o} className="flex items-center gap-2 cursor-pointer" onClick={() => setSelectedOccasions(s => toggle(s, o))}>
+                <span className={`w-4 h-4 rounded shrink-0 border-[1.5px] flex items-center justify-center transition-colors ${checked ? 'bg-store-primary border-store-primary' : 'bg-white border-border'}`}>
+                  {checked && <CheckIcon />}
+                </span>
+                <span className="text-fg text-[13px] font-body leading-4">{o}</span>
+              </label>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Buttons */}
+      <div className="flex gap-2">
+        <button onClick={() => { setVisibleCount(PRODUCTS_PER_PAGE); setShowMobileFilters(false) }} className="flex-1 py-2.5 rounded-lg border-[1.5px] border-store-primary text-store-primary text-[13px] font-semibold font-body text-center hover:bg-store-primary/5 transition-colors">
+          Apply ({filteredProducts.length})
+        </button>
+        <button onClick={handleReset} className="px-3.5 py-2.5 rounded-lg border-[1.5px] border-border text-[#8B7D7A] text-[13px] font-body hover:bg-[#F9F9F9] transition-colors">Reset</button>
+      </div>
+    </>
+  )
 
   return (
-    <main>
-      <HeroBanner tenant={tenant} />
-      <CategoryPills categories={categories} />
+    <div className="flex flex-col min-h-screen bg-[#F9F9F9] font-body">
+      {/* ─── Hero Carousel (fixed height, no layout shift) ─── */}
+      <section className="relative overflow-hidden h-[400px]" style={{ backgroundImage: 'linear-gradient(120deg, oklab(22.1% 0.025 -0.083), oklab(26.4% 0.107 0.004) 45%, oklab(53.1% 0.201 0.020))' }}>
+        <div className="absolute rounded-full" style={{ top: '-80px', left: '50%', width: '400px', height: '400px', backgroundColor: 'rgba(255,255,255,0.04)' }} />
+        <div className="absolute rounded-full" style={{ bottom: '-60px', right: '200px', width: '240px', height: '240px', backgroundColor: 'rgba(255,255,255,0.03)' }} />
 
-      <section className="mx-auto max-w-6xl px-4 py-6 sm:px-12 sm:py-15">
-        <div className="mb-4 flex items-baseline justify-between sm:mb-8">
-          <div className="flex flex-col gap-1 sm:gap-2">
-            <h2 className="font-heading text-xl leading-relaxed font-bold text-fg sm:text-[36px] sm:leading-[44px]">
-              <span className="sm:hidden">New Arrivals</span>
-              <span className="hidden sm:inline">New Collections</span>
-            </h2>
-            <p className="hidden font-body text-[15px] leading-snug text-muted-warm sm:block">
-              Handpicked ethnic wear and artisan crafts
-            </p>
+        <div className="flex h-full">
+          {/* Product image area */}
+          <div className="w-[520px] shrink-0 hidden md:flex items-center justify-center relative">
+            <div className="w-[340px] h-[380px] rounded-2xl border border-white/10 flex items-center justify-center transition-opacity duration-500" style={{ backgroundImage: 'linear-gradient(160deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02))' }}>
+              <ImagePlaceholder />
+            </div>
+            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2">
+              {heroProducts.map((_, i) => (
+                <button key={i} onClick={() => goTo(i)} className={`w-[52px] h-[52px] rounded-lg shrink-0 transition-all ${i === heroIndex ? 'border-2 border-white bg-white/15' : 'border border-white/30 bg-white/8'}`} />
+              ))}
+              <div className="w-[52px] h-[52px] rounded-lg border border-white/30 bg-white/8 shrink-0" />
+            </div>
           </div>
-          <Link
-            href="/shop"
-            className="font-body text-sm leading-tight font-medium text-store-primary sm:text-md sm:font-semibold sm:leading-snug"
-          >
-            View All →
-          </Link>
+
+          {/* Product info — key forces remount for clean transition */}
+          <div key={heroIndex} className="flex-1 flex flex-col justify-center px-5 md:pr-16 md:pl-5 py-6 md:py-12 relative animate-[fadeIn_0.4s_ease-out]">
+            <div className="flex gap-2.5 mb-4 flex-wrap">
+              {hero.discount && <span className="px-3.5 py-1 bg-store-primary rounded-md text-white text-[13px] font-extrabold leading-4 font-body">{hero.discount}</span>}
+              {hero.badge && (
+                <span className="flex items-center gap-1.5 px-3 py-1 bg-danger/85 rounded-full">
+                  <span className="w-[5px] h-[5px] rounded-full bg-white shrink-0" />
+                  <span className="text-white text-[11px] font-semibold leading-[14px] font-body">{hero.badge}</span>
+                </span>
+              )}
+            </div>
+            <p className="text-white/50 text-[11px] font-body uppercase tracking-[0.12em] leading-[14px] mb-2">{hero.category}</p>
+            <h1 className="text-white text-[28px] md:text-[36px] font-bold font-heading leading-[115%] mb-4 whitespace-pre-line">{hero.name}</h1>
+            <div className="flex items-center gap-1.5 mb-2">
+              <span className="text-success text-[13px] font-body">★★★★★</span>
+              <span className="text-white/60 text-[13px] font-body">{hero.rating} · {hero.reviews} reviews</span>
+            </div>
+            <div className="flex items-baseline gap-3 mb-6">
+              <span className="text-white text-[28px] md:text-[32px] font-extrabold font-body leading-10">₹{hero.price.toLocaleString('en-IN')}</span>
+              <span className="text-white/40 text-[18px] font-body line-through">₹{hero.originalPrice.toLocaleString('en-IN')}</span>
+              <span className="px-2.5 py-1 bg-white/10 border border-white/20 rounded text-white/70 text-[12px] font-body leading-4">You save ₹{hero.savings}</span>
+            </div>
+            <div className="flex items-center gap-2 mb-6 flex-wrap">
+              <span className="text-white/50 text-[12px] font-body mr-1">Size:</span>
+              {hero.sizes.map(s => (
+                <button key={s} onClick={() => setActiveSize(s)} className={`px-4 py-1.5 rounded-lg text-[13px] font-body transition-all ${s === activeSize ? 'border-2 border-white text-white font-bold' : 'border border-white/30 text-white/60'}`}>
+                  {s}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-3">
+              <button className="inline-flex items-center gap-2 bg-store-primary rounded-[10px] px-8 py-3.5 hover:opacity-90 transition-opacity">
+                <CartIcon />
+                <span className="text-white text-[15px] font-bold font-body leading-[18px]">Add to Cart</span>
+              </button>
+              <button className="w-12 h-12 shrink-0 rounded-[10px] border-[1.5px] border-white/40 flex items-center justify-center hover:bg-white/10 transition-colors">
+                <HeartIcon size={20} color="#FFFFFF" />
+              </button>
+            </div>
+          </div>
+
+          {/* Carousel controls (desktop) */}
+          <div className="hidden md:flex items-center gap-2 absolute bottom-5 right-12">
+            {heroProducts.map((_, i) => (
+              <span key={i} className={`rounded-full transition-all cursor-pointer ${i === heroIndex ? 'w-7 h-[5px] bg-white' : 'w-[5px] h-[5px] bg-white/35'}`} onClick={() => goTo(i)} />
+            ))}
+            <div className="flex gap-1.5 ml-3">
+              <button onClick={prevHero} className="w-8 h-8 rounded-full bg-white/15 border border-white/25 flex items-center justify-center hover:bg-white/25 transition-colors">
+                <ChevronLeft className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
+              </button>
+              <button onClick={nextHero} className="w-8 h-8 rounded-full bg-white/15 border border-white/25 flex items-center justify-center hover:bg-white/25 transition-colors">
+                <ChevronRight className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile carousel dots */}
+          <div className="md:hidden absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+            {heroProducts.map((_, i) => (
+              <span key={i} className={`rounded-full transition-all ${i === heroIndex ? 'w-5 h-1 bg-white' : 'w-1 h-1 bg-white/35'}`} onClick={() => goTo(i)} />
+            ))}
+          </div>
         </div>
-        <ProductGrid products={products} />
       </section>
 
-      <FestivalEdit />
-      <OurStory tenant={tenant} />
-    </main>
+      {/* ─── Flash Sale Bar (centered on mobile) ─── */}
+      <div className="flex items-center justify-center md:justify-start gap-4 md:gap-8 h-14 px-4 md:px-12 overflow-x-auto" style={{ backgroundColor: '#0E0A1F' }}>
+        <div className="flex items-center gap-2.5 shrink-0">
+          <span className="text-base">⚡</span>
+          <span className="text-white text-[13px] font-bold font-body uppercase tracking-[0.08em]">Flash Sale</span>
+          <div className="flex items-center gap-[3px]">
+            {[hours, minutes, secs].map((t, i) => (
+              <div key={i} className="flex items-center gap-[3px]">
+                {i > 0 && <span className="text-white/40 text-[11px] font-body">:</span>}
+                <span className="bg-white/12 rounded px-2 py-1 text-white text-[13px] font-bold font-body leading-4 tabular-nums w-[33px] text-center">{t}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="hidden md:flex gap-2.5 flex-1 overflow-x-auto">
+          {deals.map((d, i) => (
+            <span key={i} className="inline-flex items-center gap-2 shrink-0 px-4 py-1.5 rounded-lg border border-[#D4AF374D] bg-white/8">
+              <span className="text-[#D4AF37] text-[12px] font-bold font-body leading-4">{d.offer}</span>
+              <span className="text-white/35 text-[11px] font-body">{d.sub}</span>
+            </span>
+          ))}
+        </div>
+        <span className="text-[#D4AF37] text-[12px] font-semibold font-body shrink-0 hidden md:block cursor-pointer">View all deals →</span>
+      </div>
+
+      {/* ─── Main content area ─── */}
+      <div className="max-w-[1312px] mx-auto w-full px-4 md:px-16">
+        {/* Shop by Occasion */}
+        <section className="py-10">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2">
+              <div className="w-1 h-5 bg-store-primary rounded-full" />
+              <h2 className="text-[18px] font-bold text-fg font-body leading-[22px]">Shop by Occasion</h2>
+            </div>
+            <span className="text-store-primary text-[13px] font-semibold font-body cursor-pointer">See all occasions →</span>
+          </div>
+          <div className="flex gap-8 overflow-x-auto pb-2">
+            {occasions.map(occ => (
+              <button key={occ.name} className="flex flex-col items-center gap-2.5 shrink-0 group">
+                <div className="w-24 h-24 rounded-full flex items-center justify-center text-3xl border-[3px] border-store-primary shrink-0" style={{ backgroundImage: 'linear-gradient(135deg, oklab(53.1% 0.201 0.020), oklab(41.5% 0.160 -0.012))', boxShadow: '#E8577E4D 0px 4px 16px' }}>
+                  {occ.emoji}
+                </div>
+                <span className="text-fg text-[13px] font-semibold font-body">{occ.name}</span>
+                <span className="text-[#8B7D7A] text-[11px] font-body -mt-1">{occ.count} items</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* New This Week */}
+        <section className="pb-10">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2">
+              <div className="w-1 h-5 bg-store-primary rounded-full" />
+              <h2 className="text-[18px] font-bold text-fg font-body leading-[22px]">New This Week</h2>
+              <span className="ml-2 px-2.5 py-0.5 bg-success text-white text-[10px] font-bold rounded font-body leading-3">8 items</span>
+            </div>
+            <span className="text-store-primary text-[13px] font-semibold font-body cursor-pointer">View all new arrivals →</span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {newThisWeek.map((p, i) => (
+              <div key={i} className="bg-white rounded-xl border-[1.5px] border-[#F0E8D8] overflow-hidden">
+                <div className="aspect-[2/3] relative" style={{ backgroundImage: p.gradient }}>
+                  <span className="absolute top-2 left-2 px-2 py-[3px] bg-success rounded text-white text-[10px] font-bold font-body leading-3">{p.badge}</span>
+                  <button className="absolute top-2 right-2 w-7 h-7 bg-white/90 rounded-full flex items-center justify-center">
+                    <HeartIcon />
+                  </button>
+                </div>
+                <div className="p-2.5">
+                  <h3 className="text-fg text-[13px] font-bold font-heading leading-[130%] mb-1">{p.name}</h3>
+                  <p className="text-fg text-[14px] font-extrabold font-body leading-[18px]">₹{p.price.toLocaleString('en-IN')}</p>
+                  <p className="text-[10px] font-body leading-3 mt-0.5"><Stars rating={p.rating} /> <span className="text-[#B0A090]">{p.rating} ({p.reviews})</span></p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Browse Categories */}
+        <section className="pb-10">
+          <div className="flex items-center gap-2 mb-5">
+            <div className="w-1 h-5 bg-store-primary rounded-full" />
+            <h2 className="text-[18px] font-bold text-fg font-body leading-[22px]">Browse Categories</h2>
+          </div>
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+            {categoryCards.map(cat => (
+              <div key={cat.name} className="h-[120px] rounded-xl overflow-hidden relative flex items-end p-3 cursor-pointer group" style={{ backgroundImage: cat.gradient }}>
+                <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(0deg, rgba(0,0,0,0.55), rgba(0,0,0,0) 55%)' }} />
+                <div className="relative">
+                  <p className="text-white text-[13px] font-bold font-body leading-4">{cat.name}</p>
+                  <p className="text-white/65 text-[10px] font-body leading-3 mt-px">{cat.count}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+
+      {/* Divider */}
+      <div className="h-2 bg-[#F0E8D8]" />
+
+      {/* ─── Filters + Product Grid ─── */}
+      <div className="max-w-[1312px] mx-auto w-full px-4 md:px-16 py-8">
+        <div className="flex gap-8">
+          {/* Desktop Sidebar */}
+          <aside className="hidden md:block w-[240px] shrink-0">
+            {filterPanel}
+          </aside>
+
+          {/* Product grid area */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <h2 className="text-fg text-[16px] font-bold font-body leading-5">All Products</h2>
+                <span className="text-[#8B7D7A] text-[13px] font-body">{filteredProducts.length} items</span>
+              </div>
+              <div className="hidden md:flex items-center gap-2">
+                {activeChips.map(c => (
+                  <button key={c.label} onClick={() => removeFilterChip(c.type, c.value)} className="flex items-center gap-1 px-3 py-1 bg-store-primary/10 rounded-full text-store-primary text-[12px] font-body hover:bg-store-primary/20 transition-colors">
+                    {c.label} <X className="w-3 h-3" />
+                  </button>
+                ))}
+                <div className="relative ml-2">
+                  <button onClick={() => setShowSortMenu(v => !v)} className="flex items-center gap-1 text-[13px] text-fg font-body">
+                    Sort: <strong>{sortBy}</strong> <ChevronDown className="w-3.5 h-3.5" />
+                  </button>
+                  {showSortMenu && (
+                    <div className="absolute top-8 right-0 bg-white rounded-lg border border-border shadow-lg py-1 z-20 w-48">
+                      {SORT_OPTIONS.map(opt => (
+                        <button key={opt} onClick={() => { setSortBy(opt); setShowSortMenu(false) }} className={`w-full text-left px-4 py-2 text-[13px] font-body transition-colors ${opt === sortBy ? 'text-store-primary bg-store-primary/5 font-semibold' : 'text-fg hover:bg-[#F9F9F9]'}`}>
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              {/* Mobile filter button */}
+              <button onClick={() => setShowMobileFilters(true)} className="md:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-[13px] text-fg font-body">
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                Filter & Sort
+                {activeFilterCount > 0 && <span className="w-4 h-4 bg-store-primary text-white text-[9px] font-bold rounded-full flex items-center justify-center">{activeFilterCount}</span>}
+              </button>
+            </div>
+
+            {/* Active filter chips (mobile) */}
+            {activeChips.length > 0 && (
+              <div className="md:hidden flex gap-2 mb-4 flex-wrap">
+                {activeChips.map(c => (
+                  <button key={c.label} onClick={() => removeFilterChip(c.type, c.value)} className="flex items-center gap-1 px-2.5 py-1 bg-store-primary/10 rounded-full text-store-primary text-[11px] font-body">
+                    {c.label} <X className="w-2.5 h-2.5" />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Grid */}
+            {visibleProducts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <p className="text-fg text-[16px] font-semibold font-body mb-2">No products found</p>
+                <p className="text-[#8B7D7A] text-[13px] font-body mb-4">Try adjusting your filters</p>
+                <button onClick={handleReset} className="px-6 py-2 rounded-lg border-[1.5px] border-store-primary text-store-primary text-[13px] font-semibold font-body">Clear all filters</button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {visibleProducts.map((p, i) => (
+                  <div key={`${p.name}-${i}`} className="bg-white rounded-xl border-[1.5px] border-[#F0E8D8] overflow-hidden group cursor-pointer">
+                    <div className="aspect-[2/3] relative" style={{ backgroundImage: p.gradient }}>
+                      {p.discount && <span className="absolute top-2 left-2 px-2 py-[3px] bg-store-primary rounded text-white text-[10px] font-bold font-body leading-3">{p.discount}</span>}
+                      {p.badge && !p.discount && <span className={`absolute top-2 left-2 px-2 py-[3px] rounded text-white text-[10px] font-bold font-body leading-3 ${p.badge === 'NEW' ? 'bg-success' : 'bg-danger/85'}`}>{p.badge}</span>}
+                      <button className="absolute top-2 right-2 w-7 h-7 bg-white/90 rounded-full flex items-center justify-center hover:scale-110 transition-transform">
+                        <HeartIcon />
+                      </button>
+                    </div>
+                    <div className="p-2.5">
+                      <p className="text-[#8B7D7A] text-[10px] font-bold font-body uppercase tracking-[0.08em] leading-3 mb-1">{p.categoryLabel}</p>
+                      <h3 className="text-fg text-[13px] font-bold font-heading leading-[130%] mb-1">{p.name}</h3>
+                      <div className="flex items-center gap-2">
+                        <span className="text-store-primary text-[14px] font-extrabold font-body leading-[18px]">₹{p.price.toLocaleString('en-IN')}</span>
+                        {p.originalPrice && <span className="text-[#B0A090] text-[11px] font-body line-through">₹{p.originalPrice.toLocaleString('en-IN')}</span>}
+                        <button className="ml-auto w-7 h-7 bg-store-primary rounded-md flex items-center justify-center text-white text-lg leading-none">+</button>
+                      </div>
+                      <p className="text-[10px] font-body leading-3 mt-1"><Stars rating={p.rating} /> <span className="text-[#B0A090]">{p.rating} ({p.reviews})</span></p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Show more */}
+            {filteredProducts.length > 0 && (
+              <div className="flex flex-col items-center gap-3 mt-8">
+                {hasMore ? (
+                  <button onClick={() => setVisibleCount(c => c + PRODUCTS_PER_PAGE)} className="inline-flex items-center gap-2 px-10 py-3 bg-store-primary text-white text-[14px] font-semibold font-body rounded-full hover:opacity-90 transition-opacity">
+                    Show more products
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+                ) : visibleCount > PRODUCTS_PER_PAGE && (
+                  <button onClick={() => { setVisibleCount(PRODUCTS_PER_PAGE); window.scrollTo({ top: document.querySelector('#product-grid-top')?.getBoundingClientRect().top! + window.scrollY - 80, behavior: 'smooth' }) }} className="inline-flex items-center gap-2 px-10 py-3 border-[1.5px] border-store-primary text-store-primary text-[14px] font-semibold font-body rounded-full hover:bg-store-primary/5 transition-colors">
+                    Show less
+                  </button>
+                )}
+                <span className="text-[#8B7D7A] text-[11px] font-body">Showing {Math.min(visibleCount, filteredProducts.length)} of {filteredProducts.length} products</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ─── Mobile Filter Bottom Sheet ─── */}
+      {showMobileFilters && (
+        <div className="md:hidden fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowMobileFilters(false)} />
+          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl max-h-[85vh] overflow-y-auto p-6 animate-[slideUp_0.3s_ease-out]">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-fg text-[16px] font-bold font-body">Filters</span>
+              <button onClick={() => setShowMobileFilters(false)} className="w-8 h-8 rounded-full bg-[#F9F9F9] flex items-center justify-center">
+                <X className="w-4 h-4 text-fg" />
+              </button>
+            </div>
+            {/* Sort (mobile only) */}
+            <div className="border-b border-[#F0E8D8] mb-5 pb-5">
+              <p className="text-[#8B7D7A] text-[11px] font-bold font-body uppercase tracking-[0.08em] leading-[14px] mb-3">Sort By</p>
+              <div className="flex flex-wrap gap-1.5">
+                {SORT_OPTIONS.map(opt => (
+                  <button key={opt} onClick={() => setSortBy(opt)} className={`px-3 py-1.5 rounded-md border-[1.5px] text-[12px] font-body leading-4 transition-colors ${opt === sortBy ? 'bg-store-primary/6 border-store-primary text-store-primary font-semibold' : 'border-border text-[#8B7D7A]'}`}>
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {filterPanel}
+          </div>
+        </div>
+      )}
+    </div>
   )
 }

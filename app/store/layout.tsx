@@ -1,6 +1,6 @@
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
-import { getTenantStorefront } from '@/lib/data/tenant'
+import { getTenantStorefront, getDevTenantId } from '@/lib/data/tenant'
 import { getCategories } from '@/lib/data/products'
 import { StoreHeader } from '@/components/store/store-header'
 import { StoreFooter } from '@/components/store/store-footer'
@@ -12,7 +12,7 @@ export default async function StoreLayout({
   children: React.ReactNode
 }) {
   const headersList = await headers()
-  const tenantId = headersList.get('x-tenant-id')
+  const tenantId = headersList.get('x-tenant-id') ?? (await getDevTenantId())
 
   if (!tenantId) notFound()
 

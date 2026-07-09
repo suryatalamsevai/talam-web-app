@@ -12,17 +12,6 @@ const tabs = [
     ),
   },
   {
-    label: 'Shop',
-    href: '/shop',
-    icon: (
-      <>
-        <circle cx="9" cy="21" r="1" />
-        <circle cx="20" cy="21" r="1" />
-        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-      </>
-    ),
-  },
-  {
     label: 'Wishlist',
     href: '/wishlist',
     icon: <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />,
@@ -52,7 +41,7 @@ const tabs = [
 ]
 
 // ponytail: `active` defaults to Home since it's the only tab page that exists so far;
-// switch to usePathname-based detection once /shop, /wishlist, /orders, /account land.
+// switch to usePathname-based detection once /wishlist, /orders, /account land.
 export function MobileTabBar({ active = 'Home' }: { active?: string }) {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 h-20 border-t border-border bg-surface sm:hidden">

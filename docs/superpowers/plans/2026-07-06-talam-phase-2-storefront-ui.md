@@ -24,6 +24,8 @@
 
 ### Task 1: Rebuild Shop Page to Match Paper (`Shop — Desktop / Discovery` + `Shop — Mobile / Discovery` + `Filter Bottom Sheet — Mobile`) (UI)
 
+> **Amendment (design doc v1.5, 2026-07-09):** `/shop` no longer exists as a route — its content was merged into `app/store/page.tsx` (the `/` route), which is now the tenant default/home. Every `app/store/shop/page.tsx` reference below (including in git commands) means `app/store/page.tsx`. `FilterBar`'s `router.push` targets were updated from `/shop?...` to `/?...` accordingly. This task's actual implementation ended up as a single inline component rather than the `product-card.tsx`/`product-grid.tsx`/`filter-bar.tsx`/`filter-sheet.tsx` split described below — treat this task body as the target architecture for a future refactor, not a description of current code.
+
 **Paper ground truth pulled this session:**
 - Desktop artboard `9HU-0` ("Shop — Desktop / Discovery", 1441×2915) — the "All Products" section (`9PK-0`) is a `flex` row: `paddingTop: 32px, gap: 32px, paddingInline: 64px` (i.e. `pt-8 gap-8 px-16`), with a `240px` fixed-width filter sidebar (`9PL-0`, `w-[240px] shrink-0`) and a `flex-1` product column (`9RE-0`).
 - Filter sidebar (`9PL-0`, desktop) sections in order: **Category** (checkboxes with counts, e.g. "Sarees (48)"), **Size** (bordered pills, 6 sizes XS–XXL), **Price Range** (two bordered `₹` inputs joined by `–`), **Occasion** (checkboxes: Festive/Wedding/Casual — not in current implementation), **Apply / Reset** button row at the bottom (bordered pink "Apply" + plain "Reset" — current `FilterBar` has no Apply/Reset, it live-navigates on every click).
@@ -1550,12 +1552,14 @@ git commit -m "feat: add /about storefront page UI with owner story, social link
 
 ---
 
-### Task 5: Category SEO Pages (`/shop/[categorySlug]`) (New) (UI)
+### Task 5: Category SEO Pages (`/category/[categorySlug]`) (New) (UI)
+
+> **Amendment (design doc v1.5, 2026-07-09):** route moved from `/shop/[categorySlug]` to `/category/[categorySlug]` — `/shop` no longer exists (merged into `app/store/page.tsx`, the `/` route), and a bare `/[categorySlug]` at root would risk a category slug colliding with static routes like `/about` or `/cart`.
 
 **Paper ground truth:** there is no distinct Paper artboard for a per-category listing screen — the "Shop — Desktop / Discovery" and "Shop — Mobile / Discovery" artboards pulled in Task 1 already show the filtered-by-category state of the same grid (the header row's `"Sarees ×"` chip and the sidebar's pre-checked "Sarees" checkbox in `9PL-0`/`9RF-0`). This route is a crawlable, statically-cacheable URL variant of that same UI — it reuses every component built in Task 1 (`ProductGrid`, `FilterBar`) rather than introducing new visual design.
 
 **Files:**
-- Create: `app/store/shop/[categorySlug]/page.tsx` (mock-wired only in this file)
+- Create: `app/store/category/[categorySlug]/page.tsx` (mock-wired only in this file)
 
 **Interfaces:**
 - Mocks (this file): reuses `MOCK_PRODUCTS`/`MOCK_CATEGORIES` from Task 1's `components/store/__mocks__/shop-mock-data.ts`.
@@ -1563,7 +1567,7 @@ git commit -m "feat: add /about storefront page UI with owner story, social link
 
 - [ ] **Step 1: Create the category slug page (mock-wired)**
 
-Create `app/store/shop/[categorySlug]/page.tsx` — mock-wired; the Data-track sibling swaps these for `getCategories`/`getProducts`:
+Create `app/store/category/[categorySlug]/page.tsx` — mock-wired; the Data-track sibling swaps these for `getCategories`/`getProducts`:
 
 ```typescript
 import { notFound } from 'next/navigation'

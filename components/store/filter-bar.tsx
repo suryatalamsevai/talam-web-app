@@ -32,7 +32,7 @@ export function FilterBar({ categories, activeCategory, activeSize, minPrice, ma
     } else {
       params.set(key, value)
     }
-    router.push(`/shop?${params.toString()}`)
+    router.push(`/?${params.toString()}`)
   }
 
   function handlePriceSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -43,7 +43,7 @@ export function FilterBar({ categories, activeCategory, activeSize, minPrice, ma
     const max = form.get('maxPrice')?.toString().trim()
     min ? params.set('minPrice', min) : params.delete('minPrice')
     max ? params.set('maxPrice', max) : params.delete('maxPrice')
-    router.push(`/shop?${params.toString()}`)
+    router.push(`/?${params.toString()}`)
   }
 
   const panel = (

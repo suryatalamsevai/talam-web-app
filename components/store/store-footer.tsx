@@ -18,7 +18,7 @@ type Props = {
 }
 
 const footerLinks = [
-  { label: 'Shop', href: '/shop' },
+  { label: 'Shop', href: '/' },
   { label: 'About', href: '/about' },
   { label: 'Shipping', href: '/shipping' },
   { label: 'Returns', href: '/returns' },
@@ -174,14 +174,14 @@ export function StoreFooter({ tenant, categories }: Props) {
             <div className="mb-5 text-[10px] leading-3 font-bold tracking-[0.12em] text-white/30 uppercase">Shop</div>
             <div className="flex flex-col gap-[13px]">
               {categories.map((category) => (
-                <Link key={category.id} href={`/shop?category=${category.slug}`} className="text-md/snug text-white/75">
+                <Link key={category.id} href={`/?category=${category.slug}`} className="text-md/snug text-white/75">
                   {category.name}
                 </Link>
               ))}
-              <Link href="/shop" className="text-md/snug text-white/75">
+              <Link href="/" className="text-md/snug text-white/75">
                 New Arrivals
               </Link>
-              <Link href="/shop?category=sale" className="text-md/snug font-semibold text-store-primary">
+              <Link href="/?category=sale" className="text-md/snug font-semibold text-store-primary">
                 Sale Items
               </Link>
             </div>

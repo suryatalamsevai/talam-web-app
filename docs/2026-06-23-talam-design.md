@@ -1,10 +1,15 @@
 # Talam — Full Product Design Spec
 
 **Date:** 2026-06-23  
-**Last updated:** 2026-07-04  
-**Status:** Approved — v1.4  
+**Last updated:** 2026-07-09  
+**Status:** Approved — v1.5  
 **Author:** Surya Prakash  
-**Version:** 1.4 (OTP channel confirmed SMS-only via MSG91; WhatsApp scoped to alerts-with-email-fallback, not login)
+**Version:** 1.5 (Storefront home merged into /shop, retiring the separate hero-driven home design; header nav wired to product filters)
+
+**Changelog v1.5 (2026-07-09)**
+- **`/shop` is now the tenant default/home route — literally, not via redirect:** The hero-driven storefront home (`HeroBanner`, `CategoryPills`, `FestivalEdit`, `OurStory` components) was retired; that Paper design no longer exists. `/shop`'s content (hero carousel, flash sale bar, occasion/new-arrivals sections, filter sidebar + product grid) now lives at `app/store/page.tsx` (the `/` route) instead of a separate `/shop` path — there is no `/shop` route left in the app, and nothing redirects to one. Category SEO pages move to `/category/[categorySlug]` (not `/shop/[categorySlug]`) — namespaced to avoid a category slug colliding with a static top-level route like `/about` or `/cart`.
+- **Header nav wired to real filters, not `href="#"`:** Desktop `StoreHeader` nav (`components/store/store-header.tsx`) now links Festive → `/?occasion=Festive` and New Arrivals → `/?sort=newest`, both read by the home page via `useSearchParams` on mount. "Shop" was dropped from the nav (Home now serves that role — a self-referencing link would be redundant). Women/Men currently link home unfiltered — there's no gender field on `products` yet, so real filtering for those two is deferred until the schema supports it.
+- **Local dev preview without subdomain middleware:** No subdomain-resolution middleware exists yet (§3.1's wildcard routing was never implemented — confirmed no `middleware.ts` in the repo). `lib/data/tenant.ts` now exports `getDevTenantId()`, a dev-only (`NODE_ENV === 'development'`) fallback that resolves a seeded tenant by slug (`TALAM_DEV_TENANT_SLUG`, default `silk`) when `x-tenant-id` is absent, so `app/store/layout.tsx` renders locally at `localhost:3000/store` without simulating a subdomain. This is a stopgap, not a substitute for the real middleware §3.1 still requires before production launch.
 
 **Changelog v1.4 (2026-07-04)**
 - **OTP stays SMS-only, DLT fee now budgeted:** Considered switching Phone OTP delivery to WhatsApp (via Supabase + Twilio) to dodge MSG91's ₹5,900 one-time DLT Principal Entity registration fee. Confirmed the fee is a TRAI regulatory requirement that applies to *any* SMS gateway sending OTPs to Indian numbers (Twilio, Fast2SMS, 2Factor, etc. all require it) — switching providers doesn't avoid it. Also, ~25% of Indian smartphone users don't have WhatsApp, so it can't be the sole phone-based login channel without a fallback. **Decision: keep §5 Phone OTP as SMS-only via MSG91, treat the ₹5,900 DLT fee as a one-time setup cost** (in addition to the ₹1,890/mo recurring infra cost in §4).
@@ -108,10 +113,13 @@ admin.mytalam.com/                 → Super admin (platform owner)
 
 **Storefront routes:**
 ```
-/                         Home — hero, collections, sale banner
+/                         Home — IS the product listing (hero carousel, flash sale, filters/sort, grid).
+                          No separate hero/collections home design — the old home was retired (v1.5)
+                          and /shop was merged into / instead of / redirecting to /shop.
 /about                    Store about page — owner story, social links, trust stats, branch locations
-/shop                     Product listing + filters (category, size, price)
-/shop/[categorySlug]      Category-specific listing — SEO-indexable, pre-rendered (ISR 30 min)
+/category/[categorySlug]  Category-specific listing — SEO-indexable, pre-rendered (ISR 30 min).
+                          Namespaced under /category (not bare /[slug]) to avoid a category named
+                          e.g. "about" or "cart" colliding with the static top-level routes below.
 /product/[slug]           Product detail — images, size picker, reviews, trust badges, add to cart
 /cart                     Shopping cart (Zustand + localStorage)
 /checkout                 Address + payment gateway (pincode auto-fill, delivery estimate)
