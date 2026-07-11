@@ -184,6 +184,16 @@
   html {
     @apply font-sans;
   }
+
+  /* Native-app tap feedback: no gray flash, quick press-down scale on any tap target */
+  button, a, [role="button"], input[type="checkbox"], input[type="radio"], select, summary {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  button:active, a:active, [role="button"]:active {
+    transform: scale(0.96);
+    transition: transform 80ms ease-out;
+  }
 }
 
 @layer utilities {

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { ChevronLeft, ChevronRight, ChevronDown, SlidersHorizontal, X } from 'lucide-react'
 import Image from 'next/image'
 import { mockGetProducts } from '@/lib/mock-data'
+import { hapticError } from '@/lib/haptics'
 
 // ponytail: UI-only display metadata per product (gradients, badges, occasions).
 // The actual product data (name, slug, price, sizes, reviews) comes from mock-data.
@@ -178,6 +179,7 @@ function StorePageInner() {
 
   const startAutoplay = useCallback(() => {
     if (autoplayRef.current) clearInterval(autoplayRef.current)
+    if (document.visibilityState !== 'visible') return
     autoplayRef.current = setInterval(() => setHeroIndex(i => (i + 1) % heroProducts.length), 5000)
   }, [])
 
@@ -193,6 +195,16 @@ function StorePageInner() {
   const goTo = (i: number) => { setHeroIndex(i); stopAutoplay() }
   const prevHero = () => goTo((heroIndex - 1 + heroProducts.length) % heroProducts.length)
   const nextHero = () => goTo((heroIndex + 1) % heroProducts.length)
+
+  // ── Hero swipe ──
+  const heroTouchStart = useRef<number | null>(null)
+  const handleHeroTouchStart = (e: React.TouchEvent) => { heroTouchStart.current = e.touches[0].clientX }
+  const handleHeroTouchEnd = (e: React.TouchEvent) => {
+    if (heroTouchStart.current === null) return
+    const diff = heroTouchStart.current - e.changedTouches[0].clientX
+    if (Math.abs(diff) > 40) diff > 0 ? nextHero() : prevHero()
+    heroTouchStart.current = null
+  }
 
   // ── Timer ──
   const [hours, minutes, secs] = useCountdown(2 * 3600 + 45 * 60 + 30)
@@ -215,6 +227,17 @@ function StorePageInner() {
   }, [searchParams])
 
   const activeFilterCount = (selectedCategories.size > 0 ? 1 : 0) + (selectedSizes.size > 0 ? 1 : 0) + (selectedOccasions.size > 0 ? 1 : 0)
+
+  const priceRangeInvalid = Number(priceMin) > Number(priceMax) && Number(priceMax) > 0
+  const priceErrorShown = useRef(false)
+  useEffect(() => {
+    if (priceRangeInvalid && !priceErrorShown.current) {
+      hapticError()
+      priceErrorShown.current = true
+    } else if (!priceRangeInvalid) {
+      priceErrorShown.current = false
+    }
+  }, [priceRangeInvalid])
 
   const filteredProducts = allProductsData.filter(p => {
     if (selectedCategories.size > 0 && !selectedCategories.has(p.category)) return false
@@ -306,7 +329,7 @@ function StorePageInner() {
             <input type="number" value={priceMax} onChange={e => setPriceMax(e.target.value)} className="text-fg text-[12px] font-body bg-transparent outline-none w-full" placeholder="Max" />
           </div>
         </div>
-        {Number(priceMin) > Number(priceMax) && Number(priceMax) > 0 && (
+        {priceRangeInvalid && (
           <p className="text-danger text-[10px] font-body mt-1">Min price cannot exceed max price</p>
         )}
       </div>
@@ -342,7 +365,12 @@ function StorePageInner() {
   return (
     <div className="flex flex-col min-h-screen bg-[#F9F9F9] font-body overflow-x-hidden">
       {/* ─── Hero Carousel (fixed height, no layout shift) ─── */}
-      <section className="relative overflow-hidden h-[360px] md:h-[400px]" style={{ backgroundImage: 'linear-gradient(120deg, oklab(22.1% 0.025 -0.083), oklab(26.4% 0.107 0.004) 45%, oklab(53.1% 0.201 0.020))' }}>
+      <section
+        className="relative overflow-hidden h-[360px] md:h-[400px] touch-pan-y"
+        style={{ backgroundImage: 'linear-gradient(120deg, oklab(22.1% 0.025 -0.083), oklab(26.4% 0.107 0.004) 45%, oklab(53.1% 0.201 0.020))' }}
+        onTouchStart={handleHeroTouchStart}
+        onTouchEnd={handleHeroTouchEnd}
+      >
         <div className="absolute rounded-full" style={{ top: '-80px', left: '50%', width: '400px', height: '400px', backgroundColor: 'rgba(255,255,255,0.04)' }} />
         <div className="absolute rounded-full" style={{ bottom: '-60px', right: '200px', width: '240px', height: '240px', backgroundColor: 'rgba(255,255,255,0.03)' }} />
 

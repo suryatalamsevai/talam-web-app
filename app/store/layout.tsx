@@ -6,6 +6,7 @@ import { StoreHeader } from '@/components/store/store-header'
 import { StoreFooter } from '@/components/store/store-footer'
 import { MobileTabBar } from '@/components/store/mobile-tab-bar'
 import { CartToast } from '@/components/store/cart-toast'
+import { TapFeedback } from '@/components/store/tap-feedback'
 
 export default async function StoreLayout({
   children,
@@ -33,6 +34,7 @@ export default async function StoreLayout({
       </div>
       <MobileTabBar />
       <CartToast />
+      <TapFeedback />
     </>
   )
 }

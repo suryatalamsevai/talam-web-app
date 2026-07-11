@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
 
 const tabs = [
   {
@@ -45,6 +46,33 @@ const tabs = [
 
 export function MobileTabBar() {
   const pathname = usePathname()
+  const [hidden, setHidden] = useState(false)
+  const lastY = useRef(0)
+  const stopTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    lastY.current = window.scrollY
+    function onScroll() {
+      const y = window.scrollY
+      const delta = y - lastY.current
+      if (y < 40) {
+        setHidden(false)
+      } else if (delta > 8) {
+        setHidden(true)
+      } else if (delta < -8) {
+        setHidden(false)
+      }
+      lastY.current = y
+
+      if (stopTimer.current) clearTimeout(stopTimer.current)
+      stopTimer.current = setTimeout(() => setHidden(false), 400)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      if (stopTimer.current) clearTimeout(stopTimer.current)
+    }
+  }, [])
 
   function isActive(href: string) {
     if (href === '/') return pathname === '/' || pathname === ''
@@ -52,7 +80,9 @@ export function MobileTabBar() {
   }
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 h-20 border-t border-border bg-surface sm:hidden">
+    <nav
+      className={`fixed inset-x-0 bottom-0 z-40 h-20 border-t border-border bg-surface sm:hidden transition-transform duration-200 ease-out ${hidden ? 'translate-y-full' : 'translate-y-0'}`}
+    >
       <div className="flex h-16 items-start justify-around pt-2.5">
         {tabs.map((tab) => {
           const active = isActive(tab.href)
