@@ -146,7 +146,7 @@ export function StoreFooter({ tenant, categories }: Props) {
   return (
     <footer className="font-body">
       {/* Desktop */}
-      <div className="hidden bg-[#0E0A1F] sm:block">
+      <div className="hidden bg-[#0E0A1F] lg:block">
         <div
           className="h-[3px]"
           style={{ backgroundImage: 'linear-gradient(90deg, var(--color-store-primary) 0%, #a04ea0 50%, var(--color-amber) 100%)' }}
@@ -244,7 +244,7 @@ export function StoreFooter({ tenant, categories }: Props) {
       </div>
 
       {/* Mobile */}
-      <div className="relative border-t border-border bg-bg sm:hidden">
+      <div className="relative border-t border-border bg-bg lg:hidden">
         <div className="border-b border-border px-5 pt-7 pb-5">
           <div className="mb-1 font-heading text-xl/relaxed font-bold text-fg">{tenant.name}</div>
           {tenant.tagline && <div className="text-xs leading-[140%] text-muted-warm">{tenant.tagline}</div>}

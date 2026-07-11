@@ -169,6 +169,10 @@
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
 }
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
 
 @layer base {
   * {
@@ -180,4 +184,9 @@
   html {
     @apply font-sans;
   }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 }

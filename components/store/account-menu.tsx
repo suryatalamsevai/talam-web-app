@@ -1,0 +1,89 @@
+'use client'
+
+import { useState, useRef, useEffect } from 'react'
+import Link from 'next/link'
+
+// ponytail: mock auth state until real auth lands
+const mockUser = {
+  name: 'Priya Rajan',
+  phone: '+91 98765 43210',
+  initial: 'P',
+}
+
+export function AccountMenu() {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  const user = mockUser // swap for real auth check
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-border-light sm:size-10"
+      >
+        {user ? (
+          <span className="flex size-9 items-center justify-center rounded-lg bg-store-primary/15 font-body text-xs font-bold text-store-primary sm:size-10">
+            {user.initial}
+          </span>
+        ) : (
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="#8B7D7A" strokeWidth="2" />
+            <circle cx="12" cy="7" r="4" stroke="#8B7D7A" strokeWidth="2" />
+          </svg>
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full mt-2 z-50 w-[220px] rounded-xl border border-border bg-surface py-2 shadow-lg">
+          {user ? (
+            <>
+              <div className="px-4 py-3 border-b border-border-light">
+                <div className="flex items-center gap-3">
+                  <span className="flex size-9 items-center justify-center rounded-full bg-store-primary/15 font-body text-xs font-bold text-store-primary">
+                    {user.initial}
+                  </span>
+                  <div>
+                    <div className="font-body text-sm font-semibold text-fg">{user.name}</div>
+                    <div className="font-body text-xs text-muted-warm">{user.phone}</div>
+                  </div>
+                </div>
+              </div>
+              <Link href="/account/profile" onClick={() => setOpen(false)} className="flex items-center gap-3 px-4 py-2.5 font-body text-sm text-fg hover:bg-bg">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                Profile
+              </Link>
+              <Link href="/orders" onClick={() => setOpen(false)} className="flex items-center gap-3 px-4 py-2.5 font-body text-sm text-fg hover:bg-bg">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" /><rect x="9" y="3" width="6" height="4" rx="1" /></svg>
+                Orders
+              </Link>
+              <Link href="/account" onClick={() => setOpen(false)} className="flex items-center gap-3 px-4 py-2.5 font-body text-sm text-fg hover:bg-bg">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
+                Settings
+              </Link>
+              <div className="mx-3 my-1 border-t border-border-light" />
+              <button className="flex w-full items-center gap-3 px-4 py-2.5 font-body text-sm text-danger hover:bg-bg">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16,17 21,12 16,7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
+                Log Out
+              </button>
+            </>
+          ) : (
+            <Link href="/auth" onClick={() => setOpen(false)} className="flex items-center gap-3 px-4 py-2.5 font-body text-sm text-fg hover:bg-bg">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><polyline points="10,17 15,12 10,7" /><line x1="15" y1="12" x2="3" y2="12" /></svg>
+              Log in / Sign up
+            </Link>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}

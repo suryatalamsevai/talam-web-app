@@ -4,9 +4,10 @@ import { useState } from 'react'
 import { SizePicker } from './size-picker'
 import { Button } from '@/components/ui/button'
 import { useCartStore } from '@/lib/store/cart'
+import { showCartToast } from './cart-toast'
 
 type Props = {
-  product: { id: string; tenantId: string; name: string; price: number | string; sizes: string[]; images: string[] }
+  product: { id: string; tenantId: string; name: string; slug: string; price: number | string; comparePrice?: number | null; sizes: string[]; images: string[]; description?: string | null }
   stockBySize: Record<string, number>
 }
 
@@ -22,14 +23,20 @@ export function AddToCartButton({ product, stockBySize }: Props) {
       return
     }
     setError('')
+    const desc = product.description ?? ''
+    const fabricMatch = desc.match(/Fabric:\s*(.+)/i)
     addItem({
       productId: product.id,
       name: product.name,
+      slug: product.slug,
       price: Number(product.price),
+      comparePrice: product.comparePrice ? Number(product.comparePrice) : null,
       size: selectedSize ?? undefined,
+      fabric: fabricMatch?.[1]?.trim(),
       image: product.images[0] ?? '',
       tenantId: product.tenantId,
     })
+    showCartToast({ name: product.name, size: selectedSize ?? undefined })
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
   }

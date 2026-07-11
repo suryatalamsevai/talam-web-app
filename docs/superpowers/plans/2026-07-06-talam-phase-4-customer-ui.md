@@ -15,7 +15,7 @@
 - Inherit all prior phase constraints as context, but do not write any Prisma, Server Action, API-route, or auth-guard code in this file — that is the Data-track's job. If a task needs a data shape that doesn't exist yet, mock it locally typed like the real shape and leave the real wiring to the Data-track sibling.
 - All pages in this phase: `export const dynamic = 'force-dynamic'`.
 - **No `requireAuth`/`requireTenant` calls in this track.** These pages are auth-gated in the finished product, but in this file each page is a plain (non-async) component rendering mock fixture data — an inline mocked logged-in state — so it renders and screenshots on the dev server without a session. The Data-track sibling adds the guard and the `/auth?next={path}` redirect behavior to each page as part of its wiring step. Do not add redirects, session reads, or `lib/auth-guard.ts` imports here.
-- Design ground truth is the live Paper file "Talam Design" (team `Surya's Team`, file id `01KVZYTDJNREHBACTQMT2D9HR9`), page "Store Front" (page id `1-0`) — NOT `docs/2026-06-23-talam-design.md`, which can lag. Exact copy, colors, and spacing below were pulled directly from that file's artboards: Orders List (`9YD-0` mobile / `AWZ-0` desktop), Order Detail (`9YE-0` mobile / `AX0-0` desktop), Account (`AB2-0` mobile / `AX1-0` desktop), Wishlist (`AB3-0` mobile / `AX3-0` desktop).
+- Design ground truth is the live Paper file "Talam Design" (team `Surya's Team`, file id `01KVZYTDJNREHBACTQMT2D9HR9`), page "Store Front" (page id `1-0`) — NOT `docs/2026-06-23-talam-design.md`, which can lag. Exact copy, colors, and spacing below were pulled directly from that file's artboards: Orders List (`9YD-0` mobile / `AWZ-0` desktop), Order Detail (`9YE-0` mobile / `AX0-0` desktop), Account/Settings — now a hub + four subpages, see Task 4's superseded note and design doc §4.1c v1.8 for current artboard names (`Settings — Mobile (Hub)` / `Settings — Desktop` plus per-section subpage artboards) — and Wishlist (`AB3-0` mobile / `AX3-0` desktop).
 - Design tokens (from Paper, already partially wired into `app/globals.css` per prior phase notes): `--color-store-primary: #E8577E`, `--color-amber: #F59E0B`, `--color-danger: #EF4444`, `--color-success: #10B981` / `--color-success-bg: #F0FDF4` / `--color-success-border: #BBEDD4`, `--color-muted: #8B7D7A`, `--color-border: #E8E8E8`, `--color-surface: #FFFFFF`, `--color-bg: #F9F9F9`. Font: `--font-heading: "Playfair Display"`, `--font-body: "DM Sans"`.
 - Every page in this phase renders inside `app/store/layout.tsx`, which already renders `StoreHeader`, `StoreFooter`, and `MobileTabBar` — do not duplicate header/footer/tab-bar chrome inside page components.
 - `components/store/mobile-tab-bar.tsx` already has `/orders`, `/wishlist`, `/account` links; it accepts an `active` prop (default `'Home'`) — each page in this phase must render `<MobileTabBar active="Orders" />` etc. by passing the prop through, NOT by re-adding a duplicate nav.
@@ -25,7 +25,7 @@
 
 ## Known Gaps
 
-Phase 4's flagged gaps (`/orders/[id]` route ownership vs Phase 3's checkout redirect, the Order Confirmed page, the Reviews link with no destination, coupon data, the desktop-vs-mobile Account layout split, and the schema-less notification toggles) live in the "Known Gaps" section of the sibling `2026-07-06-talam-phase-4-customer-data.md`. The two that shape UI decisions in this file are repeated inline where they matter: the "My Reviews" row renders as a disabled/static row (Task 4), and the notification/language toggles are inert display-only controls (Task 4).
+Phase 4's flagged gaps (`/orders/[id]` route ownership vs Phase 3's checkout redirect, the Order Confirmed page, the Reviews link with no destination, coupon data, and the schema-less notification toggles) live in the "Known Gaps" section of the sibling `2026-07-06-talam-phase-4-customer-data.md`. The two that shape UI decisions in this file are repeated inline where they matter: the "My Reviews" row renders as a disabled/static row (Task 4), and the notification/language toggles are inert display-only controls (Task 4). The former "desktop-vs-mobile Account layout split" gap is resolved as of 2026-07-11 — both breakpoints now share the same hub + four-subpage structure (see Task 4's superseded note).
 
 ---
 
@@ -448,21 +448,41 @@ git commit -m "feat: add order detail page UI with mock data matching Paper desi
 
 ---
 
-### Task 4: Account Page (UI)
+### Task 4: Account / Settings Pages (UI)
+
+> **SUPERSEDED 2026-07-11 — read before implementing.** The artboard citations and single-page layout below (`Account & Settings — Mobile` / `AX1-0` desktop, one long scrolling page) predate the design's restructure into a hub + four subpages. Current ground truth is **design doc §4.1c v1.8** (`docs/design/2026-06-23-talam-oss-design.md`) and the live Paper artboards `Settings — Mobile (Hub)`, `Addresses — Mobile`, `Payment Method — Mobile`, `Notifications — Mobile`, `Account (Actions) — Mobile`, and desktop counterparts `Settings — Desktop` (hub, 5-item sidebar), `Addresses — Desktop`, `Payment Method — Desktop`, `Notifications — Desktop`, `Account — Desktop`. The JSX sample further down this task is illustrative of styling/tokens only — do not build it as one page.
 
 **Files:**
-- Create: `app/store/account/page.tsx`
+- Create: `app/store/account/page.tsx` (hub — nav-list only, no inline accordion content)
+- Create: `app/store/account/addresses/page.tsx`
+- Create: `app/store/account/payment-method/page.tsx`
+- Create: `app/store/account/notifications/page.tsx`
+- Create: `app/store/account/actions/page.tsx` (route deliberately avoids `account/account`; breadcrumb still reads "Settings › Account")
+- Create: `components/store/settings-breadcrumb.tsx` (shared `Settings › <Section>` breadcrumb, reused by all four subpages)
+- Extract shared section content (address cards, payment cards, notification toggles) into a shared module (e.g. `components/store/settings-sections.tsx`) so hub and subpage don't duplicate markup
 
 **Interfaces:**
-- Produces: `/account` page rendered from a typed `MockAccount` fixture whose fields mirror the Data-track's `AccountSummary` shape (`lib/data/customer-account.ts`), so the mock→real swap is a data-source replacement.
+- Produces `/account` (hub) plus four subpages, all rendered from a typed `MockAccount`/`MockAddress`/`MockPaymentMethod` fixture whose fields mirror the Data-track's `AccountSummary` shape (`lib/data/customer-account.ts`), so the mock→real swap is a data-source replacement.
 
-- [ ] **Step 1: Build the account page against Paper mock data**
+- [ ] **Step 1: Build the Settings hub**
 
-Paper's "Account & Settings — Mobile" artboard (`AB2-0`, 390×1466) shows: header "My Account" + search icon; a dark gradient profile card (`linear-gradient(135deg, #1A1040-ish → #430D1A-ish` per Paper's oklab values — approximate with `bg-gradient-to-br from-[#1F1730] to-[#431A2E]`) with a 72×72 circular avatar (initial "P" on `--color-store-primary` background, 3px semi-transparent white border), name "Priya Rajan", phone "+91 98765 43210", email "priya.rajan@gmail.com" (both at reduced white opacity), an edit-pencil icon button, and a 3-column stats row (Orders: 8, Wishlist: 12 in pink, Total Spent: ₹14.2K in amber) separated by 1px translucent white dividers. Below: grouped list sections with uppercase muted section labels — "MY ACTIVITY" (My Orders w/ "1 Active" amber pill badge, My Wishlist, My Reviews — all with colored icon-badge + chevron), "ADDRESSES & PAYMENT" (Saved Addresses, Payment Methods), "PREFERENCES" (Order Notifications toggle ON pink, WhatsApp Updates toggle ON green, Language → English), "SUPPORT" (Help Centre, Chat with Meena Silks), "ACCOUNT" (Log Out in red, Delete Account in red with subtext). Footer: "Powered by talam" pill + "App version 1.0.0".
+Mobile hub: header "Settings" + search icon; dark gradient profile card (name, phone, email, edit-pencil button, Orders/Wishlist/Total Spent stat row) — unchanged from the old design. Below: "MY ACTIVITY" section (My Wishlist, My Reviews — disabled/static row since no Reviews page exists), then a new **"SETTINGS"** nav-list section with four rows — **Addresses** (map-pin icon, tint `#EFF6FF`, subtitle "N addresses saved") → `/account/addresses`; **Payment Method** (card icon, tint `#F0FDF4`, subtitle previewing the default method) → `/account/payment-method`; **Notifications** (bell icon, tint `#FFF0F4`, subtitle "Deals, order updates, promotions") → `/account/notifications`; **Account** (user icon, tint `#F5F3FF`, subtitle "Log out, deactivate, or delete") → `/account/actions`. Each row: icon chip + title + one-line subtitle + chevron, consistent with the "My Activity" rows above it. "PREFERENCES" (Language) and "SUPPORT" (Help Centre, Chat) sections remain below, unchanged. No inline address/payment/notification content and no Log Out/Delete Account block on this page anymore — those moved to their subpages.
 
-Desktop variant (`AX1-0`, 1440×960) uses a different layout: left sidebar card with avatar/name/phone + a vertical menu (Profile active/highlighted, My Orders, Addresses, Payments, Notifications), and a right content area with "Personal Information" card (editable Full Name / Phone / Email inputs + "Save Changes" button), "Notification Preferences" card (Order Updates, WhatsApp Alerts, Promotions & Offers toggles), and an "Account" card (Log Out / Delete Account buttons side by side).
+Desktop hub: left sidebar card (avatar/name/phone) + a vertical nav with **five** items — Profile (external link to Edit Profile), Addresses, Payments, Notifications, **Account** (new) — each item other than Profile routes to its own subpage and highlights as active when on that subpage. The content pane shows whichever subpage is active (see Step 2); there is no more single scrolling content pane with all sections stacked.
 
-Two scope flags carried from the plan's Known Gaps (data-track file): the "My Reviews" row renders as a disabled/static row ("Coming soon", `opacity-60`, no link) since no Reviews page exists; the "Order Notifications" / "WhatsApp Updates" toggles are inert display-only controls (no backing schema field exists) — both by design, not omissions.
+- [ ] **Step 2: Build the four subpages**
+
+Each subpage: status bar/header, a `Settings › <Section>` breadcrumb (shared component, muted "Settings" + chevron + bold current section), an `<h1>` matching the section name, then only that section's content:
+- **Addresses** — header row + "+ Add New Address" button, amber hint banner ("One default address is required to place orders"), one card per address (name label, `DEFAULT` badge on the default only, address text, phone, action row — `Edit`/`Delete` on default, `Set as Default`/`Edit`/`Delete` on others). Two-up on desktop, stacked on mobile.
+- **Payment Method** — header row + "+ Add Payment Method" button, one card per method (brand + masked number + expiry + `DEFAULT` badge, or UPI ID), action row `Remove` (default) or `Set as Default`/`Remove` (others).
+- **Notifications** — three toggle rows in a card: Deals / Order Updates / Promotions, single `--color-success` toggle color. Still schema-less/inert — no backing column exists yet.
+- **Account** (`/account/actions`) — a readonly profile summary card at the top (name/phone/email, no edit affordance), then a card with three action rows in order: **Deactivate Account** (new, neutral styling, "Temporarily hide your account"), **Delete Account** (danger, "Permanently remove your data"), **Log Out** (danger).
+
+Desktop subpages reuse the same sidebar shell as the hub, with the current section's sidebar item highlighted.
+
+Two scope flags carried from the plan's Known Gaps (data-track file): the "My Reviews" row renders as a disabled/static row ("Coming soon", `opacity-60`, no link) since no Reviews page exists; the notification toggles are inert display-only controls (no backing schema field exists) — both by design, not omissions. Deactivate Account is UI-only in this track (no backing action) — same treatment as Log Out/Delete Account already had.
+
+**Legacy reference (pre-restructure JSX, illustrative only — see superseded note above):**
 
 Create `app/store/account/page.tsx`:
 ```tsx

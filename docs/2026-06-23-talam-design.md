@@ -1,12 +1,19 @@
 # Talam — Full Product Design Spec
 
 **Date:** 2026-06-23  
-**Last updated:** 2026-07-09  
+**Last updated:** 2026-07-11  
 **Status:** Approved — v1.6  
 **Author:** Surya Prakash  
-**Version:** 1.6 (Storefront-first delivery on localhost `/` routes; tenant domain/proxy work deferred until domain purchase)
+**Version:** 1.6 (Settings hub+subpages; storefront-first delivery)
 
-**Changelog v1.6 (2026-07-09)**
+**Changelog v1.6 (2026-07-11)**
+- **Profile editing split out of Settings:** The 2026-07-04 decision that folded everything (profile + settings) into a single `/account` page is superseded. Editing your name/phone/email is now a **separate "Edit Profile" screen**, reached only via the "Profile" row in the Account Menu dropdown — not via the Settings page. Phone number is **read-only** on Edit Profile (locked field with a lock icon + "Phone number cannot be changed" caption) since phone is the OTP login identity and isn't meant to be self-service editable.
+- **`/account` becomes a dedicated Settings page:** No more Personal Information card. Content is now three accordion sections — **Addresses**, **Payment Methods**, **Notifications** — plus the existing Account (Log Out / Delete Account) block. Mobile bottom nav's "Account" tab is renamed **"Settings"** (icon swapped from a person glyph to a gear) to match; it still points at the same route.
+- **Addresses & Payment Methods are now real UI, not dead links:** Both were previously placeholder rows (`href="/"`, no destination). They're now expandable sections showing actual address/card entries — Default badge, Edit/Delete, "Set as Default" for non-default entries, and a "+ Add" action (opens as a modal/bottom-sheet, not a separate page). Addresses carries a hint: *"One default address is required to place orders."*
+- **"My Orders" removed from Settings:** It was a redundant entry point — Orders already has its own route and its own bottom-nav/menu presence — so the row was cut to reduce duplication.
+- **Notification toggles unified:** Previously two independent, out-of-sync toggle sets existed — mobile had 2 toggles (Order Notifications, WhatsApp Updates) in one `--color-store-primary`/`#25D366` mix, desktop had 3 differently-labeled toggles (Order Updates, WhatsApp Alerts, Promotions & Offers) with a third toggle in a different color entirely. Now there's one consistent 3-toggle set — **Deals / Order Updates / Promotions** — using a single color (`--color-success`) for the "on" state everywhere. Still schema-less/inert (no backing DB field) — see the `product_categories`-adjacent gap noted in §12; wiring these to a real preference field is unscoped.
+- **Account Menu dropdown gains an Orders row (mobile only):** The mobile "Account Menu (Signed In)" dropdown is now Identity header → **Profile → Orders → Settings** → Log Out (4 action rows instead of 2). The **desktop** dropdown intentionally stays at 2 action rows (Profile, Settings) — Orders is reachable from the header's own Orders/cart affordance on desktop, so no Orders row was added there. This mobile/desktop asymmetry is deliberate, not an oversight.
+- Route/nav updates to §3.2 below.
 - **Implementation order changed to storefront-first:** complete the tenant-facing storefront on localhost root routes first — `/`, `/category/[categorySlug]`, `/product/[slug]`, `/about`, `/cart`, `/checkout`, `/wishlist`, `/account`, `/auth` — using the seeded dev-tenant fallback already noted below. Do not block storefront delivery on wildcard subdomain routing, custom-domain purchase, or proxy setup.
 - **Tenant domain + proxy work explicitly deferred:** production-style tenant host resolution, wildcard DNS, middleware hardening, preview aliases, and proxy/cutover tasks move to the post-purchase launch phase. They remain required for production, but they are no longer a prerequisite for storefront implementation or verification.
 
@@ -130,7 +137,10 @@ admin.mytalam.com/                 → Super admin (platform owner)
 /orders                   Order history + tracking
 /orders/[id]              Single order detail + status
 /wishlist                 Saved products
-/account                  Profile, saved addresses, and settings (preferences, notifications) — one page, no separate /account/settings route
+/account                  Settings — Addresses, Payment Methods, Notifications (accordion sections) + Log Out / Delete Account.
+                          Renamed "Settings" in the mobile bottom nav and Account Menu (was "Account" through v1.5).
+/account/profile          Edit Profile — full name, email (editable), phone number (read-only). Reached only from
+                          the Account Menu's "Profile" row, not from the Settings page itself (v1.6, see changelog).
 /auth                     OTP / Google / Email login
 ```
 

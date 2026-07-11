@@ -16,6 +16,10 @@ export async function proxy(request: NextRequest) {
   // Refresh Supabase session on every request
   const sessionResponse = await updateSession(request)
 
+  if (pathname === '/admin/onboarding') {
+    return sessionResponse
+  }
+
   // Super admin subdomain → rewrite to /super-admin/*
   if (host === `admin.${ROOT_DOMAIN}`) {
     const url = new URL(`/super-admin${pathname === '/' ? '' : pathname}`, request.url)

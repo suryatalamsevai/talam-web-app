@@ -4,8 +4,11 @@ import { persist } from 'zustand/middleware'
 export type CartItem = {
   productId: string
   name: string
+  slug: string
   price: number
+  comparePrice?: number | null
   size?: string
+  fabric?: string
   image: string
   tenantId: string
   quantity: number

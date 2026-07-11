@@ -5,6 +5,7 @@ import { getCategories } from '@/lib/data/products'
 import { StoreHeader } from '@/components/store/store-header'
 import { StoreFooter } from '@/components/store/store-footer'
 import { MobileTabBar } from '@/components/store/mobile-tab-bar'
+import { CartToast } from '@/components/store/cart-toast'
 
 export default async function StoreLayout({
   children,
@@ -31,6 +32,7 @@ export default async function StoreLayout({
         <StoreFooter tenant={tenant} categories={categories} />
       </div>
       <MobileTabBar />
+      <CartToast />
     </>
   )
 }

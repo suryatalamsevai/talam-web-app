@@ -1,12 +1,26 @@
 # Talam — Open Source Design Spec
 
 **Date:** 2026-06-23
-**Last updated:** 2026-07-04
+**Last updated:** 2026-07-11
 **Status:** Open for Contribution
-**Version:** 1.6 (Checkout Flow re-verified against live Paper artboards; new Order Confirmed screen documented)
+**Version:** 1.8 (Settings restructured from a single accordion page into a hub + four subpages with breadcrumbs)
 **For:** UI/UX designers contributing to the Talam open source project
 
 > **Design source of truth:** Real design work now happens in a Paper Design file (`Talam Design`, 6 pages: Store Front, Marketing, Checkout Flow, Design Library, Admin Dashboard, Onboarding). The Admin Dashboard page alone has grown to 22 artboards (Dashboard, Products, Orders + order details/action menu, Settings + 7 Store Settings sub-pages, Product Editor, filter/modal overlays) — far more than §4.8–4.12 below describe; the Checkout Flow page has 7 (3 steps × mobile/desktop + a mobile-only Order Confirmed screen). This document's brand/typography/spacing/radius tokens (§2) and the design tokens reference (§10) have been re-synced to that file's live token set as of 2026-06-30. §4.5 and §4.8 have been re-verified against their live artboards (2026-07-04, see changelog notes); §4.1–4.4, §4.6–4.7, and §4.9–4.14 are still the original written brief and have **not** been individually re-verified against each Paper artboard — treat them as design intent, not a guaranteed pixel match. For current per-screen build status, see [`docs/2026-06-28-PAPER-DESIGN-INVENTORY.md`](../2026-06-28-PAPER-DESIGN-INVENTORY.md) (**note: this file does not currently exist in the repo** — recreate it before relying on it).
+
+**Changelog v1.8 (2026-07-11)**
+- **REWROTE:** §4.1c Settings restructured from a single-page accordion (Addresses/Payment Methods/Notifications/Account all inline) into a nav-list **hub** at `/account` plus four subpages with `Settings › <Section>` breadcrumbs: `/account/addresses`, `/account/payment-method`, `/account/notifications`, `/account/actions`. The Account subpage route is `/account/actions` (not `/account/account`) to avoid a duplicated path segment — its breadcrumb still reads "Settings › Account".
+- **NEW:** Account subpage gains a readonly profile summary (name/phone/email, no edit) above the action rows, and a third action, **Deactivate Account** (neutral styling), alongside the existing Log Out / Delete Account.
+- **CHANGED:** Desktop sidebar gains a fifth nav item, **Account**, and now serves as the sole navigation for the settings area — each item routes to its own subpage instead of jumping to an inline anchor on one long page.
+- Fixed a layout bug caught in review: an early build of the hub's new "SETTINGS" nav-list section was left `position: absolute`, causing it to float on top of and visually hide the Preferences/Support sections below it — corrected to sit in normal document flow between "My Activity" and "Preferences".
+
+**Changelog v1.7 (2026-07-11)**
+- **REWROTE:** §4.1b re-verified against the live `Account Settings — Mobile`, `Settings — Desktop`, `Edit Profile — Mobile`, and `Edit Profile — Desktop` Paper artboards. Profile editing is no longer part of the Settings page — it's a dedicated Edit Profile screen, reached only through the Account Menu's "Profile" row. Settings itself was rebuilt from a sidebar-tab-switcher (Profile/My Orders/Addresses/Payments/Notifications) into a single-page accordion of three sections: Addresses, Payment Methods, Notifications.
+- **NEW:** §4.1c documents the Settings page content in full — Addresses and Payment Methods were previously placeholder rows with no underlying screen (`href="/"`); they're now built out with real card content, Default/Edit/Delete/Set-as-Default actions, and "+ Add" modals.
+- **NEW:** §4.1d documents the new Edit Profile screen — Full Name, Phone Number (locked, non-editable), Email Address, Save/Cancel.
+- **FIXED:** The two independent notification-toggle sets (2 toggles on the old mobile Preferences block vs. 3 differently-colored toggles on desktop) are unified into one 3-toggle set — Deals / Order Updates / Promotions — with a single toggle color (`--color-success`) at every breakpoint.
+- **CHANGED:** Account Menu (Signed In) — Mobile gains a third action row, **Orders**, between Profile and Settings. Account Menu (Signed In) — Desktop is unchanged (still Profile / Settings / Log Out) — this asymmetry is intentional, not a missed sync.
+- **REMOVED:** "My Orders" row from the Settings page (both breakpoints) — redundant with the dedicated Orders route/nav entry.
 
 **Changelog v1.6 (2026-07-04)**
 - **REWROTE:** §4.5 Checkout re-verified against the live `Step 1/2/3 — Mobile/Desktop` Paper artboards. Corrections: the order summary, coupon field, and trust bar are **always visible on every step** (not a collapsible toggle confined to Address); the OTP step also offers **"Continue with Google"** (previously undocumented); the Address form has **no Email field** in the live design; Payment shows a non-editable Delivery Address recap card; and there are two distinct CTAs (the UPI card's own "Confirm Payment" vs. the page-level "Place Order").
@@ -337,15 +351,74 @@ Home | Shop | Wishlist | Orders | Account (5 items, 64px height)
 - **Single row** (updated 2026-07-04 — previously two separate "Log In" / "Sign Up" rows): "Log in / Sign up", arrow-into-door icon, 14px medium text. One row instead of two because both destinations are the same `Auth` screen (see below) — no reason to make the visitor pick a label before they've even seen the form
 - Profile icon shows an active/highlighted background (light store-primary tint) while the menu is open
 
-**Account Menu — logged-in state (new 2026-07-04):**
+**Account Menu — logged-in state (updated 2026-07-11):**
 - Profile icon becomes a filled avatar: store-primary circle with the customer's first-initial, replacing the outline glyph
 - Card is taller, three sections top to bottom:
   1. Identity header — small avatar (initial) + customer name (14px semibold) + phone number (12px muted), non-interactive
-  2. Hairline divider, then two rows: **"Profile"** (person icon) and **"Settings"** (gear icon), 14px medium text, `--color-fg` — both rows route into the single `/account` page (decided 2026-07-04: Settings is a section within `/account`, not a separate route), matching the combined `Account & Settings — Mobile` / `Settings — Desktop` artboards
+  2. Hairline divider, then action rows, 14px medium text, `--color-fg`:
+     - **Mobile** — three rows: **"Profile"** (person icon) → Edit Profile screen, **"Orders"** (bag icon) → `/orders`, **"Settings"** (gear icon) → the Settings hub. Orders was added 2026-07-11 as a direct shortcut; it does not exist on desktop.
+     - **Desktop** — two rows: **"Profile"** → Edit Profile screen, **"Settings"** → the Settings hub. No Orders row — desktop reaches Orders via the header's own Orders affordance, so a third dropdown row was judged redundant.
+     - **Profile and Settings are two distinct destinations** (changed 2026-07-11 — previously, per the 2026-07-04 decision, both rows routed to the same combined `/account` page). "Profile" opens the dedicated Edit Profile screen (§4.1d); "Settings" opens the Settings hub (§4.1c). They no longer share a screen.
   3. Hairline divider, then **"Log Out"** row — same row styling but icon + text in `--color-danger` to visually separate it as the exiting action
 - Mobile and desktop use the same card structure, anchored to each header's own icon position
 
 Both states are live in Paper as `Account Menu — Mobile`, `Account Menu — Desktop`, `Account Menu (Signed In) — Mobile`, and `Account Menu (Signed In) — Desktop`.
+
+---
+
+### 4.1c Storefront — Settings (`/account`, `/account/addresses`, `/account/payment-method`, `/account/notifications`, `/account/actions`)
+
+**Purpose:** Manage saved addresses, payment methods, notification preferences, and account-level actions. Reached via the Account Menu's "Settings" row or the mobile bottom nav's "Settings" tab (same route, gear icon instead of a person glyph).
+
+**Not on this page:** Profile editing (name/phone/email) — that's a separate screen, see §4.1d. "My Orders" was removed from Settings 2026-07-11 as a duplicate entry point; Orders has its own route and its own nav/menu presence.
+
+**Restructured 2026-07-11 (v1.8): accordion → hub + four subpages with breadcrumbs.** The single long accordion page (Addresses/Payment Methods/Notifications/Account all inline and expanded) is gone. `/account` is now a nav-list **hub**; Addresses, Payment Method, Notifications, and Account each get their own subpage reached from that hub, with a `Settings › <Section>` breadcrumb at the top. Route names deliberately avoid the `account/account` duplication — the Account subpage lives at `/account/actions`, with the breadcrumb still reading "Settings › Account".
+
+**Hub (`/account`) — both breakpoints:**
+- Mobile: profile card, then a "MY ACTIVITY" section (Wishlist, Reviews — unchanged), then a new **"SETTINGS"** nav-list section with four rows — **Addresses** (map-pin icon, "N addresses saved"), **Payment Method** (card icon, default method preview), **Notifications** (bell icon, "Deals, order updates, promotions"), **Account** (user icon, "Log out, deactivate, or delete") — each row has a chevron and routes to its subpage. Preferences (Language) and Support sections remain below, unchanged.
+- Desktop: the existing left sidebar (profile card + nav) gains a fifth item, **Account**, alongside Profile / Addresses / Payments / Notifications — the sidebar itself now serves as the primary navigation, and the active item is highlighted per subpage. Each sidebar item (other than Profile) routes to its own subpage rather than jumping to an inline anchor.
+
+**Subpages (breadcrumb `Settings › <Section>` + single section content):**
+
+1. **Addresses** (`/account/addresses`)
+   - Header row: "Addresses" title + "+ Add New Address" button (opens a modal/bottom-sheet, not a separate page)
+   - Hint banner directly below the header: amber/warning-tinted, info icon, *"One default address is required to place orders."*
+   - One card per saved address: name label ("Home", "Office"), a `DEFAULT` badge (success-green pill) on the default address only, full address text, phone number, and an action row — `Edit` / `Delete` on the default address, `Set as Default` / `Edit` / `Delete` on others
+   - Desktop shows address cards two-up in a row; mobile stacks them full-width
+
+2. **Payment Method** (`/account/payment-method`)
+   - Header row: "Payment Method" title + "+ Add Payment Method" button (modal/bottom-sheet)
+   - One card per saved method: card brand + masked number + expiry + `DEFAULT` badge for the default card, or a UPI ID for UPI methods; action row is `Remove` (default) or `Set as Default` / `Remove` (others)
+   - Same two-up (desktop) / stacked (mobile) card layout as Addresses
+
+3. **Notifications** (`/account/notifications`)
+   - Three toggle rows in a card, each with a label + one-line description + a switch: **Deals** ("Offers, discounts, and new drops"), **Order Updates** ("Shipping and delivery updates"), **Promotions** ("Flash sales and limited-time deals")
+   - All three use one toggle color (`--color-success`) for the "on" state
+   - Still schema-less/inert — no `tenants` or `customers` column backs these switches yet; wiring them up is unscoped (see §12-equivalent gap in the product spec)
+
+4. **Account** (`/account/actions`)
+   - Readonly profile summary card at the top — name, phone, email, no edit affordance (editing still only happens on the dedicated Edit Profile screen, §4.1d)
+   - Three distinct action rows in a card, in order: **Deactivate Account** (new 2026-07-11, neutral styling, "Temporarily hide your account") / **Delete Account** (danger, "Permanently remove your data") / **Log Out** (danger). Previously Log Out and Delete Account were the only two actions, inline at the bottom of the single long page; Deactivate is a new addition and all three now live together on this subpage instead of inline on the hub.
+
+Live in Paper (Store Front page) as: `Settings — Mobile (Hub)`, `Addresses — Mobile`, `Payment Method — Mobile`, `Notifications — Mobile`, `Account (Actions) — Mobile`, and their desktop counterparts `Addresses — Desktop`, `Payment Method — Desktop`, `Notifications — Desktop`, `Account — Desktop` (desktop hub is the original `Settings — Desktop` artboard, sidebar updated to 5 items). Supersedes the old single `Account Settings — Mobile` / `Settings — Desktop` accordion artboards referenced in v1.7.
+
+---
+
+### 4.1d Storefront — Edit Profile
+
+**Purpose:** Edit the fields that used to live in Settings' "Personal Information" card, now split into its own screen. Reached only from the Account Menu's "Profile" row (§4.1b) — there is no link into this screen from within Settings itself besides the sidebar "Profile" jump link on desktop.
+
+**Fields:**
+- **Full Name** — editable text input
+- **Phone Number** — locked/read-only: greyed input background, a lock icon on the right, and a caption below reading "Phone number cannot be changed." Phone is the OTP login identity, so it's intentionally not self-service editable.
+- **Email Address** — editable text input
+
+**Layout:**
+- Avatar block at the top (gradient circle + initial, "Change Photo" link below it) — mobile centers this under a back-arrow header titled "Edit Profile"; desktop puts it inside the same card as the form fields, to the left of the name, above the fields
+- Desktop wraps the whole form in a single centered card (640px) with a page title + subtext above it ("Edit Profile" / "Update your personal information") and `Cancel` / `Save Changes` buttons bottom-right
+- Mobile is full-bleed fields down the screen with a single full-width `Save Changes` button pinned above the safe area
+
+Live in Paper as `Edit Profile — Mobile` and `Edit Profile — Desktop` (both new 2026-07-11).
 
 **Auth screen (single screen for both Log In and Sign Up):**
 - Rationale: the product spec's OTP flow (mobile number → OTP → session) doesn't distinguish new vs. returning users until after the phone number is verified, so one screen covers both entry points — avoids building near-duplicate Log In / Sign Up screens
