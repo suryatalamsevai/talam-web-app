@@ -6,6 +6,10 @@
 **Author:** Surya Prakash  
 **Version:** 1.6 (Settings hub+subpages; storefront-first delivery)
 
+**Changelog v1.7 (2026-07-11)**
+- **Production domain updated:** `talam4shop.com` is now the production root domain. Root and `www` render the marketing site, `{store}.talam4shop.com` renders the tenant storefront, `{store}.talam4shop.com/admin/*` renders tenant admin, and `admin.talam4shop.com` renders super admin.
+- **Local route bypass added:** `localhost:3000` renders marketing; tenant storefront previews use `/dev/store/silk`, tenant admin previews use `/dev/store/silk/admin/*`, and super admin previews use `/dev/super-admin`. `silk.localhost:3000` remains an optional production-like preview.
+
 **Changelog v1.6 (2026-07-11)**
 - **Profile editing split out of Settings:** The 2026-07-04 decision that folded everything (profile + settings) into a single `/account` page is superseded. Editing your name/phone/email is now a **separate "Edit Profile" screen**, reached only via the "Profile" row in the Account Menu dropdown — not via the Settings page. Phone number is **read-only** on Edit Profile (locked field with a lock icon + "Phone number cannot be changed" caption) since phone is the OTP login identity and isn't meant to be self-service editable.
 - **`/account` becomes a dedicated Settings page:** No more Personal Information card. Content is now three accordion sections — **Addresses**, **Payment Methods**, **Notifications** — plus the existing Account (Log Out / Delete Account) block. Mobile bottom nav's "Account" tab is renamed **"Settings"** (icon swapped from a person glyph to a gear) to match; it still points at the same route.
@@ -14,8 +18,8 @@
 - **Notification toggles unified:** Previously two independent, out-of-sync toggle sets existed — mobile had 2 toggles (Order Notifications, WhatsApp Updates) in one `--color-store-primary`/`#25D366` mix, desktop had 3 differently-labeled toggles (Order Updates, WhatsApp Alerts, Promotions & Offers) with a third toggle in a different color entirely. Now there's one consistent 3-toggle set — **Deals / Order Updates / Promotions** — using a single color (`--color-success`) for the "on" state everywhere. Still schema-less/inert (no backing DB field) — see the `product_categories`-adjacent gap noted in §12; wiring these to a real preference field is unscoped.
 - **Account Menu dropdown gains an Orders row (mobile only):** The mobile "Account Menu (Signed In)" dropdown is now Identity header → **Profile → Orders → Settings** → Log Out (4 action rows instead of 2). The **desktop** dropdown intentionally stays at 2 action rows (Profile, Settings) — Orders is reachable from the header's own Orders/cart affordance on desktop, so no Orders row was added there. This mobile/desktop asymmetry is deliberate, not an oversight.
 - Route/nav updates to §3.2 below.
-- **Implementation order changed to storefront-first:** complete the tenant-facing storefront on localhost root routes first — `/`, `/category/[categorySlug]`, `/product/[slug]`, `/about`, `/cart`, `/checkout`, `/wishlist`, `/account`, `/auth` — using the seeded dev-tenant fallback already noted below. Do not block storefront delivery on wildcard subdomain routing, custom-domain purchase, or proxy setup.
-- **Tenant domain + proxy work explicitly deferred:** production-style tenant host resolution, wildcard DNS, middleware hardening, preview aliases, and proxy/cutover tasks move to the post-purchase launch phase. They remain required for production, but they are no longer a prerequisite for storefront implementation or verification.
+- **Implementation order changed to storefront-first:** complete the tenant-facing storefront through the local `/dev/store/silk` preview routes first — `/`, `/category/[categorySlug]`, `/product/[slug]`, `/about`, `/cart`, `/checkout`, `/wishlist`, `/account`, `/auth` — using the seeded dev-tenant fallback already noted below. Do not block storefront delivery on wildcard subdomain routing, custom-domain purchase, or proxy setup.
+- **Tenant domain + proxy work explicitly deferred:** wildcard DNS and final production cutover remain launch-phase tasks, but host-aware proxy routing and local preview aliases are now implemented for development and pre-production verification.
 
 **Changelog v1.5 (2026-07-09)**
 - **`/shop` is now the tenant default/home route — literally, not via redirect:** The hero-driven storefront home (`HeroBanner`, `CategoryPills`, `FestivalEdit`, `OurStory` components) was retired; that Paper design no longer exists. `/shop`'s content (hero carousel, flash sale bar, occasion/new-arrivals sections, filter sidebar + product grid) now lives at `app/store/page.tsx` (the `/` route) instead of a separate `/shop` path — there is no `/shop` route left in the app, and nothing redirects to one. Category SEO pages move to `/category/[categorySlug]` (not `/shop/[categorySlug]`) — namespaced to avoid a category slug colliding with a static top-level route like `/about` or `/cart`.
@@ -41,7 +45,7 @@
 - **Settings hub:** Now 12 routes nested under Settings (Customers moved out; see above).
 
 **Changelog v1.1 Final (2026-06-25)**
-- **Domain:** Changed from `talam.app` (unavailable) to `mytalam.com`
+- **Domain:** Changed from `talam.app` (unavailable) to `talam4shop.com`
 - **Product categories:** Added `product_categories` table — dynamic, per-tenant, ordered categories
 - **Store identity:** Added `/about` storefront route + `/admin/about` admin route for store story, social links, branch locations
 - **Product reviews:** Added 5-star review system with verified purchase badges, moderation, and report mechanism. New tables: `product_reviews`, `review_reports`
@@ -58,7 +62,7 @@
 ## 1. Product Overview
 
 **Name:** Talam (தளம் — Tamil for "platform/ground")  
-**Domain:** `mytalam.com`  
+**Domain:** `talam4shop.com`  
 **Tagline:** "Your platform. Your business."  
 **Type:** Multi-tenant SaaS e-commerce platform
 
@@ -71,7 +75,7 @@ A Myntra-quality online store builder for any Indian small business — ethnic w
 - Not multi-currency — India-only at launch
 
 ### Store #1
-D'Mystique Boutique (`silk.mytalam.com`) — the owner's own ethnic wear boutique. Used as proof-of-concept, marketing demo, and first viral referral source.
+D'Mystique Boutique (`silk.talam4shop.com`) — the owner's own ethnic wear boutique. Used as proof-of-concept, marketing demo, and first viral referral source.
 
 ---
 
@@ -96,7 +100,7 @@ D'Mystique Boutique (`silk.mytalam.com`) — the owner's own ethnic wear boutiqu
 
 **Product count limit enforcement:** Enforced server-side on `createProduct` Server Action — returns a user-visible error before writing to the DB.
 
-**Referral program:** A store owner who refers a new subscriber earns 1 free month. Tracked via `utm_source=badge&utm_medium=store&utm_campaign={slug}` on the "Powered by Talam" badge link → `/join` landing page on `mytalam.com` captures the referral source.
+**Referral program:** A store owner who refers a new subscriber earns 1 free month. Tracked via `utm_source=badge&utm_medium=store&utm_campaign={slug}` on the "Powered by Talam" badge link → `/join` landing page on `talam4shop.com` captures the referral source.
 
 **Talam subscription billing:** Via Talam's own Razorpay account (separate from tenant payments).
 
@@ -107,19 +111,19 @@ D'Mystique Boutique (`silk.mytalam.com`) — the owner's own ethnic wear boutiqu
 ## 3. Architecture
 
 ### 3.1 Multi-Tenancy Model
-- **Routing:** Wildcard subdomain `*.mytalam.com` — Vercel middleware extracts subdomain → resolves `tenant_id` → injects into request context via `x-tenant-id` / `x-tenant-tier` headers
+- **Routing:** Wildcard subdomain `*.talam4shop.com` — Vercel middleware extracts subdomain → resolves `tenant_id` → injects into request context via `x-tenant-id` / `x-tenant-tier` headers
 - **Database:** Shared PostgreSQL, every table has `tenant_id` UUID foreign key
 - **Isolation:** Supabase Row Level Security (RLS) enforces tenant boundaries at DB level; Prisma `withTenant()` sets `app.tenant_id` session variable before every query
 - **Image isolation:** Cloudinary folder per tenant `/talam/{tenantId}/`
-- **Admin split:** Tenant admin at `{store}.mytalam.com/admin`, Super admin at `admin.mytalam.com`
+- **Admin split:** Tenant admin at `{store}.talam4shop.com/admin`, Super admin at `admin.talam4shop.com`
 
 ### 3.2 App Structure
 
 ```
-mytalam.com/                       → Marketing landing page + pricing page
-{store}.mytalam.com/               → Tenant storefront
-{store}.mytalam.com/admin          → Tenant admin panel
-admin.mytalam.com/                 → Super admin (platform owner)
+talam4shop.com/                       → Marketing landing page + pricing page
+{store}.talam4shop.com/               → Tenant storefront
+{store}.talam4shop.com/admin          → Tenant admin panel
+admin.talam4shop.com/                 → Super admin (platform owner)
 ```
 
 **Storefront routes:**
@@ -180,9 +184,9 @@ Desktop: fixed left sidebar nav (icon-only, expandable), not a top header nav �
 
 **Marketing site routes:**
 ```
-mytalam.com/         Landing page — hero, features, social proof
-mytalam.com/pricing  Plan comparison — Trial / Starter / Pro feature table + CTA
-mytalam.com/join     Referral landing page — captures utm_campaign={slug} for attribution
+talam4shop.com/         Landing page — hero, features, social proof
+talam4shop.com/pricing  Plan comparison — Trial / Starter / Pro feature table + CTA
+talam4shop.com/join     Referral landing page — captures utm_campaign={slug} for attribution
 ```
 
 ### 3.3 Rendering Strategy
@@ -238,7 +242,7 @@ Payment webhook received → verify signature → mark order PAID
 | OG cards | @vercel/og | — | Free |
 | Analytics | PostHog | — | Free (1M events) |
 | Hosting | Vercel Pro | — | $20/mo (~₹1,700) |
-| Domain | mytalam.com via Cloudflare | — | ~$10/yr (~₹850) |
+| Domain | talam4shop.com via Cloudflare | — | ~$10/yr (~₹850) |
 | DNS | Vercel nameservers | — | Free |
 
 **Total infra cost before first tenant: ₹1,890/mo**
@@ -274,7 +278,7 @@ User enters phone → rate limit check (Upstash Redis: 5/10 min per phone)
 tenants
   id uuid PK
   owner_id uuid FK → auth.users  -- Supabase Auth user who created the store
-  slug text UNIQUE               -- "silk" in silk.mytalam.com
+  slug text UNIQUE               -- "silk" in silk.talam4shop.com
   name text
   tier enum('trial','starter','pro')
   trial_ends_at timestamptz
@@ -517,10 +521,10 @@ Supabase session management unbroken. Hook signature verified with HMAC-SHA256.
 ### DNS Setup
 ```
 Domain registrar: Cloudflare (at-cost pricing, no markup)
-Domain: mytalam.com
+Domain: talam4shop.com
 Nameservers: ns1.vercel-dns.com + ns2.vercel-dns.com (required for wildcard SSL)
-Vercel project: Add mytalam.com + *.mytalam.com wildcard domain
-Email subdomain: mail.mytalam.com (Resend SPF/DKIM DNS records added via Vercel DNS)
+Vercel project: Add talam4shop.com + *.talam4shop.com wildcard domain
+Email subdomain: mail.talam4shop.com (Resend SPF/DKIM DNS records added via Vercel DNS)
 SSL: Auto-provisioned by Vercel via Let's Encrypt (wildcard cert requires Vercel nameservers)
 ```
 
@@ -531,7 +535,7 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=
 NEXT_PUBLIC_POSTHOG_KEY=
-NEXT_PUBLIC_ROOT_DOMAIN=mytalam.com     # used in middleware, OG cards, badge links
+NEXT_PUBLIC_ROOT_DOMAIN=talam4shop.com     # used in middleware, OG cards, badge links
 
 # ─── SERVER ONLY (never add NEXT_PUBLIC_ prefix) ─────────────────────────────
 SUPABASE_SERVICE_ROLE_KEY=
@@ -575,11 +579,11 @@ Women-owned ethnic wear, handicrafts, or homemade food businesses in Tier 1–2 
 | **Viral loop** | "Powered by Talam" badge → `/join?utm_campaign={slug}` → signup → referrer gets 1 free month |
 | **WhatsApp preview** | `@vercel/og` generates 1200×630 card when store link shared — brand color + product image |
 | **Paid (Month 2)** | Instagram Reels ads, ₹5–10K/mo, Tamil Nadu women business owners 25–45 |
-| **SEO** | Per-tenant category pages (`silk.mytalam.com/category/sarees`) — indexable, shareable URLs |
-| **Pricing page** | `mytalam.com/pricing` — public plan comparison with "Start free" CTA, no credit card required |
+| **SEO** | Per-tenant category pages (`silk.talam4shop.com/category/sarees`) — indexable, shareable URLs |
+| **Pricing page** | `talam4shop.com/pricing` — public plan comparison with "Start free" CTA, no credit card required |
 
 ### Referral Attribution
-- "Powered by Talam" badge on trial stores links to `mytalam.com/join?utm_source=badge&utm_medium=store&utm_campaign={slug}`
+- "Powered by Talam" badge on trial stores links to `talam4shop.com/join?utm_source=badge&utm_medium=store&utm_campaign={slug}`
 - `/join` page reads `utm_campaign`, shows: *"You found us via {store name}. They get 1 free month when you subscribe."*
 - On successful subscription, referrer's `trial_ends_at` extended by 30 days (super admin action or Razorpay webhook)
 
@@ -638,7 +642,7 @@ Triggered by Vercel Cron — checks tenant state daily:
 - **Integrations:** SMS fallback for owner/customer alerts when WhatsApp contact-check fails (V1 fallback is email-only, see §3.4/§4/Changelog v1.4), Vyapar CSV export for accounting sync, custom domain per Pro tenant (Vercel Domains API)
 
 **Resolved questions (moved from backlog):**
-- ~~Domain `talam.app`~~ → **`mytalam.com`** (registered) — v1.1
+- ~~Domain `talam.app`~~ → **`talam4shop.com`** (registered) — v1.1
 - ~~Free-text category field~~ → **`product_categories` FK table** (v1.1)
 - ~~No referral tracking~~ → **UTM + `/join` page** (v1.1)
 - ~~No social proof / reviews~~ → **Product reviews + verified purchase badges** (v1.1)

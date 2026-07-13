@@ -51,9 +51,9 @@
 - Onboarding wizard step count corrected from "6-step" to 5-step in §3 (the wizard itself, §4.7, was already correct)
 
 **Changelog v1.1 (2026-06-25)**
-- Domain updated: `talam.app` → `mytalam.com` throughout
+- Domain updated: `talam.app` → `talam4shop.com` throughout
 - Added `/shop/[categorySlug]` SEO route to storefront section
-- Added `mytalam.com/pricing` and `mytalam.com/join` to marketing site scope
+- Added `talam4shop.com/pricing` and `talam4shop.com/join` to marketing site scope
 - **NEW:** Storefront `/about` page — store story, owner photo, social links, trust stats, branch locations
 - **NEW:** Storefront `/wishlist` page design specs
 - **NEW:** Product reviews UI — individual review cards, verified purchase badges, review filtering, report mechanism
@@ -68,7 +68,7 @@
 
 Talam is an open-source multi-tenant e-commerce SaaS platform built for Indian small businesses. We are looking for design contributions across two surfaces:
 
-1. **Storefront** — what customers see when they visit a store (e.g. `silk.mytalam.com`)
+1. **Storefront** — what customers see when they visit a store (e.g. `silk.talam4shop.com`)
 2. **Tenant Admin Panel** — what store owners use to manage products, orders, and settings (mobile-first)
 
 This document gives you everything you need to contribute designs without writing code.
@@ -1382,9 +1382,9 @@ Talam Design/
 ├── 03 - Onboarding/
 │   └── 5-Step Wizard
 └── 04 - Marketing Site/
-    ├── mytalam.com landing page
-    ├── mytalam.com/pricing (plan comparison)
-    └── mytalam.com/join (referral landing)
+    ├── talam4shop.com landing page
+    ├── talam4shop.com/pricing (plan comparison)
+    └── talam4shop.com/join (referral landing)
 ```
 
 ### Naming Convention
@@ -1459,7 +1459,7 @@ Designers: these are the **exact token names from the live Paper file** (44 toke
 2. **Tenant Admin — Mobile dashboard** (most used by store owners)
 3. **Onboarding wizard** (first experience — sets expectations)
 4. **Checkout flow** (trust = conversion)
-5. **mytalam.com marketing site** — landing page, `/pricing` plan comparison, `/join` referral page (acquisition)
+5. **talam4shop.com marketing site** — landing page, `/pricing` plan comparison, `/join` referral page (acquisition)
 6. **Empty states** (polish, delight)
 7. **Illustration set** (empty states, onboarding, success screens)
 

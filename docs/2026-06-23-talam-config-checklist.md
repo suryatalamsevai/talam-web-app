@@ -1,7 +1,7 @@
 # Talam — Configuration Checklist
 
 **Date:** 2026-07-03 (revised)
-**Domain:** `mytalam.com` (production only — not needed for development)
+**Domain:** `talam4shop.com` (production only — not needed for development)
 **Status:** Pre-launch setup reference
 
 > Work top-to-bottom. Each section has **Configure → Test → Validate** steps, and every step is its own checkbox.
@@ -13,12 +13,12 @@
 
 ## Local dev model (read this first)
 
-- [ ] Understand: root app runs at `http://localhost:3000`. No domain needed for local dev.
-- [ ] Understand: the current implementation plan treats localhost root routes as the primary storefront delivery surface. Build and verify `/`, `/category/[categorySlug]`, `/product/[slug]`, `/about`, `/cart`, `/checkout`, `/wishlist`, `/account`, and `/auth` here first.
-- [ ] Understand: per-tenant subdomains (`silk.mytalam.com` in prod) are **not reliably testable on localhost** — `*.localhost` subdomain routing depends on OS/browser support and is flaky.
-- [ ] Defer subdomain-routing, proxy, and wildcard-domain validation until the storefront routes above are complete and a real domain purchase is in motion.
-- [ ] Plan to use a **Vercel preview deployment** later to test subdomain routing instead of fighting `/etc/hosts` (per [phase-1-foundation plan](superpowers/plans/2026-06-23-talam-phase-1-foundation.md) — Vercel gives every deployment a `*.vercel.app` URL, and you can add a preview-only wildcard alias). Details in §J.
-- [ ] Note: every third-party service below has a **sandbox/test mode** that works without `mytalam.com` existing — use it. Each section calls out the dev-mode shortcut.
+- [ ] Understand: `http://localhost:3000` is the local marketing root. No domain is needed for local dev.
+- [ ] Understand: tenant storefront preview uses `http://localhost:3000/dev/store/silk`. Build and verify `/dev/store/silk`, `/dev/store/silk/category/[categorySlug]`, `/dev/store/silk/product/[slug]`, `/dev/store/silk/about`, `/dev/store/silk/cart`, `/dev/store/silk/checkout`, `/dev/store/silk/wishlist`, `/dev/store/silk/account`, and `/dev/store/silk/auth` before production cutover.
+- [ ] Understand: tenant admin preview uses `http://localhost:3000/dev/store/silk/admin/dashboard`, and super admin preview uses `http://localhost:3000/dev/super-admin`.
+- [ ] Optional: `http://silk.localhost:3000` remains available as a production-like tenant host preview when your browser resolves `*.localhost`.
+- [ ] Plan to use a **Vercel preview deployment** later for HTTPS wildcard-domain validation before production cutover. Details in §J.
+- [ ] Note: every third-party service below has a **sandbox/test mode** that works without `talam4shop.com` existing; use it. Each section calls out the dev-mode shortcut.
 
 ---
 
@@ -174,7 +174,7 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public
 
 ## §E. Resend — Transactional Email (dev mode)
 
-> In dev, skip domain verification — Resend lets you send from `onboarding@resend.dev` to your own verified address with zero DNS setup. Custom domain (`mail.mytalam.com`) is a §K production step.
+> In dev, skip domain verification — Resend lets you send from `onboarding@resend.dev` to your own verified address with zero DNS setup. Custom domain (`mail.talam4shop.com`) is a §K production step.
 
 **Configure**
 - [ ] Create account at [resend.com](https://resend.com)
@@ -338,64 +338,64 @@ Run once §A–§J are wired up.
 
 ## §K. Production Domain Cutover (deferred — do this last, right before launch)
 
-> Nothing in §A–§J depends on this section. Come back here once the storefront is feature-complete on localhost and you're ready to go live on `mytalam.com`.
+> Nothing in §A–§J depends on this section. Come back here once the storefront is feature-complete on localhost and you're ready to go live on `talam4shop.com`.
 
 ### §K1. Domain Registration
 **Configure**
 - [ ] Go to [Cloudflare Registrar](https://www.cloudflare.com/products/registrar/)
-- [ ] Search `mytalam.com`
+- [ ] Search `talam4shop.com`
 - [ ] Confirm availability and pricing (at-cost, no markup)
 - [ ] Register the domain (note: `talam.co.in` is taken by an unrelated MSME consultancy — avoid it)
 - [ ] Complete payment and registrant contact details
 
 **Validate**
-- [ ] `mytalam.com` shows under Cloudflare → **Registrar → Domains**
+- [ ] `talam4shop.com` shows under Cloudflare → **Registrar → Domains**
 
 ### §K2. Cloudflare — Nameserver Handoff to Vercel
 > ⚠️ Cloudflare is registrar only. Nameservers must point to Vercel for wildcard SSL (DNS-01 challenge). No Cloudflare proxy/WAF — Vercel terminates SSL.
 
 **Configure**
-- [ ] Go to Cloudflare → `mytalam.com` → **DNS → Nameservers**
+- [ ] Go to Cloudflare → `talam4shop.com` → **DNS → Nameservers**
 - [ ] Set nameservers to `ns1.vercel-dns.com` and `ns2.vercel-dns.com`
 - [ ] Confirm no existing DNS records are set to orange-cloud (proxied) — all must be grey-cloud
 - [ ] Save changes
 
 **Test**
-- [ ] Run `nslookup mytalam.com` after allowing up to 48h propagation
-- [ ] Run `nslookup silk.mytalam.com` after propagation
+- [ ] Run `nslookup talam4shop.com` after allowing up to 48h propagation
+- [ ] Run `nslookup silk.talam4shop.com` after propagation
 
 **Validate**
-- [ ] `dig NS mytalam.com` returns the two Vercel nameservers
+- [ ] `dig NS talam4shop.com` returns the two Vercel nameservers
 - [ ] Propagation confirmed via [dnschecker.org](https://dnschecker.org)
 - [ ] No Cloudflare proxy active
 
 ### §K3. Vercel — Attach Production Domains
 **Configure**
 - [ ] Go to the Vercel project → **Settings → Domains**
-- [ ] Add `mytalam.com`
-- [ ] Add `*.mytalam.com`
+- [ ] Add `talam4shop.com`
+- [ ] Add `*.talam4shop.com`
 - [ ] Wait for SSL to auto-provision via Let's Encrypt (requires §K2 nameservers to already point at Vercel)
 - [ ] Confirm the `main` branch is set as the **Production Branch**
 - [ ] Promote the latest `main` deployment to production if not already live
 
 **Test**
-- [ ] Visit `https://mytalam.com`
-- [ ] Visit `https://test.mytalam.com`
+- [ ] Visit `https://talam4shop.com`
+- [ ] Visit `https://test.talam4shop.com`
 
 **Validate**
-- [ ] `mytalam.com` shows green padlock, no certificate warning
-- [ ] `*.mytalam.com` wildcard certificate issued (Vercel → Domains)
+- [ ] `talam4shop.com` shows green padlock, no certificate warning
+- [ ] `*.talam4shop.com` wildcard certificate issued (Vercel → Domains)
 - [ ] Deployment status **Ready**
 
 ### §K4. Resend — Verify Production Sending Domain
 **Configure**
 - [ ] Go to Resend → **Domains → Add Domain**
-- [ ] Enter `mail.mytalam.com`
+- [ ] Enter `mail.talam4shop.com`
 - [ ] Copy the SPF (TXT) record Resend provides → add to Vercel DNS
 - [ ] Copy the DKIM (CNAME ×2–3) records Resend provides → add to Vercel DNS
 - [ ] Wait for DNS propagation
 - [ ] Confirm the green verification tick appears in Resend → **Domains**
-- [ ] Update application code: switch `from:` to `orders@mail.mytalam.com`
+- [ ] Update application code: switch `from:` to `orders@mail.talam4shop.com`
 - [ ] Update `RESEND_API_KEY` in Vercel Production environment variables if using a different key for prod
 
 **Test**
@@ -438,7 +438,7 @@ Run once §A–§J are wired up.
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Settings → API | ✅ Public |
 | `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | Cloudinary → Dashboard | ✅ Public |
 | `NEXT_PUBLIC_POSTHOG_KEY` | PostHog → Project Settings | ✅ Public |
-| `NEXT_PUBLIC_ROOT_DOMAIN` | `mytalam.com` in production | ✅ Public |
+| `NEXT_PUBLIC_ROOT_DOMAIN` | `talam4shop.com` in production | ✅ Public |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Settings → API | 🔴 Server only |
 | `DATABASE_URL` | Supabase → Settings → Database (`talam_app_user`) | 🔴 Server only |
 | `DATABASE_URL_SERVICE_ROLE` | Supabase → Settings → Database (`postgres`) | 🔴 Server only |
@@ -464,9 +464,9 @@ Run once §A–§J are wired up.
 - [ ] `git grep NEXT_PUBLIC_SUPABASE_SERVICE` returns no results
 
 ### §K7. Production Smoke Test
-- [ ] Visit `https://mytalam.com` — marketing page loads
-- [ ] Visit `https://silk.mytalam.com` — tenant storefront loads (wildcard works)
-- [ ] Visit `https://silk.mytalam.com/admin` — tenant admin panel loads
+- [ ] Visit `https://talam4shop.com` — marketing page loads
+- [ ] Visit `https://silk.talam4shop.com` — tenant storefront loads (wildcard works)
+- [ ] Visit `https://silk.talam4shop.com/admin` — tenant admin panel loads
 - [ ] Phone OTP works against production
 - [ ] Google login works against production
 - [ ] Image upload works against production

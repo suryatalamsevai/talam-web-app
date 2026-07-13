@@ -11,6 +11,7 @@
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-playfair);
   --font-body: var(--font-dm-sans);
+  --font-admin: var(--font-admin);
 
   /* Paper design tokens (Talam Design file, content hash 42f27fdd). Colours
      are added as needed per screen to avoid silently re-theming already-
@@ -93,6 +94,7 @@
 }
 
 :root {
+  --font-admin: system-ui, sans-serif;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
