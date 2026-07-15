@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronRight, Clock, Package, AlertTriangle } from 'lucide-react'
+import { ChevronRight, Clock, Package, AlertTriangle, ExternalLink } from 'lucide-react'
 
 type MockStat = { label: string; value: string; change: string; up: boolean }
 const MOCK_STATS: MockStat[] = [
@@ -110,6 +110,18 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="mx-auto max-w-[390px] md:max-w-none">
+      <div className="flex justify-end px-4 pt-3 md:px-0 md:pt-0">
+        <a
+          href="/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 text-sm font-medium text-brand-primary"
+        >
+          See live store
+          <ExternalLink className="size-3.5" />
+        </a>
+      </div>
+
       {/* Time filter pills — scrollable with hidden scrollbar */}
       <div className="-mx-4 flex gap-2 overflow-x-auto px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:mx-0 md:px-0 md:pb-4">
         {TABS.map((tab) => (

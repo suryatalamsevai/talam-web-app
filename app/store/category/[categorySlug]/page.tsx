@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { getDevTenantId } from '@/lib/data/tenant'
+import { getRequestTenantId } from '@/lib/data/tenant'
 import { getCategories, getProducts } from '@/lib/data/products'
 import { ProductGrid } from '@/components/store/product-grid'
 
@@ -8,14 +8,14 @@ type Props = { params: Promise<{ categorySlug: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { categorySlug } = await params
-  const tenantId = await getDevTenantId()
+  const tenantId = await getRequestTenantId()
   const category = tenantId ? (await getCategories(tenantId)).find(c => c.slug === categorySlug) : null
   return category ? { title: category.name } : {}
 }
 
 export default async function CategoryPage({ params }: Props) {
   const { categorySlug } = await params
-  const tenantId = await getDevTenantId()
+  const tenantId = await getRequestTenantId()
   const category = tenantId ? (await getCategories(tenantId)).find(c => c.slug === categorySlug) : null
   if (!category || !tenantId) notFound()
 

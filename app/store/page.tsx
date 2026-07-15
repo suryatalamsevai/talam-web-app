@@ -1,11 +1,11 @@
 import { notFound } from 'next/navigation'
-import { getDevTenantId, getTenantStorefront } from '@/lib/data/tenant'
+import { getRequestTenantId, getTenantStorefront } from '@/lib/data/tenant'
 import { getStoreBanners, getStorePromotions, getProductTags } from '@/lib/data/storefront'
 import { getCategories, getProducts } from '@/lib/data/products'
 import { StorePageClient } from './store-page-client'
 
 export default async function StorePage() {
-  const tenantId = await getDevTenantId()
+  const tenantId = await getRequestTenantId()
   if (!tenantId) return notFound()
 
   const [tenant, banners, promotions, tags, categories, products] = await Promise.all([

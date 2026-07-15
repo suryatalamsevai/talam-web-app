@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { getDevTenantId, getTenantStorefront } from '@/lib/data/tenant'
+import { getRequestTenantId, getTenantStorefront } from '@/lib/data/tenant'
 import { getProductBySlug, getProductReviews } from '@/lib/data/products'
 import { AddToCartButton } from '@/components/store/add-to-cart-button'
 import { ReviewsSection } from '@/components/store/reviews-section'
@@ -13,7 +13,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const tenantId = await getDevTenantId()
+  const tenantId = await getRequestTenantId()
   const product = tenantId ? await getProductBySlug(tenantId, slug) : null
   if (!product) return {}
 
@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProductPage({ params }: Props) {
   const { slug } = await params
-  const tenantId = await getDevTenantId()
+  const tenantId = await getRequestTenantId()
   const product = tenantId ? await getProductBySlug(tenantId, slug) : null
   if (!product || !tenantId) notFound()
 

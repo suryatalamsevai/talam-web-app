@@ -1,10 +1,10 @@
 import { notFound } from 'next/navigation'
-import { getDevTenantId, getTenantStorefront, getBranches } from '@/lib/data/tenant'
+import { getRequestTenantId, getTenantStorefront, getBranches } from '@/lib/data/tenant'
 import { AboutHero } from '@/components/store/about-hero'
 import { VisitUs } from '@/components/store/visit-us'
 
 export default async function AboutPage() {
-  const tenantId = await getDevTenantId()
+  const tenantId = await getRequestTenantId()
   const tenant = tenantId ? await getTenantStorefront(tenantId) : null
   if (!tenant) notFound()
   const branches = await getBranches(tenantId!)

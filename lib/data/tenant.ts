@@ -1,3 +1,4 @@
+import { headers } from 'next/headers'
 import { prisma, withTenant } from '@/lib/prisma'
 
 export type TenantStorefront = {
@@ -94,6 +95,13 @@ export async function getTenantStorefront(tenantId: string): Promise<TenantStore
 // localhost. Dev-only fallback resolves a seeded tenant by slug so /store
 // renders without simulating a subdomain. Real middleware, when built,
 // makes this dead in production (NODE_ENV check) and unnecessary in dev.
+// Reads the tenant resolved by proxy.ts (x-tenant-id header) for real subdomains,
+// falling back to the dev-only seeded tenant on localhost.
+export async function getRequestTenantId(): Promise<string | null> {
+  const headersList = await headers()
+  return headersList.get('x-tenant-id') ?? (await getDevTenantId())
+}
+
 export async function getDevTenantId(): Promise<string | null> {
   if (process.env.NODE_ENV !== 'development') return null
   const slug = process.env.TALAM_DEV_TENANT_SLUG ?? 'dmystique'
