@@ -1,5 +1,5 @@
-import Link from 'next/link'
 import type { TenantStorefront } from '@/lib/data/tenant'
+import { StoreLink } from '@/components/store/store-context'
 import type { CategoryMeta } from '@/lib/data/products'
 
 type Props = {
@@ -73,11 +73,13 @@ const socialIconPaths = {
   ),
 } as const
 
-function SocialIcons({ tenant, dark }: { tenant: Props['tenant']; dark: boolean }) {
+function SocialIcons({ tenant, dark, size = 'md' }: { tenant: Props['tenant']; dark: boolean; size?: 'sm' | 'md' }) {
   const iconColor = dark ? 'rgb(255 255 255 / 70%)' : 'var(--color-fg)'
+  const sizeClass = size === 'sm' ? 'size-9' : 'size-10'
+  const gapClass = size === 'sm' ? 'gap-2' : 'gap-[10px]'
   const wrapperClass = dark
-    ? 'flex size-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5'
-    : 'flex size-10 shrink-0 items-center justify-center rounded-full border border-border bg-surface'
+    ? `flex ${sizeClass} shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5`
+    : `flex ${sizeClass} shrink-0 items-center justify-center rounded-full border border-border bg-surface`
 
   const socials = [
     { href: tenant.about?.instagramUrl, label: 'Instagram' as const },
@@ -89,7 +91,7 @@ function SocialIcons({ tenant, dark }: { tenant: Props['tenant']; dark: boolean 
   if (socials.length === 0) return null
 
   return (
-    <div className="flex gap-[10px]">
+    <div className={`flex ${gapClass}`}>
       {socials.map((social) => (
         <a key={social.label} href={social.href} target="_blank" rel="noreferrer" className={wrapperClass} aria-label={social.label}>
           <svg width="17" height="17" viewBox="0 0 24 24" fill={iconColor} stroke={iconColor}>
@@ -174,16 +176,16 @@ export function StoreFooter({ tenant, categories }: Props) {
             <div className="mb-5 text-[10px] leading-3 font-bold tracking-[0.12em] text-white/30 uppercase">Shop</div>
             <div className="flex flex-col gap-[13px]">
               {categories.map((category) => (
-                <Link key={category.id} href={`/?category=${category.slug}`} className="text-md/snug text-white/75">
+                <StoreLink key={category.id} href={`/?category=${category.slug}`} className="text-md/snug text-white/75">
                   {category.name}
-                </Link>
+                </StoreLink>
               ))}
-              <Link href="/" className="text-md/snug text-white/75">
+              <StoreLink href="/" className="text-md/snug text-white/75">
                 New Arrivals
-              </Link>
-              <Link href="/?category=sale" className="text-md/snug font-semibold text-store-primary">
+              </StoreLink>
+              <StoreLink href="/?category=sale" className="text-md/snug font-semibold text-store-primary">
                 Sale Items
-              </Link>
+              </StoreLink>
             </div>
           </div>
 
@@ -191,13 +193,13 @@ export function StoreFooter({ tenant, categories }: Props) {
             <div className="mb-5 text-[10px] leading-3 font-bold tracking-[0.12em] text-white/30 uppercase">Help</div>
             <div className="flex flex-col gap-[13px]">
               {desktopHelpLinks.map((link) => (
-                <Link key={link.href} href={link.href} className="text-md/snug text-white/75">
+                <StoreLink key={link.href} href={link.href} className="text-md/snug text-white/75">
                   {link.label}
-                </Link>
+                </StoreLink>
               ))}
-              <Link href={tenant.sizeGuideUrl ?? '/size-guide'} className="text-md/snug text-white/75">
+              <StoreLink href={tenant.sizeGuideUrl ?? '/size-guide'} className="text-md/snug text-white/75">
                 Size Guide
-              </Link>
+              </StoreLink>
             </div>
           </div>
 
@@ -245,42 +247,45 @@ export function StoreFooter({ tenant, categories }: Props) {
 
       {/* Mobile */}
       <div className="relative border-t border-border bg-bg lg:hidden">
-        <div className="border-b border-border px-5 pt-7 pb-5">
-          <div className="mb-1 font-heading text-xl/relaxed font-bold text-fg">{tenant.name}</div>
-          {tenant.tagline && <div className="text-xs leading-[140%] text-muted-warm">{tenant.tagline}</div>}
-        </div>
+        <div className="flex flex-col gap-7 px-5 pt-8 pb-7">
+          <div>
+            <div className="mb-1 font-heading text-xl/relaxed font-bold text-fg">{tenant.name}</div>
+            {tenant.tagline && <div className="text-xs leading-[140%] text-muted-warm">{tenant.tagline}</div>}
+          </div>
 
-        <div className="flex flex-wrap gap-x-5 gap-y-2 border-b border-border px-5 py-4">
-          {footerLinks.map((link, i) => (
-            <Link key={link.href} href={link.href} className={i === 0 ? 'text-sm/tight font-medium text-fg' : 'text-sm/tight text-muted-warm'}>
-              {link.label}
-            </Link>
-          ))}
-        </div>
-
-        {contactRows.length > 0 && (
-          <div className="flex flex-col gap-2.5 border-b border-border px-5 py-4">
-            {contactRows.map((row) => (
-              <div key={row.label} className="flex items-start gap-2.5">
-                <span className="mt-px shrink-0">
-                  <ContactIcon icon={row.icon} color="var(--color-muted-warm)" />
-                </span>
-                <span className="whitespace-pre-line text-sm/tight text-fg">{row.value}</span>
-              </div>
+          <div className="flex flex-wrap gap-x-5 gap-y-2">
+            {footerLinks.map((link, i) => (
+              <StoreLink key={link.href} href={link.href} className={i === 0 ? 'text-sm/tight font-medium text-fg' : 'text-sm/tight text-muted-warm'}>
+                {link.label}
+              </StoreLink>
             ))}
           </div>
-        )}
 
-        {(tenant.about?.instagramUrl || tenant.about?.facebookUrl || tenant.about?.youtubeUrl || tenant.whatsappNumber) && (
-          <div className="border-b border-border px-5 py-4">
-            <div className="mb-3 text-2xs/[14px] font-semibold tracking-wide text-muted-warm uppercase">Follow us</div>
-            <SocialIcons tenant={tenant} dark={false} />
-          </div>
-        )}
+          {contactRows.length > 0 && (
+            <div className="flex flex-col gap-2.5">
+              {contactRows.map((row) => (
+                <div key={row.label} className="flex items-start gap-2.5">
+                  <span className="mt-px shrink-0">
+                    <ContactIcon icon={row.icon} color="var(--color-muted-warm)" />
+                  </span>
+                  <span className="whitespace-pre-line text-sm/tight text-fg">{row.value}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
-        <div className="flex items-center justify-between px-5 py-3.5">
+          {(tenant.about?.instagramUrl || tenant.about?.facebookUrl || tenant.about?.youtubeUrl || tenant.whatsappNumber) && (
+            <div>
+              <div className="mb-3 text-2xs/[14px] font-semibold tracking-wide text-muted-warm uppercase">Follow us</div>
+              <SocialIcons tenant={tenant} dark={false} size="sm" />
+            </div>
+          )}
+
           <div className="text-2xs/[14px] text-muted-warm">© {new Date().getFullYear()} {tenant.name}</div>
-          <div className="inline-flex items-center gap-[5px] rounded-full border border-border px-2.5 py-1">
+        </div>
+
+        <div className="flex justify-center border-t border-border/60 py-4">
+          <div className="inline-flex items-center gap-[5px] rounded-full border border-border px-3 py-1">
             <span className="text-[10px] leading-3 text-muted-warm">Powered by</span>
             <span className="text-[10px] leading-3 font-bold text-brand-primary">talam</span>
           </div>

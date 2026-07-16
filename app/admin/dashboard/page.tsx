@@ -1,14 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronRight, Clock, Package, AlertTriangle, ExternalLink } from 'lucide-react'
+import { ChevronRight, Clock, Package, AlertTriangle, ExternalLink, TrendingUp, TrendingDown } from 'lucide-react'
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
 type MockStat = { label: string; value: string; change: string; up: boolean }
 const MOCK_STATS: MockStat[] = [
-  { label: 'Revenue', value: '₹24,500', change: '+18% vs yesterday', up: true },
-  { label: 'Orders', value: '38', change: '-5% vs yesterday', up: false },
-  { label: 'Customers', value: '142', change: '+3 new today', up: true },
-  { label: 'Avg Order Value', value: '₹645', change: '+₹120 vs yesterday', up: true },
+  { label: 'Revenue', value: '₹24,500', change: '+18%', up: true },
+  { label: 'Orders', value: '38', change: '-5%', up: false },
+  { label: 'Customers', value: '142', change: '+3', up: true },
+  { label: 'Avg Order', value: '₹645', change: '+₹120', up: true },
 ]
 
 type MockAlert = { text: string; sub: string; tone: 'amber' | 'danger'; icon: typeof Clock }
@@ -25,113 +26,55 @@ const MOCK_ORDERS: MockOrder[] = [
   { code: '#1043', time: 'Yesterday', customer: 'Ananya Patel', items: '3× Cotton Kurta', price: '₹2,100', status: 'Delivered', statusColor: 'bg-success-bg text-[#065F46]' },
 ]
 
-type MockProduct = { name: string; sold: string; stock: string; stockColor: string; bg: string; iconColor: string }
+type MockProduct = { name: string; sold: string; stock: string; stockColor: string }
 const MOCK_PRODUCTS: MockProduct[] = [
-  { name: 'Cotton Kurta Set', sold: '24 sold', stock: 'In stock', stockColor: 'text-success', bg: 'bg-[#EDE9FE]', iconColor: 'text-brand-primary' },
-  { name: 'Silk Banarasi Saree', sold: '18 sold', stock: 'Low (3 left)', stockColor: 'text-amber', bg: 'bg-[#FEF3C7]', iconColor: 'text-amber' },
-  { name: 'Anarkali Suit', sold: '15 sold', stock: 'In stock', stockColor: 'text-success', bg: 'bg-[#DBEAFE]', iconColor: 'text-[#3B82F6]' },
+  { name: 'Cotton Kurta Set', sold: '24 sold', stock: 'In stock', stockColor: 'text-success' },
+  { name: 'Silk Banarasi Saree', sold: '18 sold', stock: 'Low (3 left)', stockColor: 'text-amber' },
+  { name: 'Anarkali Suit', sold: '15 sold', stock: 'In stock', stockColor: 'text-success' },
 ]
 
 const TABS = ['Today', 'Yesterday', 'This Week', 'This Month']
 
-// Smooth cubic bezier curve matching Paper's chart shape
-const CHART_LINE = 'M0,130 C20,125 40,115 57,105 C74,95 90,75 114,65 C138,55 150,58 171,55 C192,52 210,42 228,38 C246,34 265,32 285,35 C305,38 322,48 342,42 C362,36 380,22 400,15'
-const CHART_FILL = CHART_LINE + ' L400,150 L0,150 Z'
-const CHART_DOTS: [number, number][] = [[0, 130], [57, 105], [114, 65], [171, 55], [228, 38], [285, 35], [342, 42], [400, 15]]
+type RevenuePoint = { day: string; revenue: number }
+const REVENUE_TREND: RevenuePoint[] = [
+  { day: 'Mon', revenue: 4000 },
+  { day: 'Tue', revenue: 9000 },
+  { day: 'Wed', revenue: 17000 },
+  { day: 'Thu', revenue: 19000 },
+  { day: 'Fri', revenue: 22400 },
+  { day: 'Sat', revenue: 23000 },
+  { day: 'Sun', revenue: 27000 },
+]
 
-function BagIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-      <line x1="3" y1="6" x2="21" y2="6" />
-      <path d="M16 10a4 4 0 01-8 0" />
-    </svg>
-  )
-}
-
-function ActionRequiredSection() {
-  return (
-    <section className="px-4 py-4 md:px-0">
-      <p className="mb-2 text-xs font-bold uppercase tracking-wide text-danger">Action Required</p>
-      <div className="flex flex-col gap-2">
-        {MOCK_ALERTS.map((alert) => {
-          const Icon = alert.icon
-          return (
-            <button
-              key={alert.text}
-              className={`flex w-full cursor-pointer items-center gap-3 rounded-xl px-[14px] py-3 text-left transition-colors hover:brightness-95 ${
-                alert.tone === 'amber'
-                  ? 'border-l-[3px] border-l-amber bg-[#F59E0B0F]'
-                  : 'border-l-[3px] border-l-danger bg-[#EF44440F]'
-              }`}
-            >
-              <Icon className={`size-5 shrink-0 ${alert.tone === 'amber' ? 'text-amber' : 'text-danger'}`} strokeWidth={2} />
-              <div className="min-w-0 grow">
-                <p className="text-sm font-semibold text-fg">{alert.text}</p>
-                <p className="text-xs text-muted-warm">{alert.sub}</p>
-              </div>
-              <ChevronRight className="size-4 shrink-0 text-muted-warm" />
-            </button>
-          )
-        })}
-      </div>
-    </section>
-  )
-}
-
-function TopProductsSection() {
-  return (
-    <section className="px-4 py-4 md:px-0">
-      <div className="mb-3 flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-warm">Top Products</p>
-        <button className="cursor-pointer text-sm font-medium text-brand-primary">View all</button>
-      </div>
-      {/* Mobile: horizontal scroll cards. Desktop: vertical list */}
-      <div className="flex gap-3 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex-col md:overflow-visible">
-        {MOCK_PRODUCTS.map((product) => (
-          <div key={product.name} className="flex shrink-0 cursor-pointer flex-col rounded-xl border border-border p-3 transition-colors hover:bg-bg md:flex-row md:items-center md:gap-3 md:p-[14px]" style={{ minWidth: '140px' }}>
-            <div className={`mb-2 flex size-12 items-center justify-center rounded-xl ${product.bg} md:mb-0`}>
-              <BagIcon className={`size-6 ${product.iconColor}`} />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-fg">{product.name}</p>
-              <p className="text-xs text-muted-warm">{product.sold}</p>
-              <p className={`text-xs font-semibold ${product.stockColor}`}>{product.stock}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  )
-}
+const TODAY = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })
 
 export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState('This Week')
 
   return (
-    <div className="mx-auto max-w-[390px] md:max-w-none">
-      <div className="flex justify-end px-4 pt-3 md:px-0 md:pt-0">
-        <a
-          href="/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1.5 text-sm font-medium text-brand-primary"
-        >
-          See live store
-          <ExternalLink className="size-3.5" />
+    <div className="px-4 pb-24 md:px-0 md:pb-0">
+
+      {/* ── Header ── */}
+      <div className="flex items-end justify-between pb-5 pt-1 md:pt-0">
+        <div>
+          <p className="text-2xs font-medium uppercase tracking-[0.08em] text-muted-warm">{TODAY}</p>
+          <h1 className="font-marketing mt-0.5 text-[24px] font-semibold leading-tight text-fg md:text-[28px]">
+            Overview
+          </h1>
+        </div>
+        <a href="/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs font-medium text-muted-warm hover:text-brand-primary">
+          Live store <ExternalLink className="size-3" />
         </a>
       </div>
 
-      {/* Time filter pills — scrollable with hidden scrollbar */}
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:mx-0 md:px-0 md:pb-4">
+      {/* ── Time pills ── */}
+      <div className="mb-5 flex gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {TABS.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`shrink-0 cursor-pointer rounded-full px-4 py-[7px] text-xs font-semibold transition-colors ${
-              tab === activeTab
-                ? 'bg-brand-primary text-surface'
-                : 'border border-border text-muted-warm hover:border-brand-primary hover:text-brand-primary'
+            className={`shrink-0 cursor-pointer rounded-full px-3 py-[5px] text-2xs font-semibold transition-colors ${
+              tab === activeTab ? 'bg-fg text-surface' : 'text-muted-warm hover:text-fg'
             }`}
           >
             {tab}
@@ -139,113 +82,162 @@ export default function AdminDashboardPage() {
         ))}
       </div>
 
-      {/* Mobile: Action Required FIRST (matches Paper mobile ordering) */}
-      <div className="md:hidden">
-        <ActionRequiredSection />
-      </div>
+      {/* ── Desktop: two-column top section (stats+chart LEFT, alerts RIGHT) ── */}
+      {/* ── Mobile: alerts first, then stats, then chart ── */}
 
-      {/* Stats — mobile: 2x2, desktop: 4-col full width ABOVE the 2-col split */}
-      <section className="grid grid-cols-2 gap-3 px-4 pb-4 md:grid-cols-4 md:px-0">
-        {MOCK_STATS.map((stat) => (
-          <div
-            key={stat.label}
-            className="cursor-pointer rounded-[10px] border border-[#E5E7EB] bg-white p-[14px] transition-colors hover:bg-bg"
-          >
-            <p className="mb-2 text-xs font-normal" style={{ color: '#6B7280' }}>{stat.label}</p>
-            <p className="mb-1 text-2xl font-bold leading-[30px]" style={{ color: '#4F3FF0' }}>{stat.value}</p>
-            <p className={`text-[11px] font-semibold leading-[14px] ${stat.up ? 'text-success' : 'text-danger'}`}>
-              {stat.up ? '↑' : '↓'} {stat.change}
-            </p>
-          </div>
-        ))}
-      </section>
+      <div className="md:flex md:gap-8">
 
-      {/* Desktop: 2-column layout */}
-      <div className="md:flex md:gap-6">
-        {/* Left column */}
+        {/* Left column: stats + chart */}
         <div className="min-w-0 md:flex-1">
-          {/* Revenue Trend Chart — smooth bezier curve */}
-          <section className="mx-4 mb-4 rounded-[10px] border border-[#E5E7EB] p-4 md:mx-0">
-            <div className="mb-4 flex items-center justify-between">
-              <p className="text-sm font-semibold text-fg">Revenue Trend</p>
-              <div className="flex gap-2">
-                {['Revenue', 'Orders', 'Customers'].map((label, i) => (
-                  <button
-                    key={label}
-                    className={`cursor-pointer rounded-full px-3 py-[5px] text-2xs font-semibold transition-colors ${
-                      i === 0
-                        ? 'bg-brand-primary text-surface'
-                        : 'border border-border text-muted-warm hover:border-brand-primary hover:text-brand-primary'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
+
+          {/* Stats — mobile: 2×2 grid, desktop: 4-col */}
+          <section className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+            {MOCK_STATS.map((stat) => (
+              <div key={stat.label} className="rounded-lg bg-surface p-3.5 md:p-4">
+                <p className="text-2xs font-medium uppercase tracking-[0.06em] text-muted-warm">{stat.label}</p>
+                <p className="font-marketing mt-1.5 text-[28px] font-semibold leading-none tracking-[-0.02em] text-fg md:text-[32px]">
+                  {stat.value}
+                </p>
+                <p className={`mt-1.5 flex items-center gap-1 text-2xs font-medium ${stat.up ? 'text-success' : 'text-danger'}`}>
+                  {stat.up ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
+                  {stat.change}
+                </p>
               </div>
-            </div>
-            <div className="relative h-[180px] w-full pl-8">
-              <div className="absolute left-0 top-0 flex h-full flex-col justify-between pb-1 text-[11px]" style={{ color: '#6B7280' }}>
-                <span>30k</span><span>20k</span><span>10k</span><span>0</span>
-              </div>
-              <svg viewBox="0 0 400 150" className="h-full w-full" preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#4F3FF0" stopOpacity="0.10" />
-                    <stop offset="100%" stopColor="#4F3FF0" stopOpacity="0.01" />
-                  </linearGradient>
-                </defs>
-                <path d={CHART_FILL} fill="url(#chartGrad)" />
-                <path d={CHART_LINE} fill="none" stroke="#4F3FF0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                {CHART_DOTS.map(([cx, cy], i) => (
-                  <circle key={i} cx={cx} cy={cy} r="3" fill="#4F3FF0" stroke="white" strokeWidth="2" />
-                ))}
-              </svg>
-            </div>
-            <div className="mt-2 flex justify-between pl-8 text-[11px]" style={{ color: '#6B7280' }}>
-              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
-                <span key={d}>{d}</span>
-              ))}
-            </div>
+            ))}
           </section>
 
-          {/* Recent Orders */}
-          <section className="px-4 py-4 md:px-0">
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-warm">Recent Orders</p>
-              <button className="cursor-pointer text-sm font-medium text-brand-primary">View all</button>
-            </div>
-            <div className="flex flex-col gap-3">
-              {MOCK_ORDERS.map((order) => (
-                <div key={order.code} className="cursor-pointer rounded-xl border border-border p-[14px] transition-colors hover:bg-bg">
-                  <div className="mb-1 flex justify-between text-xs">
-                    <span className="font-semibold text-muted-warm">{order.code}</span>
-                    <span className="flex items-center gap-1 font-semibold text-muted-warm">
-                      {order.status === 'Pending' && <Clock className="size-3" />}
-                      {order.time}
-                    </span>
-                  </div>
-                  <p className="mb-[2px] text-md font-bold text-fg">{order.customer}</p>
-                  <p className="mb-[10px] text-sm text-muted-warm">{order.items}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[15px] font-bold text-fg">{order.price}</span>
-                    <span className={`rounded-full px-[10px] py-1 text-2xs font-semibold ${order.statusColor}`}>{order.status}</span>
-                  </div>
-                </div>
-              ))}
+          {/* Chart */}
+          <section className="mb-6 rounded-lg bg-surface p-4">
+            <p className="mb-3 text-2xs font-medium uppercase tracking-[0.06em] text-muted-warm">Revenue Trend</p>
+            <div className="h-[160px] w-full md:h-[200px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={REVENUE_TREND} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#C1502E" stopOpacity="0.10" />
+                      <stop offset="100%" stopColor="#C1502E" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#8B7D7A' }} />
+                  <YAxis hide />
+                  <Tooltip
+                    formatter={(value) => [`₹${Number(value).toLocaleString('en-IN')}`, 'Revenue']}
+                    contentStyle={{ borderRadius: 8, borderColor: '#E8E8E8', fontSize: 12 }}
+                  />
+                  <Area type="monotone" dataKey="revenue" stroke="#C1502E" strokeWidth={2} fill="url(#chartGrad)" dot={false} activeDot={{ r: 4, fill: '#C1502E', stroke: 'white', strokeWidth: 2 }} />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </section>
         </div>
 
-        {/* Right column — desktop only (mobile sections rendered above/below) */}
-        <div className="hidden md:block md:w-[360px] md:shrink-0">
-          <ActionRequiredSection />
-          <TopProductsSection />
-        </div>
+        {/* Right column: Needs Attention — vertical stack */}
+        <section className="order-first mb-6 md:order-none md:mb-0 md:w-[280px] md:shrink-0">
+          <p className="mb-3 text-2xs font-medium uppercase tracking-[0.06em] text-danger">Needs Attention</p>
+          <div className="flex flex-col gap-2">
+            {MOCK_ALERTS.map((alert) => {
+              const Icon = alert.icon
+              return (
+                <button
+                  key={alert.text}
+                  className={`flex w-full cursor-pointer items-center gap-3 rounded-lg p-3 text-left transition-colors hover:brightness-95 ${
+                    alert.tone === 'amber'
+                      ? 'bg-[#FEF3C7]'
+                      : 'bg-[#FEE2E2]'
+                  }`}
+                >
+                  <Icon className={`size-4 shrink-0 ${alert.tone === 'amber' ? 'text-[#92400E]' : 'text-[#991B1B]'}`} strokeWidth={2} />
+                  <div className="min-w-0 flex-1">
+                    <p className={`text-sm font-semibold ${alert.tone === 'amber' ? 'text-[#92400E]' : 'text-[#991B1B]'}`}>{alert.text}</p>
+                    <p className={`text-xs ${alert.tone === 'amber' ? 'text-[#92400E]/70' : 'text-[#991B1B]/70'}`}>{alert.sub}</p>
+                  </div>
+                  <ChevronRight className={`size-4 shrink-0 ${alert.tone === 'amber' ? 'text-[#92400E]/40' : 'text-[#991B1B]/40'}`} />
+                </button>
+              )
+            })}
+          </div>
+        </section>
       </div>
 
-      {/* Mobile: Top Products after orders */}
-      <div className="pb-4 md:hidden">
-        <TopProductsSection />
+      {/* ── Bottom: Orders + Top Sellers ── */}
+      <div className="md:flex md:gap-8">
+
+        {/* Orders */}
+        <section className="min-w-0 flex-1">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-2xs font-medium uppercase tracking-[0.06em] text-muted-warm">Recent Orders</p>
+            <button className="cursor-pointer text-xs font-medium text-brand-primary">View all →</button>
+          </div>
+
+          {/* Desktop: table rows */}
+          <div className="hidden rounded-lg bg-surface md:block">
+            {MOCK_ORDERS.map((order, i) => (
+              <div
+                key={order.code}
+                className={`grid cursor-pointer grid-cols-[1fr_2fr_auto_auto] items-center gap-x-5 px-4 py-3 transition-colors hover:bg-bg ${
+                  i > 0 ? 'border-t border-border-light' : ''
+                }`}
+              >
+                <div>
+                  <p className="text-sm font-semibold text-fg">{order.customer}</p>
+                  <p className="text-2xs text-muted-warm">{order.code} · {order.time}</p>
+                </div>
+                <p className="truncate text-sm text-muted-warm">{order.items}</p>
+                <p className="font-marketing text-right text-[15px] font-semibold text-fg">{order.price}</p>
+                <span className={`rounded-full px-2.5 py-0.5 text-2xs font-semibold ${order.statusColor}`}>
+                  {order.status}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Mobile: cards */}
+          <div className="flex flex-col gap-2 md:hidden">
+            {MOCK_ORDERS.map((order) => (
+              <div key={order.code} className="cursor-pointer rounded-lg bg-surface p-3 transition-colors active:bg-bg">
+                <div className="mb-1 flex items-center justify-between">
+                  <p className="text-sm font-semibold text-fg">{order.customer}</p>
+                  <span className={`rounded-full px-2 py-0.5 text-2xs font-semibold ${order.statusColor}`}>
+                    {order.status}
+                  </span>
+                </div>
+                <p className="mb-2 truncate text-xs text-muted-warm">{order.items}</p>
+                <div className="flex items-center justify-between">
+                  <span className="font-marketing text-[15px] font-semibold text-fg">{order.price}</span>
+                  <span className="flex items-center gap-1 text-2xs text-muted-warm">
+                    {order.status === 'Pending' && <Clock className="size-3" />}
+                    {order.time}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Top Sellers */}
+        <section className="mt-6 md:mt-0 md:w-[280px] md:shrink-0">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-2xs font-medium uppercase tracking-[0.06em] text-muted-warm">Top Sellers</p>
+            <button className="cursor-pointer text-xs font-medium text-brand-primary">View all →</button>
+          </div>
+          <div className="rounded-lg bg-surface">
+            {MOCK_PRODUCTS.map((product, i) => (
+              <div
+                key={product.name}
+                className={`flex cursor-pointer items-center gap-3 px-3.5 py-3 transition-colors hover:bg-bg ${
+                  i > 0 ? 'border-t border-border-light' : ''
+                }`}
+              >
+                <span className="font-marketing w-5 text-center text-base font-semibold text-border">{i + 1}</span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-fg">{product.name}</p>
+                  <p className="text-2xs text-muted-warm">{product.sold}</p>
+                </div>
+                <span className={`text-2xs font-semibold ${product.stockColor}`}>{product.stock}</span>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
     </div>
   )

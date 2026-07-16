@@ -113,6 +113,7 @@ async function createTenantResponse(
   response.headers.set('x-subdomain', decision.slug)
   response.headers.set('x-tenant-id', tenant.id)
   response.headers.set('x-tenant-tier', tenant.tier)
+  response.headers.set('x-store-base', isLocalhost(request.headers.get('host')?.split(':')[0] ?? '') ? `/dev/store/${decision.slug}` : '')
   return response
 }
 

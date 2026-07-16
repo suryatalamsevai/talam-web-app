@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import Image from 'next/image'
+import { StoreLink } from '@/components/store/store-context'
 import { useCartStore } from '@/lib/store/cart'
 import { showCartToast } from '@/components/store/cart-toast'
 import { ArrowLeft, Heart, ShoppingCart, Share2, Check } from 'lucide-react'
@@ -55,7 +55,7 @@ function WishlistCard({ item, onRemove }: { item: WishlistItem; onRemove: () => 
 
   return (
     <div className="group flex flex-col overflow-hidden rounded-xl border border-border bg-surface">
-      <Link href={`/product/${item.slug}`} className="relative block aspect-[3/4] overflow-hidden bg-bg">
+      <StoreLink href={`/product/${item.slug}`} className="relative block aspect-[3/4] overflow-hidden bg-bg">
         {item.images[0] && (
           <Image src={item.images[0]} alt={item.name} fill sizes="(min-width:1024px) 25vw, 50vw" className="object-cover transition-transform group-hover:scale-105" />
         )}
@@ -71,34 +71,34 @@ function WishlistCard({ item, onRemove }: { item: WishlistItem; onRemove: () => 
         {!outOfStock && item.totalStock <= 3 && (
           <span className="absolute bottom-3 left-3 rounded-md bg-store-primary px-3 py-1 font-body text-[11px] font-bold text-surface">Only {item.totalStock} left!</span>
         )}
+        {item.averageRating && (
+          <span className="absolute bottom-2 left-2 flex items-center gap-1 rounded-md bg-success px-1.5 py-0.5 font-body text-[11px] font-bold text-surface">
+            {item.averageRating.toFixed(1)} ★ <span className="font-normal opacity-80">| {item.reviewCount}</span>
+          </span>
+        )}
         <button onClick={onRemove} className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-surface/80">
           <Heart className="h-4 w-4 fill-store-primary text-store-primary" />
         </button>
-      </Link>
+      </StoreLink>
 
       <div className="flex flex-1 flex-col p-3">
         {item.category && (
           <p className="font-body text-[11px] font-medium uppercase tracking-wide text-muted-warm">{item.category.name}</p>
         )}
-        <Link href={`/product/${item.slug}`} className="mt-0.5 block font-body text-sm font-semibold text-fg leading-tight line-clamp-1 hover:text-store-primary">
+        <StoreLink href={`/product/${item.slug}`} className="mt-0.5 block font-body text-sm font-semibold text-fg leading-tight line-clamp-1 hover:text-store-primary">
           {item.name}
-        </Link>
+        </StoreLink>
         <div className="mt-1 flex items-center gap-1.5">
-          <span className="font-body text-sm font-bold text-store-primary">₹{item.price.toLocaleString('en-IN')}</span>
+          <span className="font-body text-base font-extrabold text-store-primary">₹{item.price.toLocaleString('en-IN')}</span>
           {item.comparePrice && item.comparePrice > item.price && (
             <span className="font-body text-xs text-muted-warm line-through">₹{item.comparePrice.toLocaleString('en-IN')}</span>
           )}
         </div>
-        {item.averageRating && (
-          <p className="mt-1 font-body text-[11px] text-muted-warm">
-            {'★'.repeat(Math.round(item.averageRating))} {item.averageRating.toFixed(1)} ({item.reviewCount})
-          </p>
-        )}
         <div className="mt-auto pt-2.5">
           <button
             onClick={outOfStock ? undefined : handleAddToCart}
             disabled={outOfStock}
-            className={`flex h-9 w-full items-center justify-center rounded-lg font-body text-sm font-semibold transition-opacity ${
+            className={`flex h-9 w-full items-center justify-center rounded-xl font-body text-sm font-semibold transition-opacity ${
               outOfStock
                 ? 'border border-border text-muted-warm'
                 : 'bg-store-primary text-surface hover:opacity-90'
@@ -158,9 +158,9 @@ export default function WishlistPage() {
       {/* Header */}
       <div className="mb-1 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <Link href="/" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border hover:bg-bg transition-colors lg:hidden">
+          <StoreLink href="/" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border hover:bg-bg transition-colors lg:hidden">
             <ArrowLeft className="h-4 w-4 text-fg" />
-          </Link>
+          </StoreLink>
           <div className="min-w-0">
             <h1 className="font-heading text-lg sm:text-[22px] font-bold leading-7 text-fg">Saved Items</h1>
             <p className="mt-0.5 font-body text-xs sm:text-sm text-muted-warm truncate">{items.length} items · ₹{totalValue.toLocaleString('en-IN')} total value</p>
@@ -192,15 +192,15 @@ export default function WishlistPage() {
       </div>
 
       {/* Filter tabs */}
-      <div className="mt-4 mb-5 flex gap-2 overflow-x-auto no-scrollbar">
+      <div className="mt-4 mb-5 flex gap-5 overflow-x-auto border-b border-border no-scrollbar">
         {tabs.map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`shrink-0 rounded-full px-4 py-1.5 font-body text-sm font-medium transition-colors ${
+            className={`shrink-0 border-b-2 pb-2.5 font-body text-sm font-medium transition-colors ${
               activeTab === tab
-                ? 'bg-fg text-surface'
-                : 'border border-border text-fg hover:bg-bg'
+                ? 'border-store-primary text-fg font-semibold'
+                : 'border-transparent text-muted-warm hover:text-fg'
             }`}
           >
             {tab}

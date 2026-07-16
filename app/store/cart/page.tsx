@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import Image from 'next/image'
+import { StoreLink } from '@/components/store/store-context'
 import { useCartStore, type CartItem } from '@/lib/store/cart'
-import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft, Heart, Lock, RotateCcw, Truck, Tag, Star, Check, X } from 'lucide-react'
+import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft, Heart, Lock, RotateCcw, Truck, Tag, Star, Check, X, ChevronDown } from 'lucide-react'
 
 // ponytail: inline tenant config until SSR wrapper is added
 const tenant = { name: 'Talam Store', freeDeliveryAbove: 999, shippingFee: 99 }
@@ -26,20 +26,20 @@ function CartItemRow({ item }: { item: CartItem }) {
 
   return (
     <div className="flex gap-3 border-b border-border px-3 py-4 last:border-b-0 sm:gap-4 sm:px-6 sm:py-5">
-      <Link href={`/product/${item.slug}`} className="relative h-20 w-16 shrink-0 overflow-hidden rounded-lg bg-bg sm:h-28 sm:w-24">
+      <StoreLink href={`/product/${item.slug}`} className="relative h-24 w-20 shrink-0 overflow-hidden rounded-lg bg-bg sm:h-28 sm:w-24">
         <DiscountBadge price={item.price} comparePrice={item.comparePrice} />
         {item.image ? (
           <Image src={item.image} alt={item.name} fill sizes="96px" className="object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-xs text-muted-warm">No image</div>
         )}
-      </Link>
+      </StoreLink>
 
       <div className="flex flex-1 flex-col justify-between min-w-0">
         <div>
-          <Link href={`/product/${item.slug}`} className="font-body text-[15px] font-semibold leading-[18px] text-fg line-clamp-2 hover:text-store-primary">
+          <StoreLink href={`/product/${item.slug}`} className="font-body text-base font-bold leading-[19px] text-fg line-clamp-2 hover:text-store-primary">
             {item.name}
-          </Link>
+          </StoreLink>
           <p className="mt-0.5 font-body text-xs text-muted-warm">
             {item.size ? `Size: ${item.size}` : ''}{item.size && item.fabric ? ' · ' : ''}{item.fabric ?? ''}
           </p>
@@ -64,37 +64,37 @@ function CartItemRow({ item }: { item: CartItem }) {
         </div>
 
         <div className="flex items-center justify-between mt-2 gap-1 flex-wrap">
-          <div className="flex items-center gap-0.5">
+          <div className="flex items-center gap-1 rounded-full border border-border px-0.5 py-0.5">
             <button
               onClick={() => updateQuantity(item.productId, item.size, item.quantity - 1)}
-              className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-l-lg border border-border text-fg hover:bg-bg transition-colors"
+              className="flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full text-fg hover:bg-bg transition-colors"
               aria-label="Decrease quantity"
             >
               <Minus className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
             </button>
-            <span className="flex h-7 w-7 sm:h-8 sm:w-9 items-center justify-center border-y border-border font-body text-xs sm:text-sm font-semibold text-fg tabular-nums">{item.quantity}</span>
+            <span className="flex w-5 items-center justify-center font-body text-xs sm:text-sm font-semibold text-fg tabular-nums">{item.quantity}</span>
             <button
               onClick={() => updateQuantity(item.productId, item.size, item.quantity + 1)}
-              className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-r-lg border border-border text-fg hover:bg-bg transition-colors"
+              className="flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full text-fg hover:bg-bg transition-colors"
               aria-label="Increase quantity"
             >
               <Plus className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
             </button>
           </div>
 
-          <div className="flex items-center gap-0.5 sm:gap-1">
+          <div className="flex items-center gap-1">
             <button
-              className="flex items-center gap-0.5 sm:gap-1 rounded px-1.5 sm:px-2 py-1 font-body text-[11px] sm:text-xs text-muted-warm hover:text-store-primary transition-colors"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-muted-warm hover:bg-bg hover:text-store-primary transition-colors"
               aria-label="Save for later"
             >
-              <Heart className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Save
+              <Heart className="h-4 w-4" />
             </button>
             <button
               onClick={() => removeItem(item.productId, item.size)}
-              className="flex items-center gap-0.5 sm:gap-1 rounded px-1.5 sm:px-2 py-1 font-body text-[11px] sm:text-xs text-store-primary hover:text-danger transition-colors"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-store-primary hover:bg-danger/10 hover:text-danger transition-colors"
               aria-label="Remove item"
             >
-              <Trash2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              <Trash2 className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -108,22 +108,21 @@ function CouponSection() {
   const [applied, setApplied] = useState<string | null>(null)
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-4 sm:p-6">
-      <h3 className="mb-3 font-heading text-sm font-bold text-fg">Have a coupon?</h3>
-      <div className="flex gap-2">
+    <div className="py-2">
+      <div className="flex items-center gap-2">
         <div className="relative flex-1">
           <Tag className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-warm" />
           <input
             type="text"
             value={code}
             onChange={e => setCode(e.target.value.toUpperCase())}
-            placeholder="ENTER COUPON CODE"
-            className="h-10 w-full rounded-lg border border-border bg-surface pl-9 pr-3 font-body text-sm text-fg placeholder:text-muted-warm/60 focus:border-store-primary focus:outline-none"
+            placeholder="Have a coupon? Enter code"
+            className="h-11 w-full rounded-lg bg-surface pl-9 pr-3 font-body text-sm text-fg placeholder:text-muted-warm/60 focus:outline-none"
           />
         </div>
         <button
           onClick={() => { if (code.trim()) setApplied(code.trim()) }}
-          className="h-10 rounded-lg bg-success px-5 font-body text-sm font-semibold text-surface hover:opacity-90 transition-opacity"
+          className="h-11 shrink-0 rounded-lg bg-success px-5 font-body text-sm font-semibold text-surface hover:opacity-90 transition-opacity"
         >
           Apply
         </button>
@@ -142,10 +141,10 @@ function CouponSection() {
 
 function TrustBadges() {
   return (
-    <div className="space-y-2.5 font-body text-xs text-muted-warm">
-      <div className="flex items-center gap-2"><Lock className="h-3.5 w-3.5" /> Secure checkout — data encrypted</div>
-      <div className="flex items-center gap-2"><RotateCcw className="h-3.5 w-3.5" /> Easy 30-day returns</div>
-      <div className="flex items-center gap-2 lg:hidden"><Truck className="h-3.5 w-3.5" /> Free delivery on orders above ₹{tenant.freeDeliveryAbove?.toLocaleString('en-IN')}</div>
+    <div className="flex gap-2 overflow-x-auto no-scrollbar font-body text-xs text-muted-warm lg:flex-col lg:gap-2.5 lg:overflow-visible">
+      <div className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 lg:border-0 lg:px-0 lg:py-0"><Lock className="h-3.5 w-3.5" /> Secure checkout</div>
+      <div className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 lg:border-0 lg:px-0 lg:py-0"><RotateCcw className="h-3.5 w-3.5" /> Easy 30-day returns</div>
+      <div className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 lg:hidden"><Truck className="h-3.5 w-3.5" /> Free delivery above ₹{tenant.freeDeliveryAbove?.toLocaleString('en-IN')}</div>
     </div>
   )
 }
@@ -153,15 +152,15 @@ function TrustBadges() {
 function EmptyCart() {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
-      <ShoppingBag className="mb-4 h-16 w-16 text-border" strokeWidth={1} />
+      <ShoppingBag className="mb-4 h-20 w-20 text-border animate-[pulse_2.5s_ease-in-out_infinite]" strokeWidth={1} />
       <h2 className="mb-2 font-heading text-xl font-bold text-fg">Your cart is empty</h2>
       <p className="mb-6 font-body text-sm text-muted-warm">Looks like you haven&apos;t added anything yet.</p>
-      <Link
+      <StoreLink
         href="/"
         className="inline-flex items-center gap-2 rounded-lg bg-store-primary px-6 py-3 font-body text-sm font-semibold text-surface hover:opacity-90 transition-opacity"
       >
         Continue Shopping
-      </Link>
+      </StoreLink>
     </div>
   )
 }
@@ -171,6 +170,7 @@ export default function CartPage() {
   const total = useCartStore(s => s.total)
   const count = useCartStore(s => s.count)
   const clear = useCartStore(s => s.clear)
+  const [detailsOpen, setDetailsOpen] = useState(false)
 
   if (items.length === 0) {
     return (
@@ -193,13 +193,13 @@ export default function CartPage() {
     : 0
 
   return (
-    <main className="mx-auto max-w-6xl px-3 py-4 sm:px-12 sm:py-10 overflow-x-hidden">
+    <main className="mx-auto max-w-6xl px-3 py-4 pb-24 sm:px-12 sm:py-10 sm:pb-10 lg:pb-10 overflow-x-hidden">
       {/* Header */}
       <div className="mb-4 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <Link href="/" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border hover:bg-bg transition-colors lg:hidden">
+          <StoreLink href="/" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border hover:bg-bg transition-colors lg:hidden">
             <ArrowLeft className="h-4 w-4 text-fg" />
-          </Link>
+          </StoreLink>
           <h1 className="font-heading text-lg sm:text-[22px] font-bold leading-7 text-muted-warm truncate">
             My Cart <span className="font-body text-xs sm:text-sm font-normal">({items.length} {items.length === 1 ? 'item' : 'items'})</span>
           </h1>
@@ -269,19 +269,19 @@ export default function CartPage() {
               </div>
             )}
 
-            <Link
+            <StoreLink
               href="/checkout"
               className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-store-primary font-body text-md font-semibold text-surface hover:opacity-90 transition-opacity"
             >
               Proceed to Checkout <ArrowLeft className="h-4 w-4 rotate-180" />
-            </Link>
+            </StoreLink>
 
-            <Link
+            <StoreLink
               href="/"
               className="mt-3 flex items-center justify-center gap-1.5 font-body text-sm text-store-primary hover:underline"
             >
               <ArrowLeft className="h-3.5 w-3.5" /> Continue Shopping
-            </Link>
+            </StoreLink>
 
             <div className="mt-5 border-t border-border pt-4">
               <TrustBadges />
@@ -290,21 +290,27 @@ export default function CartPage() {
         </div>
       </div>
 
-      {/* Mobile: trust badges + bottom summary */}
+      {/* Mobile: trust badges + collapsible price details */}
       <div className="mt-6 space-y-4 lg:hidden">
-        <div className="rounded-xl border border-border bg-surface p-4">
-          <TrustBadges />
-        </div>
+        <TrustBadges />
 
-        {/* Mobile price details */}
-        <div className="border-t border-border pt-4">
-          <h3 className="mb-3 font-heading text-sm font-bold text-fg">Price Details</h3>
-          <dl className="space-y-1.5 font-body text-sm">
-            <div className="flex justify-between"><dt className="text-muted-warm">Items ({itemCount})</dt><dd className="text-fg">₹{subtotal.toLocaleString('en-IN')}</dd></div>
-            {mrpDiscount > 0 && <div className="flex justify-between"><dt className="text-muted-warm">MRP Discount</dt><dd className="text-success">−₹{mrpDiscount.toLocaleString('en-IN')}</dd></div>}
-            <div className="flex justify-between"><dt className="text-muted-warm">Delivery</dt><dd className={shippingFee === 0 ? 'text-success' : 'text-fg'}>{shippingFee === 0 ? 'Free' : `₹${shippingFee}`}</dd></div>
-            <div className="border-t border-border pt-2 flex justify-between"><dt className="font-bold text-fg">Total</dt><dd className="font-bold text-fg">₹{grandTotal.toLocaleString('en-IN')}</dd></div>
-          </dl>
+        {/* Price details accordion */}
+        <div className="rounded-xl border border-border bg-surface">
+          <button
+            onClick={() => setDetailsOpen(v => !v)}
+            className="flex w-full items-center justify-between px-4 py-3"
+          >
+            <span className="font-heading text-sm font-bold text-fg">Price Details</span>
+            <ChevronDown className={`h-4 w-4 text-muted-warm transition-transform ${detailsOpen ? 'rotate-180' : ''}`} />
+          </button>
+          {detailsOpen && (
+            <dl className="space-y-1.5 border-t border-border px-4 py-3 font-body text-sm">
+              <div className="flex justify-between"><dt className="text-muted-warm">Items ({itemCount})</dt><dd className="text-fg">₹{subtotal.toLocaleString('en-IN')}</dd></div>
+              {mrpDiscount > 0 && <div className="flex justify-between"><dt className="text-muted-warm">MRP Discount</dt><dd className="text-success">−₹{mrpDiscount.toLocaleString('en-IN')}</dd></div>}
+              <div className="flex justify-between"><dt className="text-muted-warm">Delivery</dt><dd className={shippingFee === 0 ? 'text-success' : 'text-fg'}>{shippingFee === 0 ? 'Free' : `₹${shippingFee}`}</dd></div>
+              <div className="border-t border-border pt-2 flex justify-between"><dt className="font-bold text-fg">Total</dt><dd className="font-bold text-fg">₹{grandTotal.toLocaleString('en-IN')}</dd></div>
+            </dl>
+          )}
         </div>
 
         {totalSavings > 0 && (
@@ -314,24 +320,23 @@ export default function CartPage() {
           </div>
         )}
 
-        <div className="flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <p className="font-body text-[11px] sm:text-xs text-muted-warm">Total ({itemCount} items)</p>
-            <p className="font-body text-lg sm:text-xl font-bold text-store-primary">₹{grandTotal.toLocaleString('en-IN')}</p>
-          </div>
-          {totalSavings > 0 && <p className="shrink-0 font-body text-xs sm:text-sm font-semibold text-success">Saved ₹{totalSavings.toLocaleString('en-IN')}</p>}
-        </div>
-
-        <Link
-          href="/checkout"
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-store-primary font-body text-md font-semibold text-surface hover:opacity-90 transition-opacity"
-        >
-          Proceed to Checkout <ArrowLeft className="h-4 w-4 rotate-180" />
-        </Link>
-
-        <Link href="/" className="flex items-center justify-center gap-1.5 pb-4 font-body text-sm text-store-primary hover:underline">
+        <StoreLink href="/" className="flex items-center justify-center gap-1.5 pb-4 font-body text-sm text-store-primary hover:underline">
           <ArrowLeft className="h-3.5 w-3.5" /> Continue Shopping
-        </Link>
+        </StoreLink>
+      </div>
+
+      {/* Mobile fixed bottom checkout bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-between gap-3 border-t border-border/40 bg-surface/90 px-4 py-3 backdrop-blur-xl lg:hidden">
+        <div className="min-w-0">
+          <p className="font-body text-[11px] text-muted-warm">Total ({itemCount} items)</p>
+          <p className="font-body text-lg font-bold text-store-primary">₹{grandTotal.toLocaleString('en-IN')}</p>
+        </div>
+        <StoreLink
+          href="/checkout"
+          className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-store-primary px-6 font-body text-sm font-semibold text-surface hover:opacity-90 transition-opacity"
+        >
+          Checkout <ArrowLeft className="h-4 w-4 rotate-180" />
+        </StoreLink>
       </div>
     </main>
   )

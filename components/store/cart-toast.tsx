@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import { Check } from 'lucide-react'
+import { StoreLink } from '@/components/store/store-context'
 
 type ToastData = { name: string; size?: string }
 
@@ -42,12 +42,12 @@ export function CartToast() {
           <span className="font-semibold">{toast.name}</span>
           {toast.size ? ` (${toast.size})` : ''} added
         </p>
-        <Link
+        <StoreLink
           href="/cart"
           className="shrink-0 rounded-lg bg-store-primary px-2.5 py-1.5 font-body text-[11px] font-semibold text-surface hover:opacity-90 sm:px-3 sm:text-xs"
         >
           View Cart
-        </Link>
+        </StoreLink>
       </div>
     </div>
   )

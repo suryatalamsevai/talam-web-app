@@ -2,8 +2,8 @@
 
 import { Suspense, useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
-import Link from 'next/link'
 import { ChevronLeft, ChevronRight, ChevronDown, SlidersHorizontal, X } from 'lucide-react'
+import { StoreLink, useStoreBase } from '@/components/store/store-context'
 import Image from 'next/image'
 import { hapticError } from '@/lib/haptics'
 
@@ -104,12 +104,6 @@ function ImagePlaceholder() {
       <path d="M21 15l-5-5L5 21" fill="none" stroke="rgb(255 255 255 / 20%)" />
     </svg>
   )
-}
-
-function Stars({ rating }: { rating: number }) {
-  const full = Math.floor(rating)
-  const empty = 5 - full
-  return <span className="text-success">{'★'.repeat(full)}{'☆'.repeat(empty)}</span>
 }
 
 function useCountdown(targetIso: string | null) {
@@ -340,17 +334,20 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
   )
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#F9F9F9] font-body overflow-x-hidden">
+    <div className="flex flex-col min-h-screen bg-white font-body overflow-x-hidden scroll-smooth">
+      <style>{`@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
       {/* ─── Hero Carousel (fixed height, no layout shift) ─── */}
       {banners.length > 0 && hero && (
         <section
-          className="relative overflow-hidden h-[360px] md:h-[400px] touch-pan-y"
+          className="relative overflow-hidden h-[440px] md:h-[420px] touch-pan-y -mx-0"
           style={{ backgroundImage: 'linear-gradient(120deg, oklab(22.1% 0.025 -0.083), oklab(26.4% 0.107 0.004) 45%, oklab(53.1% 0.201 0.020))' }}
           onTouchStart={handleHeroTouchStart}
           onTouchEnd={handleHeroTouchEnd}
         >
           <div className="absolute rounded-full" style={{ top: '-80px', left: '50%', width: '400px', height: '400px', backgroundColor: 'rgba(255,255,255,0.04)' }} />
           <div className="absolute rounded-full" style={{ bottom: '-60px', right: '200px', width: '240px', height: '240px', backgroundColor: 'rgba(255,255,255,0.03)' }} />
+          {/* Bottom gradient overlay for text readability on mobile */}
+          <div className="lg:hidden absolute inset-x-0 bottom-0 h-2/3 pointer-events-none" style={{ backgroundImage: 'linear-gradient(0deg, rgba(0,0,0,0.75), rgba(0,0,0,0.15) 55%, transparent)' }} />
 
           <div className="flex h-full">
             {/* Product image area */}
@@ -367,7 +364,7 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
             </div>
 
             {/* Product info — key forces remount for clean transition */}
-            <div key={heroIndex} className="flex-1 flex flex-col justify-center px-5 md:pr-16 md:pl-5 py-6 md:py-12 relative animate-[fadeIn_0.4s_ease-out]">
+            <div key={heroIndex} className="flex-1 flex flex-col justify-end lg:justify-center px-5 md:pr-16 md:pl-5 pb-8 pt-6 md:py-12 relative animate-[fadeIn_0.4s_ease-out] lg:backdrop-blur-0 backdrop-blur-[2px] lg:bg-transparent">
               <div className="flex gap-2.5 mb-4 flex-wrap">
                 {discountLabel(hero.price, hero.comparePrice) && <span className="px-3.5 py-1 bg-store-primary rounded-md text-white text-[13px] font-extrabold leading-4 font-body">{discountLabel(hero.price, hero.comparePrice)}</span>}
               </div>
@@ -395,10 +392,10 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
                 ))}
               </div>
               <div className="flex items-center gap-3">
-                <Link href={`/store/product/${hero.slug}`} className="inline-flex items-center gap-2 bg-store-primary rounded-[10px] px-5 md:px-8 py-3 md:py-3.5 hover:opacity-90 transition-opacity">
+                <StoreLink href={`/store/product/${hero.slug}`} className="inline-flex items-center gap-2 bg-store-primary rounded-[10px] px-5 md:px-8 py-3 md:py-3.5 hover:opacity-90 transition-opacity">
                   <CartIcon />
                   <span className="text-white text-[15px] font-bold font-body leading-[18px]">View Product</span>
-                </Link>
+                </StoreLink>
                 <button className="w-12 h-12 shrink-0 rounded-[10px] border-[1.5px] border-white/40 flex items-center justify-center hover:bg-white/10 transition-colors">
                   <HeartIcon size={20} color="#FFFFFF" />
                 </button>
@@ -421,9 +418,9 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
             </div>
 
             {/* Mobile carousel dots */}
-            <div className="lg:hidden absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+            <div className="lg:hidden absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-10">
               {banners.map((_, i) => (
-                <span key={i} className={`rounded-full transition-all ${i === heroIndex ? 'w-5 h-1 bg-white' : 'w-1 h-1 bg-white/35'}`} onClick={() => goTo(i)} />
+                <span key={i} className={`rounded-full transition-all duration-300 ${i === heroIndex ? 'w-6 h-2 bg-white' : 'w-2 h-2 bg-white/40'}`} onClick={() => goTo(i)} />
               ))}
             </div>
           </div>
@@ -432,18 +429,21 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
 
       {/* ─── Flash Sale Bar ─── */}
       {promotions.length > 0 && (
-        <div className="overflow-hidden" style={{ backgroundColor: '#0E0A1F' }}>
+        <div className="overflow-hidden" style={{ backgroundImage: 'linear-gradient(90deg, #0E0A1F, #1A1230, #0E0A1F)' }}>
           {/* Main row: timer + deals */}
-          <div className="flex items-center justify-center lg:justify-start gap-3 lg:gap-8 h-10 lg:h-14 px-3 lg:px-12">
+          <div className="flex items-center justify-center lg:justify-start gap-3 lg:gap-8 h-12 lg:h-14 px-3 lg:px-12">
             <div className="flex items-center gap-1.5 lg:gap-2.5 shrink-0">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-[#D4AF37]" style={{ animation: 'pulse-dot 1.4s ease-in-out infinite' }} />
+              </span>
               <span className="text-sm lg:text-base">⚡</span>
-              <span className="text-white text-[11px] lg:text-[13px] font-bold font-body uppercase tracking-[0.08em]">Flash Sale</span>
+              <span className="text-white text-[12px] lg:text-[13px] font-bold font-body uppercase tracking-[0.08em]">Flash Sale</span>
               {countdown && (
                 <div className="flex items-center gap-[2px] lg:gap-[3px]">
                   {countdown.map((t, i) => (
                     <div key={i} className="flex items-center gap-[2px] lg:gap-[3px]">
-                      {i > 0 && <span className="text-white/40 text-[10px] lg:text-[11px] font-body">:</span>}
-                      <span className="bg-white/12 rounded px-1.5 lg:px-2 py-0.5 lg:py-1 text-white text-[11px] lg:text-[13px] font-bold font-body leading-4 tabular-nums w-[28px] lg:w-[33px] text-center">{t}</span>
+                      {i > 0 && <span className="text-[#D4AF37]/60 text-[10px] lg:text-[11px] font-body">:</span>}
+                      <span className="bg-[#D4AF37]/15 border border-[#D4AF37]/30 rounded px-1.5 lg:px-2 py-0.5 lg:py-1 text-[#D4AF37] text-[12px] lg:text-[13px] font-bold font-body leading-4 tabular-nums w-[30px] lg:w-[33px] text-center">{t}</span>
                     </div>
                   ))}
                 </div>
@@ -457,10 +457,10 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
                 </span>
               ))}
             </div>
-            <span className="text-[#D4AF37] text-[12px] font-semibold font-body shrink-0 hidden lg:block cursor-pointer">View all deals →</span>
+            <span className="text-[#D4AF37] text-[12px] font-semibold font-body shrink-0 hidden lg:block cursor-pointer hover:underline">View all deals →</span>
           </div>
           {/* Mobile/tablet marquee deals */}
-          <div className="lg:hidden h-6 overflow-hidden">
+          <div className="lg:hidden h-7 overflow-hidden border-t border-white/5">
             <div className="flex gap-6 animate-[marquee_15s_linear_infinite] whitespace-nowrap items-center h-full px-3">
               {[...promotions, ...promotions].map((d, i) => (
                 <span key={i} className="text-[#D4AF37] text-[10px] font-bold font-body">{d.offerText} {d.subtitle && <span className="text-white/35 font-normal">on {d.subtitle}</span>}</span>
@@ -476,20 +476,17 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
         {tags.length > 0 && (
           <section className="py-10">
             <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-2">
-                <div className="w-1 h-5 bg-store-primary rounded-full" />
-                <h2 className="text-[18px] font-bold text-fg font-body leading-[22px]">Shop by Occasion</h2>
-              </div>
-              <span className="text-store-primary text-[13px] font-semibold font-body cursor-pointer">See all occasions →</span>
+              <h2 className="text-[18px] font-bold text-fg font-body leading-[22px]">Shop by Occasion</h2>
+              <span className="text-store-primary text-[13px] font-semibold font-body cursor-pointer hover:underline">See all occasions</span>
             </div>
-            <div className="flex gap-5 sm:gap-8 overflow-x-auto pb-2 no-scrollbar">
+            <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
               {tags.map(tag => (
-                <button key={tag.id} className="flex flex-col items-center gap-2.5 shrink-0 group">
-                  <div className="w-24 h-24 rounded-full flex items-center justify-center text-3xl border-[3px] border-store-primary shrink-0" style={{ backgroundImage: 'linear-gradient(135deg, oklab(53.1% 0.201 0.020), oklab(41.5% 0.160 -0.012))', boxShadow: '#E8577E4D 0px 4px 16px' }}>
-                    {tag.emoji}
-                  </div>
-                  <span className="text-fg text-[13px] font-semibold font-body">{tag.name}</span>
-                  <span className="text-[#8B7D7A] text-[11px] font-body -mt-1">{tag.productCount} items</span>
+                <button key={tag.id} className="flex items-center gap-3 shrink-0 pl-3 pr-5 py-2.5 rounded-full border border-store-primary/15 hover:border-store-primary/40 transition-colors" style={{ backgroundImage: 'linear-gradient(135deg, rgba(232,87,126,0.08), rgba(232,87,126,0.02))', boxShadow: '0 4px 14px rgba(232,87,126,0.12)' }}>
+                  <span className="text-4xl leading-none">{tag.emoji}</span>
+                  <span className="flex flex-col items-start">
+                    <span className="text-fg text-[13px] font-semibold font-body">{tag.name}</span>
+                    <span className="text-[#8B7D7A] text-[11px] font-body">{tag.productCount} items</span>
+                  </span>
                 </button>
               ))}
             </div>
@@ -501,28 +498,30 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
           <section className="pb-10">
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
-                <div className="w-1 h-5 bg-store-primary rounded-full" />
                 <h2 className="text-[18px] font-bold text-fg font-body leading-[22px]">New This Week</h2>
-                <span className="ml-2 px-2.5 py-0.5 bg-success text-white text-[10px] font-bold rounded font-body leading-3">{newThisWeek.length} items</span>
+                <span className="ml-1 px-2.5 py-0.5 bg-success text-white text-[10px] font-bold rounded font-body leading-3">{newThisWeek.length} items</span>
               </div>
-              <span className="text-store-primary text-[13px] font-semibold font-body cursor-pointer">View all new arrivals →</span>
+              <span className="text-store-primary text-[13px] font-semibold font-body cursor-pointer hover:underline">View all new arrivals</span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
               {newThisWeek.map((p, i) => (
-                <Link key={i} href={`/store/product/${p.slug}`} className="bg-white rounded-xl border-[1.5px] border-[#F0E8D8] overflow-hidden block hover:border-store-primary hover:shadow-md transition">
-                  <div className="aspect-[2/3] relative bg-bg">
+                <StoreLink key={i} href={`/store/product/${p.slug}`} className="bg-white rounded-xl border-[1.5px] border-[#F0E8D8] overflow-hidden block hover:border-store-primary hover:shadow-md transition">
+                  <div className="aspect-[3/4] relative bg-bg">
                     {p.images[0] && <Image src={p.images[0]} alt={p.name} fill sizes="(min-width:768px) 20vw, 50vw" className="object-cover" />}
                     <span className="absolute top-2 left-2 px-2 py-[3px] bg-success rounded text-white text-[10px] font-bold font-body leading-3">NEW</span>
-                    <span className="absolute top-2 right-2 w-7 h-7 bg-white/90 rounded-full flex items-center justify-center">
+                    <span className="absolute top-2 right-2 w-7 h-7 bg-white/70 backdrop-blur-sm rounded-full flex items-center justify-center">
                       <HeartIcon />
+                    </span>
+                    <span className="absolute bottom-2 left-2 flex items-center gap-1 px-1.5 py-[3px] bg-success rounded text-white text-[10px] font-bold font-body leading-3">
+                      {p.averageRating.toFixed(1)} ★ <span className="font-normal opacity-80">| {p.reviewCount}</span>
                     </span>
                   </div>
                   <div className="p-2.5">
+                    <p className="text-[#8B7D7A] text-[10px] font-bold font-body uppercase tracking-[0.08em] leading-3 mb-1">{p.category}</p>
                     <h3 className="text-fg text-[13px] font-bold font-heading leading-[130%] mb-1">{p.name}</h3>
                     <p className="text-fg text-[14px] font-extrabold font-body leading-[18px]">₹{p.price.toLocaleString('en-IN')}</p>
-                    <p className="text-[10px] font-body leading-3 mt-0.5"><Stars rating={p.averageRating} /> <span className="text-[#B0A090]">{p.averageRating.toFixed(1)} ({p.reviewCount})</span></p>
                   </div>
-                </Link>
+                </StoreLink>
               ))}
             </div>
           </section>
@@ -531,16 +530,13 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
         {/* Browse Categories */}
         {categories.length > 0 && (
           <section className="pb-10">
-            <div className="flex items-center gap-2 mb-5">
-              <div className="w-1 h-5 bg-store-primary rounded-full" />
-              <h2 className="text-[18px] font-bold text-fg font-body leading-[22px]">Browse Categories</h2>
-            </div>
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+            <h2 className="text-[18px] font-bold text-fg font-body leading-[22px] mb-5">Browse Categories</h2>
+            <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar md:grid md:grid-cols-6 md:overflow-visible">
               {categories.map((cat, i) => (
-                <div key={cat.id} className="h-[120px] rounded-xl overflow-hidden relative flex items-end p-3 cursor-pointer group" style={{ backgroundImage: CATEGORY_GRADIENTS[i % CATEGORY_GRADIENTS.length] }}>
-                  <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(0deg, rgba(0,0,0,0.55), rgba(0,0,0,0) 55%)' }} />
+                <div key={cat.id} className="w-[130px] md:w-auto h-[160px] shrink-0 rounded-2xl overflow-hidden relative flex items-end p-3.5 cursor-pointer group" style={{ backgroundImage: CATEGORY_GRADIENTS[i % CATEGORY_GRADIENTS.length] }}>
+                  <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(0deg, rgba(0,0,0,0.6), rgba(0,0,0,0) 55%)' }} />
                   <div className="relative">
-                    <p className="text-white text-[13px] font-bold font-body leading-4">{cat.name}</p>
+                    <p className="text-white text-[14px] font-bold font-body leading-4" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.4)' }}>{cat.name}</p>
                   </div>
                 </div>
               ))}
@@ -617,26 +613,29 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {visibleProducts.map((p, i) => (
-                  <Link key={`${p.name}-${i}`} href={`/store/product/${p.slug}`} className="bg-white rounded-xl border-[1.5px] border-[#F0E8D8] overflow-hidden group cursor-pointer block hover:border-store-primary hover:shadow-md transition">
-                    <div className="aspect-[2/3] relative bg-bg">
+                  <StoreLink key={`${p.name}-${i}`} href={`/store/product/${p.slug}`} className="bg-white rounded-xl border-[1.5px] border-[#F0E8D8] overflow-hidden group cursor-pointer block hover:border-store-primary hover:shadow-md transition">
+                    <div className="aspect-[3/4] relative bg-bg">
                       {p.images[0] && <Image src={p.images[0]} alt={p.name} fill sizes="(min-width:768px) 30vw, 50vw" className="object-cover" />}
-                      {p.discount && <span className="absolute top-2 left-2 px-2 py-[3px] bg-store-primary rounded text-white text-[10px] font-bold font-body leading-3">{p.discount}</span>}
-                      {p.badge && !p.discount && <span className="absolute top-2 left-2 px-2 py-[3px] rounded text-white text-[10px] font-bold font-body leading-3 bg-success">{p.badge}</span>}
-                      <span className="absolute top-2 right-2 w-7 h-7 bg-white/90 rounded-full flex items-center justify-center hover:scale-110 transition-transform">
+                      {p.discount && <span className="absolute top-2 left-2 px-2.5 py-[3px] bg-store-primary rounded-full text-white text-[10px] font-bold font-body leading-3">{p.discount}</span>}
+                      {p.badge && !p.discount && <span className="absolute top-2 left-2 px-2.5 py-[3px] rounded-full text-white text-[10px] font-bold font-body leading-3 bg-success">{p.badge}</span>}
+                      <span className="absolute top-2 right-2 w-7 h-7 bg-white/70 backdrop-blur-sm rounded-full flex items-center justify-center hover:scale-110 transition-transform">
                         <HeartIcon />
                       </span>
+                      <span className="absolute bottom-2 left-2 flex items-center gap-1 px-1.5 py-[3px] bg-success rounded text-white text-[10px] font-bold font-body leading-3">
+                        {p.averageRating.toFixed(1)} ★ <span className="font-normal opacity-80">| {p.reviewCount}</span>
+                      </span>
                     </div>
-                    <div className="p-2.5">
-                      <p className="text-[#8B7D7A] text-[10px] font-bold font-body uppercase tracking-[0.08em] leading-3 mb-1">{p.category}</p>
+                    <div className="p-2">
                       <h3 className="text-fg text-[13px] font-bold font-heading leading-[130%] mb-1">{p.name}</h3>
                       <div className="flex items-center gap-2">
                         <span className="text-store-primary text-[14px] font-extrabold font-body leading-[18px]">₹{p.price.toLocaleString('en-IN')}</span>
                         {p.comparePrice && <span className="text-[#B0A090] text-[11px] font-body line-through">₹{p.comparePrice.toLocaleString('en-IN')}</span>}
-                        <span className="ml-auto w-7 h-7 bg-store-primary rounded-md flex items-center justify-center text-white text-lg leading-none">+</span>
+                        <span className="ml-auto w-7 h-7 bg-store-primary rounded-full flex items-center justify-center">
+                          <CartIcon />
+                        </span>
                       </div>
-                      <p className="text-[10px] font-body leading-3 mt-1"><Stars rating={p.averageRating} /> <span className="text-[#B0A090]">{p.averageRating.toFixed(1)} ({p.reviewCount})</span></p>
                     </div>
-                  </Link>
+                  </StoreLink>
                 ))}
               </div>
             )}
@@ -665,7 +664,8 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
       {showMobileFilters && (
         <div className="lg:hidden fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/50" onClick={() => setShowMobileFilters(false)} />
-          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl max-h-[85vh] overflow-y-auto p-6 animate-[slideUp_0.3s_ease-out]">
+          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[85vh] overflow-y-auto p-6 animate-[slideUp_0.3s_ease-out] transition-transform duration-300 ease-out">
+            <div className="w-10 h-1.5 bg-[#E5E0D5] rounded-full mx-auto mb-4" />
             <div className="flex items-center justify-between mb-4">
               <span className="text-fg text-[16px] font-bold font-body">Filters</span>
               <button onClick={() => setShowMobileFilters(false)} className="w-8 h-8 rounded-full bg-[#F9F9F9] flex items-center justify-center">

@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { useCartStore } from '@/lib/store/cart'
+import { StoreLink } from '@/components/store/store-context'
 
 export function CartBadge() {
   const items = useCartStore(s => s.items)
@@ -11,7 +11,7 @@ export function CartBadge() {
   const c = mounted ? items.reduce((sum, i) => sum + i.quantity, 0) : 0
 
   return (
-    <Link
+    <StoreLink
       href="/cart"
       className="relative flex size-9 shrink-0 items-center justify-center rounded-lg bg-border-light sm:size-10"
     >
@@ -25,6 +25,6 @@ export function CartBadge() {
           {c > 9 ? '9+' : c}
         </span>
       )}
-    </Link>
+    </StoreLink>
   )
 }

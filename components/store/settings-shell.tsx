@@ -1,9 +1,9 @@
 'use client'
 
-import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ChevronRight } from 'lucide-react'
 import { user } from '@/components/store/settings-sections'
+import { StoreLink, useStoreBase } from '@/components/store/store-context'
 
 const sidebarItems = [
   { label: 'Profile', href: '/account/profile' },
@@ -15,6 +15,8 @@ const sidebarItems = [
 
 export function SettingsShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const storeBase = useStoreBase()
+  const rel = storeBase ? pathname.replace(storeBase, '') || '/' : pathname
 
   return (
     <div className="hidden lg:block min-h-screen bg-bg py-10 px-12">
@@ -31,18 +33,18 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
           </div>
           <nav className="rounded-xl border border-border bg-surface overflow-hidden">
             {sidebarItems.map((item) => (
-              <Link
+              <StoreLink
                 key={item.href}
                 href={item.href}
                 className={`flex w-full items-center justify-between px-5 py-3.5 font-body text-md transition-colors border-l-[3px] ${
-                  pathname === item.href
+                  rel === item.href
                     ? 'text-fg font-semibold border-store-primary bg-bg'
                     : 'text-muted-warm border-transparent hover:bg-bg hover:border-store-primary'
                 }`}
               >
                 {item.label}
                 <ChevronRight className="h-4 w-4" />
-              </Link>
+              </StoreLink>
             ))}
           </nav>
         </div>

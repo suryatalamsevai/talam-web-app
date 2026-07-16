@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
 import type { Metadata } from 'next'
+import { StoreLink } from '@/components/store/store-context'
 import { getRequestTenantId, getTenantStorefront } from '@/lib/data/tenant'
 import { getProductBySlug, getProductReviews } from '@/lib/data/products'
 import { AddToCartButton } from '@/components/store/add-to-cart-button'
@@ -54,32 +54,36 @@ export default async function ProductPage({ params }: Props) {
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-6 sm:px-12 sm:py-10">
+    <main className="mx-auto max-w-6xl pb-24 sm:pb-0 sm:px-12 sm:py-10">
       <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 sm:gap-12">
-        <ProductImageCarousel images={product.images} name={product.name} />
+        <div className="-mx-0 sm:mx-0">
+          <ProductImageCarousel images={product.images} name={product.name} />
+        </div>
 
-        <div className="space-y-5">
+        <div className="space-y-5 px-4 sm:px-0 pt-4 sm:pt-0">
           <div>
             {product.category && (
-              <Link
+              <StoreLink
                 href={`/?category=${product.category.id}`}
-                className="mb-1 block font-body text-xs font-semibold tracking-wide text-muted-warm uppercase"
+                className="mb-2 inline-flex items-center rounded-full bg-bg px-2.5 py-0.5 font-body text-[11px] font-semibold tracking-wide text-muted-warm uppercase"
               >
                 {product.category.name}
-              </Link>
+              </StoreLink>
             )}
             <h1 className="font-heading text-2xl leading-tight font-bold text-fg sm:text-[32px]">{product.name}</h1>
           </div>
 
           {product.reviewCount > 0 && (
-            <p className="font-body text-sm text-success">
-              {'★'.repeat(Math.round(product.averageRating ?? 0))} {product.reviewCount} reviews ·{' '}
-              {product.averageRating?.toFixed(1)} rating
-            </p>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2.5 py-1 font-body text-sm font-semibold text-success">
+                {product.averageRating?.toFixed(1)} ★
+              </span>
+              <span className="font-body text-sm text-muted-warm">{product.reviewCount} reviews</span>
+            </div>
           )}
 
           <div className="flex items-baseline gap-3">
-            <span className="font-body text-2xl font-bold text-fg">
+            <span className="font-body text-3xl font-bold text-fg">
               ₹{price.toLocaleString('en-IN')}
             </span>
             {hasDiscount && (
@@ -95,9 +99,10 @@ export default async function ProductPage({ params }: Props) {
           </div>
 
           {freeDeliveryText && (
-            <div className="rounded-lg border border-success-border bg-success-bg px-4 py-3">
-              <p className="font-body text-sm font-medium text-success">
-                ✓ {freeDeliveryText}
+            <div className="flex items-center gap-2 rounded-lg bg-bg px-4 py-3">
+              <span className="text-success">✓</span>
+              <p className="font-body text-sm font-medium text-fg">
+                {freeDeliveryText}
                 {tenant.returnWindowDays ? ` · ${tenant.returnWindowDays}-day returns guaranteed` : ''}
               </p>
             </div>
@@ -105,11 +110,11 @@ export default async function ProductPage({ params }: Props) {
 
           {product.sizes.length > 0 && (
             <div className="flex items-center justify-between">
-              <p className="font-body text-sm font-semibold text-fg uppercase">Choose Your Size</p>
+              <p className="font-body text-sm font-semibold text-fg uppercase tracking-wide">Select Size</p>
               {tenant.sizeGuideUrl && (
-                <Link href={tenant.sizeGuideUrl} className="font-body text-sm text-store-primary">
+                <StoreLink href={tenant.sizeGuideUrl} className="font-body text-sm text-store-primary">
                   View Size Guide →
-                </Link>
+                </StoreLink>
               )}
             </div>
           )}
@@ -130,9 +135,9 @@ export default async function ProductPage({ params }: Props) {
           />
 
           {product.description && (
-            <div className="space-y-1 border-t border-border pt-5">
+            <div className="space-y-1.5 border-t border-border pt-5">
               <p className="font-body text-sm font-semibold text-fg">Description</p>
-              <p className="font-body text-sm leading-relaxed text-muted-warm whitespace-pre-line">
+              <p className="font-body text-[15px] leading-[1.7] text-muted-warm whitespace-pre-line">
                 {product.description}
               </p>
             </div>
@@ -140,40 +145,43 @@ export default async function ProductPage({ params }: Props) {
 
           <div className="space-y-3 border-t border-border pt-5">
             <p className="font-body text-sm font-semibold text-fg">Product Specifications</p>
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 font-body text-sm">
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-0 font-body text-sm">
               {product.category && (
                 <>
-                  <dt className="text-muted-warm">Category</dt>
-                  <dd className="text-fg">{product.category.name}</dd>
+                  <dt className="text-muted-warm py-2 even:bg-bg px-2 -mx-2">Category</dt>
+                  <dd className="text-fg py-2 even:bg-bg px-2 -mx-2">{product.category.name}</dd>
                 </>
               )}
               {product.sizes.length > 0 && (
                 <>
-                  <dt className="text-muted-warm">Available Sizes</dt>
-                  <dd className="text-fg">{product.sizes.join(', ')}</dd>
+                  <dt className="text-muted-warm py-2 even:bg-bg px-2 -mx-2">Available Sizes</dt>
+                  <dd className="text-fg py-2 even:bg-bg px-2 -mx-2">{product.sizes.join(', ')}</dd>
                 </>
               )}
-              <dt className="text-muted-warm">SKU</dt>
-              <dd className="text-fg font-mono text-xs">{product.slug.toUpperCase()}</dd>
+              <dt className="text-muted-warm py-2 even:bg-bg px-2 -mx-2">SKU</dt>
+              <dd className="text-fg font-mono text-xs py-2 even:bg-bg px-2 -mx-2">{product.slug.toUpperCase()}</dd>
               {product.reviewCount > 0 && (
                 <>
-                  <dt className="text-muted-warm">Rating</dt>
-                  <dd className="text-fg">{product.averageRating?.toFixed(1)} / 5 ({product.reviewCount} reviews)</dd>
+                  <dt className="text-muted-warm py-2 even:bg-bg px-2 -mx-2">Rating</dt>
+                  <dd className="text-fg py-2 even:bg-bg px-2 -mx-2">{product.averageRating?.toFixed(1)} / 5 ({product.reviewCount} reviews)</dd>
                 </>
               )}
-              <dt className="text-muted-warm">Availability</dt>
-              <dd className="text-success font-medium">In Stock</dd>
+              <dt className="text-muted-warm py-2 even:bg-bg px-2 -mx-2">Availability</dt>
+              <dd className="text-success font-medium py-2 even:bg-bg px-2 -mx-2">In Stock</dd>
             </dl>
           </div>
         </div>
       </div>
 
-      <ReviewsSection
-        reviews={reviews}
-        averageRating={product.averageRating}
-        count={product.reviewCount}
-        onSubmitReview={submitReviewStub}
-      />
+      <div className="px-4 sm:px-0">
+        <ReviewsSection
+          reviews={reviews}
+          averageRating={product.averageRating}
+          count={product.reviewCount}
+          onSubmitReview={submitReviewStub}
+        />
+      </div>
+
     </main>
   )
 }

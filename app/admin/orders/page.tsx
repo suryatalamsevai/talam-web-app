@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Search } from 'lucide-react'
+import { Search, ArrowUpDown } from 'lucide-react'
 import { OrderActionSheet } from '@/components/admin/order-action-sheet'
 import { OrderDetailsModal } from '@/components/admin/order-details-modal'
 
@@ -24,26 +24,18 @@ export type MockOrder = {
   address: string
 }
 
+const STATUS_DOT: Record<OrderStatus, string> = {
+  Pending:   '#FB923C',
+  Confirmed: '#6366F1',
+  Shipped:   '#3B82F6',
+  Delivered: '#22C55E',
+}
+
 const STATUS_STYLE: Record<OrderStatus, { border: string; bg: string; text: string }> = {
   Pending:   { border: '#FB923C', bg: '#FB923C1A', text: '#9A3412' },
   Confirmed: { border: '#6366F1', bg: '#6366F11A', text: '#4338CA' },
   Shipped:   { border: '#3B82F6', bg: '#3B82F61A', text: '#1D4ED8' },
   Delivered: { border: '#22C55E', bg: '#22C55E1A', text: '#166534' },
-}
-
-const FILTER_STYLE: Record<OrderStatus | 'All', { border: string; bg: string; text: string }> = {
-  All:       { border: '#4F3FF0', bg: '#4F3FF0',   text: '#FFFFFF' },
-  Pending:   { border: '#FB923C', bg: '#FB923C26', text: '#9A3412' },
-  Confirmed: { border: '#6366F1', bg: '#6366F126', text: '#4338CA' },
-  Shipped:   { border: '#3B82F6', bg: '#3B82F626', text: '#1D4ED8' },
-  Delivered: { border: '#22C55E', bg: '#22C55E26', text: '#166534' },
-}
-
-const ACTION_BTN: Record<OrderStatus, { label: string; bg: string; opacity?: string }> = {
-  Pending:   { label: 'Update', bg: '#4F3FF0' },
-  Confirmed: { label: 'Update', bg: '#4F3FF0' },
-  Shipped:   { label: 'Track',  bg: '#6B7280' },
-  Delivered: { label: 'Closed', bg: '#8B7D7A', opacity: '0.6' },
 }
 
 const MOCK_ORDERS: MockOrder[] = [
@@ -57,162 +49,168 @@ const MOCK_ORDERS: MockOrder[] = [
 ]
 
 type FilterKey = 'All' | OrderStatus
-const FILTERS: { key: FilterKey; label: string }[] = [
-  { key: 'All', label: 'All (8)' },
-  { key: 'Pending', label: 'Pending (2)' },
-  { key: 'Confirmed', label: 'Confirmed (1)' },
-  { key: 'Shipped', label: 'Shipped (3)' },
-  { key: 'Delivered', label: 'Delivered (2)' },
-]
+const FILTERS: FilterKey[] = ['All', 'Pending', 'Confirmed', 'Shipped', 'Delivered']
+
+function filterCount(key: FilterKey) {
+  if (key === 'All') return MOCK_ORDERS.length
+  return MOCK_ORDERS.filter((o) => o.status === key).length
+}
 
 export default function AdminOrdersPage() {
   const [actionOrder, setActionOrder] = useState<MockOrder | null>(null)
   const [detailOrder, setDetailOrder] = useState<MockOrder | null>(null)
   const [activeFilter, setActiveFilter] = useState<FilterKey>('All')
   const [sortAsc, setSortAsc] = useState(false)
+  const [search, setSearch] = useState('')
 
-  const filtered = MOCK_ORDERS.filter((o) => activeFilter === 'All' || o.status === activeFilter)
+  const filtered = MOCK_ORDERS
+    .filter((o) => activeFilter === 'All' || o.status === activeFilter)
+    .filter((o) => !search || o.customer.toLowerCase().includes(search.toLowerCase()) || o.code.toLowerCase().includes(search.toLowerCase()))
   const sorted = sortAsc ? [...filtered].reverse() : filtered
 
+  const totalValue = MOCK_ORDERS.reduce((s, o) => s + o.priceNum, 0)
+  const pendingCount = MOCK_ORDERS.filter((o) => o.status === 'Pending').length
+
   return (
-    <div className="mx-auto max-w-[390px] md:max-w-none">
-      {/* Mobile header */}
-      <div className="flex items-center justify-between border-b border-border px-4 py-3 md:hidden">
-        <span className="text-base font-bold text-fg">Orders</span>
-        <button className="flex size-8 cursor-pointer items-center justify-center">
+    <div className="px-4 pb-24 md:px-0 md:pb-0">
+
+      {/* ── Header ── */}
+      <div className="flex items-end justify-between pb-5 pt-2 md:pt-0">
+        <div>
+          <p className="text-2xs font-medium uppercase tracking-[0.08em] text-muted-warm">{MOCK_ORDERS.length} orders</p>
+          <h1 className="font-marketing mt-1 text-[26px] font-semibold leading-tight text-fg md:text-[32px]">
+            Orders
+          </h1>
+        </div>
+        {/* Desktop search + sort */}
+        <div className="hidden items-center gap-3 md:flex">
+          <div className="flex h-9 w-[220px] items-center gap-2 rounded-lg border border-border-light bg-surface px-3">
+            <Search className="size-3.5 text-muted-warm" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="grow bg-transparent text-sm text-fg outline-none placeholder:text-muted-warm"
+              placeholder="Search orders..."
+            />
+          </div>
+          <button
+            onClick={() => setSortAsc(!sortAsc)}
+            className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-border-light px-3 py-[7px] text-xs font-medium text-muted-warm transition-colors hover:text-fg"
+          >
+            <ArrowUpDown className="size-3.5" />
+            {sortAsc ? 'Oldest' : 'Latest'}
+          </button>
+        </div>
+        {/* Mobile search */}
+        <button className="flex size-8 items-center justify-center md:hidden">
           <Search className="size-5 text-fg" strokeWidth={2} />
         </button>
       </div>
 
-      {/* Desktop header */}
-      <div className="mb-4 hidden items-center justify-between md:flex">
-        <h1 className="text-2xl font-bold text-fg">Orders</h1>
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-[240px] items-center gap-2 rounded-lg border border-border px-3">
-            <Search className="size-4 text-muted-warm" />
-            <input className="grow bg-transparent text-sm outline-none" placeholder="Search orders..." />
-          </div>
-          <button
-            onClick={() => setSortAsc(!sortAsc)}
-            className="cursor-pointer rounded-lg border border-border px-4 py-2 text-sm font-medium text-fg transition-colors hover:bg-bg"
-          >
-            Sort by: {sortAsc ? 'Oldest' : 'Latest'}
-          </button>
-          <button className="cursor-pointer rounded-lg border border-border px-4 py-2 text-sm font-medium text-fg transition-colors hover:bg-bg">Filter</button>
+      {/* ── Summary strip ── */}
+      <div className="mb-5 flex items-start gap-0">
+        <div className="flex-1 border-r border-border-light pr-5">
+          <p className="text-xs font-medium text-muted-warm">Total Value</p>
+          <p className="font-marketing mt-0.5 text-[22px] font-semibold leading-tight text-fg">
+            ₹{totalValue.toLocaleString('en-IN')}
+          </p>
+        </div>
+        <div className="flex-1 pl-5">
+          <p className="text-xs font-medium text-muted-warm">Needs Attention</p>
+          <p className="font-marketing mt-0.5 text-[22px] font-semibold leading-tight text-fg">
+            {pendingCount} <span className="text-sm font-normal text-muted-warm">pending</span>
+          </p>
         </div>
       </div>
 
-      {/* Filter pills — hidden scrollbar */}
-      <div className="flex gap-2 overflow-x-auto px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:px-0 md:pb-4">
-        {FILTERS.map(({ key, label }) => {
+      {/* ── Filter pills ── */}
+      <div className="mb-5 flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {FILTERS.map((key) => {
           const active = key === activeFilter
-          const style = FILTER_STYLE[key]
+          const count = filterCount(key)
           return (
             <button
               key={key}
               onClick={() => setActiveFilter(key)}
-              className="shrink-0 cursor-pointer rounded-full px-[14px] py-[7px] text-xs font-semibold transition-colors"
-              style={
+              className={`shrink-0 cursor-pointer rounded-full px-4 py-[6px] text-xs font-semibold transition-colors ${
                 active
-                  ? { backgroundColor: style.bg, color: style.text, border: `1.5px solid ${style.border}` }
-                  : { backgroundColor: 'transparent', color: '#8B7D7A', border: '1.5px solid #E8E8E8' }
-              }
+                  ? 'bg-fg text-surface'
+                  : 'text-muted-warm hover:text-fg'
+              }`}
             >
-              {label}
+              {key} ({count})
             </button>
           )
         })}
       </div>
 
-      {/* Mobile: order cards */}
-      <div className="flex flex-col gap-3 p-4 md:hidden">
-        {sorted.map((order) => {
-          const ss = STATUS_STYLE[order.status]
-          return (
+      {/* ── Mobile: order cards ── */}
+      <div className="flex flex-col gap-3 md:hidden">
+        {sorted.map((order) => (
+          <button
+            key={order.code}
+            onClick={() => setDetailOrder(order)}
+            className="cursor-pointer rounded-lg border border-border-light p-3.5 text-left transition-colors active:bg-bg"
+          >
+            <div className="mb-2.5 flex items-start justify-between">
+              <div>
+                <p className="text-sm font-bold text-fg">{order.customer}</p>
+                <p className="mt-0.5 text-xs text-muted-warm">{order.code} · {order.time.split('·')[0].trim()}</p>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="size-2 rounded-full" style={{ backgroundColor: STATUS_DOT[order.status] }} />
+                <span className="text-xs font-medium text-muted-warm">{order.status}</span>
+              </div>
+            </div>
+            <p className="mb-3 truncate text-xs text-muted-warm">{order.items}</p>
+            <div className="flex items-center justify-between">
+              <span className="font-marketing text-lg font-semibold text-fg">{order.price}</span>
+              <span
+                onClick={(e) => { e.stopPropagation(); setActionOrder(order) }}
+                className="rounded-md bg-brand-primary px-3.5 py-[5px] text-xs font-semibold text-surface transition-transform active:scale-95"
+              >
+                Action
+              </span>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* ── Desktop: clean table ── */}
+      <div className="hidden md:block">
+        <div className="grid grid-cols-[1fr_2fr_auto_auto_auto_auto] gap-x-6 border-b border-border-light pb-2 text-xs font-medium uppercase tracking-[0.06em] text-muted-warm">
+          <span>Customer</span>
+          <span>Items</span>
+          <span className="text-right">Amount</span>
+          <span className="text-center">Status</span>
+          <span>Date</span>
+          <span />
+        </div>
+        {sorted.map((order) => (
+          <div
+            key={order.code}
+            onClick={() => setDetailOrder(order)}
+            className="grid cursor-pointer grid-cols-[1fr_2fr_auto_auto_auto_auto] items-center gap-x-6 border-b border-border-light py-3.5 transition-colors hover:bg-bg"
+          >
+            <div>
+              <p className="text-sm font-semibold text-fg">{order.customer}</p>
+              <p className="text-xs text-muted-warm">{order.code}</p>
+            </div>
+            <p className="truncate text-sm text-muted-warm">{order.items}</p>
+            <p className="font-marketing min-w-[72px] text-right text-[15px] font-semibold text-fg">{order.price}</p>
+            <div className="flex min-w-[90px] items-center justify-center gap-1.5">
+              <span className="size-2 rounded-full" style={{ backgroundColor: STATUS_DOT[order.status] }} />
+              <span className="text-xs font-medium text-fg">{order.status}</span>
+            </div>
+            <span className="min-w-[80px] text-xs text-muted-warm">{order.date}</span>
             <button
-              key={order.code}
-              onClick={() => setDetailOrder(order)}
-              className="cursor-pointer rounded-xl border border-border p-[14px] text-left shadow-sm transition-colors active:bg-bg"
+              onClick={(e) => { e.stopPropagation(); setActionOrder(order) }}
+              className="min-w-[72px] cursor-pointer rounded-md bg-brand-primary px-3 py-[5px] text-center text-xs font-semibold text-surface transition-transform active:scale-95"
             >
-              <div className="mb-3 flex items-start justify-between">
-                <div>
-                  <p className="mb-[2px] text-sm font-bold text-fg">{order.code}</p>
-                  <p className="text-2xs text-muted-warm">{order.time}</p>
-                </div>
-                <span
-                  className="rounded-[4px] px-2 py-[5px] text-[10px] font-bold"
-                  style={{ backgroundColor: ss.bg, border: `1px solid ${ss.border}`, color: ss.text }}
-                >
-                  {order.status}
-                </span>
-              </div>
-              <p className="mb-1 text-sm font-semibold text-fg">{order.customer}</p>
-              <p className="mb-3 text-xs text-muted-warm">{order.items}</p>
-              <div className="flex items-center justify-between">
-                <span className="text-[15px] font-bold text-fg">{order.price}</span>
-                <span
-                  onClick={(e) => { e.stopPropagation(); setActionOrder(order) }}
-                  className="rounded-[4px] px-4 py-[6px] text-xs font-semibold text-surface transition-transform active:scale-95"
-                  style={{ backgroundColor: '#4F3FF0' }}
-                >
-                  Action
-                </span>
-              </div>
+              Action
             </button>
-          )
-        })}
-      </div>
-
-      {/* Desktop: data table */}
-      <div className="hidden overflow-x-auto md:block">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border text-left">
-              {['ORDER ID', 'CUSTOMER', 'EMAIL', 'MOBILE', 'CATEGORY', 'COUNT', 'AMOUNT', 'STATUS', 'DATE', 'ACTION'].map((h) => (
-                <th key={h} className="whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-warm">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map((order) => {
-              const ss = STATUS_STYLE[order.status]
-              const ab = ACTION_BTN[order.status]
-              return (
-                <tr
-                  key={order.code}
-                  onClick={() => setDetailOrder(order)}
-                  className="cursor-pointer border-b border-border transition-colors hover:bg-bg"
-                >
-                  <td className="whitespace-nowrap px-4 py-3 font-bold text-fg">{order.code}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-fg">{order.customerShort}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-muted-warm">{order.email}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-muted-warm">{order.mobile}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-muted-warm">{order.category}</td>
-                  <td className="px-4 py-3 text-center text-muted-warm">{order.count}</td>
-                  <td className="whitespace-nowrap px-4 py-3 font-semibold text-fg">{order.price}</td>
-                  <td className="px-4 py-3">
-                    <span
-                      className="inline-block w-[62px] rounded-[4px] px-2 py-[5px] text-center text-[10px] font-bold"
-                      style={{ backgroundColor: ss.bg, border: `1px solid ${ss.border}`, color: ss.text }}
-                    >
-                      {order.status}
-                    </span>
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-muted-warm">{order.date}</td>
-                  <td className="px-4 py-3">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setActionOrder(order) }}
-                      className="min-w-[80px] cursor-pointer rounded-[4px] px-[10px] py-[5px] text-xs font-semibold text-surface transition-transform active:scale-95"
-                      style={{ backgroundColor: ab.bg, opacity: ab.opacity ?? '1' }}
-                    >
-                      {ab.label}
-                    </button>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+          </div>
+        ))}
       </div>
 
       {actionOrder && <OrderActionSheet order={actionOrder} onClose={() => setActionOrder(null)} onViewDetails={(o) => { setActionOrder(null); setDetailOrder(o) }} />}

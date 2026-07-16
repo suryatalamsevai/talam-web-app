@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowLeft, Search, ChevronRight, X } from 'lucide-react'
+import { StoreLink } from '@/components/store/store-context'
+import { ArrowLeft, Search, ChevronRight, X, FileText, RotateCcw } from 'lucide-react'
 
 // ponytail: inline mock until real order history API exists
 type MockOrderStatus = 'Out for Delivery' | 'Shipped' | 'Delivered' | 'Cancelled' | 'Return Pickup'
@@ -84,6 +84,15 @@ const statusIcon: Record<MockOrderStatus, string> = {
   'Return Pickup': '●',
 }
 
+// left border accent for mobile order cards, grouped by status family
+const statusBorder: Record<MockOrderStatus, string> = {
+  'Out for Delivery': 'border-l-amber',
+  'Shipped': 'border-l-amber',
+  'Delivered': 'border-l-success',
+  'Cancelled': 'border-l-danger',
+  'Return Pickup': 'border-l-purple-500',
+}
+
 function tabFilter(tab: Tab): MockOrder[] {
   if (tab === 'All') return allOrders
   if (tab === 'Active') return allOrders.filter(o => o.status === 'Out for Delivery' || o.status === 'Shipped')
@@ -101,31 +110,31 @@ function formatDate(d: Date) {
 function OrderActions({ order }: { order: MockOrder }) {
   if (order.status === 'Out for Delivery' || order.status === 'Shipped') {
     return (
-      <div className="flex gap-2">
-        <button className="flex-1 rounded-lg border border-store-primary px-3 py-2 font-body text-xs font-semibold text-store-primary hover:bg-store-primary/5 sm:flex-none sm:px-4">
+      <div className="flex items-center gap-2">
+        <button className="flex-1 rounded-lg bg-store-primary px-3 py-2.5 font-body text-xs font-semibold text-surface hover:opacity-90 sm:flex-none sm:px-4">
           Track Package
         </button>
-        <button className="flex-1 rounded-lg border border-border px-3 py-2 font-body text-xs font-medium text-fg hover:bg-bg sm:flex-none sm:px-4">
-          View Invoice
+        <button aria-label="View Invoice" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border text-fg hover:bg-bg">
+          <FileText className="h-4 w-4" />
         </button>
       </div>
     )
   }
   if (order.status === 'Delivered') {
     return (
-      <div className="flex gap-2">
-        <button className="flex-1 rounded-lg border border-border px-3 py-2 font-body text-xs font-medium text-fg hover:bg-bg sm:flex-none sm:px-4">
+      <div className="flex items-center gap-2">
+        <button className="flex-1 rounded-lg bg-store-primary px-3 py-2.5 font-body text-xs font-semibold text-surface hover:opacity-90 sm:flex-none sm:px-4">
           Buy Again
         </button>
-        <button className="flex-1 rounded-lg border border-border px-3 py-2 font-body text-xs font-medium text-fg hover:bg-bg sm:flex-none sm:px-4">
-          Return / Exchange
+        <button aria-label="Return / Exchange" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border text-fg hover:bg-bg">
+          <RotateCcw className="h-4 w-4" />
         </button>
       </div>
     )
   }
   if (order.status === 'Return Pickup') {
     return (
-      <button className="w-full rounded-lg border border-store-primary px-4 py-2 font-body text-xs font-semibold text-store-primary hover:bg-store-primary/5 sm:w-auto">
+      <button className="w-full rounded-lg bg-store-primary px-4 py-2.5 font-body text-xs font-semibold text-surface hover:opacity-90 sm:w-auto">
         Track Return
       </button>
     )
@@ -139,19 +148,20 @@ function OrderCardMobile({ order }: { order: MockOrder }) {
   const extraCount = order.items.length - 1
 
   return (
-    <div className="border-b border-border py-4 last:border-b-0">
+    <div className={`border-b border-l-4 border-border py-4 pl-3 last:border-b-0 ${statusBorder[order.status]}`}>
       <div className="flex items-center justify-between gap-2 mb-2">
         <p className="font-body text-xs sm:text-sm font-bold text-fg">#{order.orderId}</p>
-        <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-body text-[10px] sm:text-[11px] font-semibold shrink-0 ${statusColor[order.status]}`}>
-          {statusIcon[order.status]} {order.status}
+        <span className={`inline-flex items-center gap-1.5 font-body text-[11px] font-semibold shrink-0 text-fg`}>
+          <span className={`h-1.5 w-1.5 rounded-full ${statusDot[order.status]}`} />
+          {order.status}
         </span>
       </div>
       <p className="mb-2 font-body text-[11px] text-muted-warm">{formatDate(order.date)}</p>
 
-      <Link href={`/orders/${order.id}`} className="flex items-center gap-3 group">
-        <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-bg">
+      <StoreLink href={`/orders/${order.id}`} className="flex items-center gap-3 group">
+        <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-bg">
           {mainItem.product.images[0] && (
-            <Image src={mainItem.product.images[0]} alt={mainItem.product.name} fill sizes="48px" className="object-cover" />
+            <Image src={mainItem.product.images[0]} alt={mainItem.product.name} fill sizes="56px" className="object-cover" />
           )}
         </div>
         <div className="flex-1 min-w-0">
@@ -168,7 +178,7 @@ function OrderCardMobile({ order }: { order: MockOrder }) {
           <p className="font-body text-sm font-bold text-fg mt-0.5">₹{order.total.toLocaleString('en-IN')}</p>
         </div>
         <ChevronRight className="h-4 w-4 shrink-0 text-muted-warm" />
-      </Link>
+      </StoreLink>
 
       <div className="mt-3">
         <OrderActions order={order} />
@@ -257,9 +267,9 @@ export default function OrdersPage() {
       {/* Header */}
       <div className="mb-1 flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <Link href="/" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border hover:bg-bg transition-colors lg:hidden">
+          <StoreLink href="/" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border hover:bg-bg transition-colors lg:hidden">
             <ArrowLeft className="h-4 w-4 text-fg" />
-          </Link>
+          </StoreLink>
           <div className="min-w-0">
             <h1 className="font-heading text-lg sm:text-[22px] font-bold leading-7 text-fg">My Orders</h1>
             <p className="mt-0.5 font-body text-xs sm:text-sm text-muted-warm">{allOrders.length} orders · Priya Rajan</p>
@@ -300,19 +310,19 @@ export default function OrdersPage() {
         </div>
       )}
 
-      {/* Tabs — scrollable pill bar */}
-      <div className="mt-3 mb-4 sm:mt-4 sm:mb-5 -mx-3 px-3 sm:mx-0 sm:px-0">
-        <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1 no-scrollbar">
+      {/* Tabs — underline style */}
+      <div className="mt-3 mb-4 sm:mt-4 sm:mb-5 -mx-3 px-3 sm:mx-0 sm:px-0 border-b border-border">
+        <div className="flex gap-4 sm:gap-5 overflow-x-auto no-scrollbar">
           {tabs.map(tab => {
             const c = tabCount(tab)
             return (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`shrink-0 rounded-full px-3 sm:px-4 py-1.5 font-body text-xs sm:text-sm font-medium transition-colors ${
+                className={`shrink-0 border-b-2 pb-2.5 font-body text-xs sm:text-sm font-medium transition-colors ${
                   activeTab === tab
-                    ? 'bg-fg text-surface'
-                    : 'border border-border text-muted-warm hover:text-fg'
+                    ? 'border-store-primary text-fg font-semibold'
+                    : 'border-transparent text-muted-warm hover:text-fg'
                 }`}
               >
                 {tab} ({c})

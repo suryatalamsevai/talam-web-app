@@ -1,8 +1,8 @@
 'use client'
 
-import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
+import { StoreLink, useStoreBase } from '@/components/store/store-context'
 
 const tabs = [
   {
@@ -46,6 +46,7 @@ const tabs = [
 
 export function MobileTabBar() {
   const pathname = usePathname()
+  const storeBase = useStoreBase()
   const [hidden, setHidden] = useState(false)
   const lastY = useRef(0)
   const stopTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -75,21 +76,22 @@ export function MobileTabBar() {
   }, [])
 
   function isActive(href: string) {
-    if (href === '/') return pathname === '/' || pathname === ''
-    return pathname.startsWith(href)
+    const rel = storeBase ? pathname.replace(storeBase, '') || '/' : pathname
+    if (href === '/') return rel === '/' || rel === ''
+    return rel.startsWith(href)
   }
 
   return (
     <nav
-      className={`fixed inset-x-0 bottom-0 z-40 h-20 border-t border-border bg-surface sm:hidden transition-transform duration-200 ease-out ${hidden ? 'translate-y-full' : 'translate-y-0'}`}
+      className={`fixed inset-x-0 bottom-0 z-40 h-[72px] border-t border-border/40 bg-surface/85 backdrop-blur-xl shadow-[0_-2px_20px_rgba(0,0,0,0.06)] sm:hidden transition-transform duration-200 ease-out ${hidden ? 'translate-y-full' : 'translate-y-0'}`}
     >
-      <div className="flex h-16 items-start justify-around pt-2.5">
+      <div className="flex h-[56px] items-start justify-around pt-2.5">
         {tabs.map((tab) => {
           const active = isActive(tab.href)
           const color = active ? 'var(--color-store-primary)' : 'var(--color-muted-warm)'
           return (
-            <Link key={tab.label} href={tab.href} className="flex flex-col items-center gap-[3px]">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <StoreLink key={tab.label} href={tab.href} className="flex flex-col items-center gap-[3px]">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill={active ? color : 'none'} stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 {tab.icon}
               </svg>
               <span
@@ -98,7 +100,11 @@ export function MobileTabBar() {
               >
                 {tab.label}
               </span>
-            </Link>
+              <span
+                className="size-1 rounded-full transition-opacity"
+                style={{ backgroundColor: 'var(--color-store-primary)', opacity: active ? 1 : 0 }}
+              />
+            </StoreLink>
           )
         })}
       </div>

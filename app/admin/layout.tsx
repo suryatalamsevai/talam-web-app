@@ -27,9 +27,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="font-admin min-h-screen bg-bg">
       {/* Desktop: dark sidebar + content */}
       <div className="hidden md:flex">
-        <aside className="sticky top-0 flex h-screen w-[240px] shrink-0 flex-col bg-[#1E1B4B] px-3 pt-4">
-          <div className="mb-4 flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-primary">
-            <span className="text-lg font-bold text-surface">●</span>
+        <aside className="sticky top-0 flex h-screen w-[240px] shrink-0 flex-col bg-bg-dark px-3 pt-4">
+          <div className="mb-5 px-1">
+            <span className="font-marketing text-2xl italic text-white">talam.</span>
           </div>
           <nav className="flex flex-col gap-1">
             {NAV.map(({ href, label, icon: Icon }) => {
@@ -54,7 +54,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </aside>
         <div className="flex-1 overflow-auto">
           <header className="flex h-[64px] items-center justify-between border-b border-border bg-surface px-8">
-            <span className="text-xl font-bold text-fg">talam.</span>
+            <span className="font-marketing text-xl italic text-fg">talam.</span>
             <div className="flex items-center gap-4">
               <button className="relative">
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#374151" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -75,7 +75,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Mobile: top header + content + fixed bottom nav */}
       <div className="md:hidden">
         <header className="flex h-[56px] items-center justify-between border-b border-border bg-surface px-4">
-          <span className="text-lg font-bold text-fg">talam.</span>
+          <span className="font-marketing text-lg italic text-fg">talam.</span>
           <div className="flex items-center gap-3">
             <button className="relative">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#374151" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -1,8 +1,8 @@
 'use client'
 
 import { use } from 'react'
-import Link from 'next/link'
 import Image from 'next/image'
+import { StoreLink } from '@/components/store/store-context'
 import { ArrowLeft, Package, Truck, CheckCircle, XCircle, RotateCcw, Copy } from 'lucide-react'
 
 // ponytail: inline mock until real order history API exists (same data as /orders)
@@ -104,7 +104,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     return (
       <main className="mx-auto max-w-3xl px-4 py-16 text-center">
         <p className="font-body text-sm text-muted-warm">Order not found.</p>
-        <Link href="/orders" className="mt-4 inline-block font-body text-sm font-semibold text-store-primary">← Back to Orders</Link>
+        <StoreLink href="/orders" className="mt-4 inline-block font-body text-sm font-semibold text-store-primary">← Back to Orders</StoreLink>
       </main>
     )
   }
@@ -117,9 +117,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     <main className="mx-auto max-w-3xl px-3 py-4 sm:px-8 sm:py-10 overflow-x-hidden">
       {/* Header */}
       <div className="mb-6 flex items-center gap-3">
-        <Link href="/orders" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border hover:bg-bg transition-colors">
+        <StoreLink href="/orders" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border hover:bg-bg transition-colors">
           <ArrowLeft className="h-4 w-4 text-fg" />
-        </Link>
+        </StoreLink>
         <div className="min-w-0">
           <h1 className="font-heading text-lg sm:text-xl font-bold text-fg">Order #{order.orderId}</h1>
           <p className="font-body text-xs text-muted-warm">Placed on {formatDate(order.date)}</p>
@@ -169,9 +169,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <Link href={`/product/${item.product.slug}`} className="font-body text-sm font-semibold text-fg line-clamp-1 hover:text-store-primary">
+                <StoreLink href={`/product/${item.product.slug}`} className="font-body text-sm font-semibold text-fg line-clamp-1 hover:text-store-primary">
                   {item.product.name}
-                </Link>
+                </StoreLink>
                 <p className="font-body text-xs text-muted-warm">Size: {item.size} · Qty: {item.quantity}</p>
               </div>
               <p className="shrink-0 font-body text-sm font-bold text-fg">₹{item.price.toLocaleString('en-IN')}</p>
@@ -244,9 +244,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             Track Return
           </button>
         )}
-        <Link href="/orders" className="flex-1 sm:flex-none rounded-lg border border-border px-5 py-2.5 text-center font-body text-sm font-medium text-fg hover:bg-bg">
+        <StoreLink href="/orders" className="flex-1 sm:flex-none rounded-lg border border-border px-5 py-2.5 text-center font-body text-sm font-medium text-fg hover:bg-bg">
           Back to Orders
-        </Link>
+        </StoreLink>
       </div>
     </main>
   )
