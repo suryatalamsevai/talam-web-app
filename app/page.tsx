@@ -8,6 +8,7 @@ import { Pricing } from '@/components/marketing/pricing'
 import { Faq } from '@/components/marketing/faq'
 import { CtaBand } from '@/components/marketing/cta-band'
 import { MarketingFooter } from '@/components/marketing/footer'
+import { Analytics } from '@vercel/analytics/next';
 
 export default function MarketingHome() {
   return (
@@ -22,6 +23,7 @@ export default function MarketingHome() {
       <Faq />
       <CtaBand />
       <MarketingFooter />
+      <Analytics />
     </main>
   )
 }
