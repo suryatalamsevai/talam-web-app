@@ -13,10 +13,13 @@ const sidebarItems = [
   { label: 'Account', href: '/account/actions' },
 ]
 
-export function SettingsShell({ children }: { children: React.ReactNode }) {
+type SidebarUser = { name: string; phone: string; initial: string; avatarUrl?: string | null }
+
+export function SettingsShell({ children, user: userOverride }: { children: React.ReactNode; user?: SidebarUser }) {
   const pathname = usePathname()
   const storeBase = useStoreBase()
   const rel = storeBase ? pathname.replace(storeBase, '') || '/' : pathname
+  const sidebarUser: SidebarUser = userOverride ?? user
 
   return (
     <div className="hidden lg:block min-h-screen bg-bg py-10 px-12">
@@ -24,11 +27,16 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
         <div className="w-[280px] shrink-0">
           <div className="rounded-xl border border-border bg-surface p-6 mb-6">
             <div className="flex flex-col items-center">
-              <div className="flex size-16 items-center justify-center rounded-full bg-store-primary/15 text-2xl font-bold text-store-primary font-body mb-3">
-                {user.initial}
+              <div className="flex size-16 items-center justify-center overflow-hidden rounded-full bg-store-primary/15 text-2xl font-bold text-store-primary font-body mb-3">
+                {sidebarUser.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={sidebarUser.avatarUrl} alt="" className="size-full object-cover" />
+                ) : (
+                  sidebarUser.initial
+                )}
               </div>
-              <div className="font-body text-base font-bold text-fg">{user.name}</div>
-              <div className="font-body text-sm text-muted-warm">{user.phone}</div>
+              <div className="font-body text-base font-bold text-fg">{sidebarUser.name}</div>
+              <div className="font-body text-sm text-muted-warm">{sidebarUser.phone}</div>
             </div>
           </div>
           <nav className="rounded-xl border border-border bg-surface overflow-hidden">

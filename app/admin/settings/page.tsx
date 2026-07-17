@@ -1,10 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { ChevronLeft, AlertTriangle, X, GripVertical } from 'lucide-react'
 import Link from 'next/link'
+import {
+  getOccasions,
+  getOccasionProductPicker,
+  createOccasion,
+  deleteOccasion,
+  setOccasionProducts,
+} from './occasions/actions'
 
-const TABS = ['About', 'Store', 'Alerts', 'Promotions', 'Subscription', 'Payments', 'Contact Info'] as const
+const TABS = ['About', 'Store', 'Alerts', 'Occasions', 'Promotions', 'Subscription', 'Payments', 'Contact Info'] as const
 type Tab = (typeof TABS)[number] | 'Delete Store'
 
 const COLOR_PRESETS = ['#C1502E', '#EC4899', '#10B981', '#F59E0B', '#EF4444', '#0EA5E9']
@@ -314,6 +321,175 @@ function AlertRow({ name, sub, on: defaultOn }: { name: string; sub: string; on:
         <p className="text-xs text-muted-warm">{sub}</p>
       </div>
       <Toggle checked={checked} onChange={setChecked} />
+    </div>
+  )
+}
+
+// ── Occasions Tab ──
+type OccasionRow = {
+  id: string
+  name: string
+  slug: string
+  emoji: string | null
+  isDefault: boolean
+  _count: { products: number }
+}
+
+type PickerProduct = {
+  id: string
+  name: string
+  price: unknown
+  images: string[]
+  tagAssignments: { id: string }[]
+}
+
+function OccasionProductPicker({ occasionId, onClose, onSaved }: { occasionId: string; onClose: () => void; onSaved: () => void }) {
+  const [products, setProducts] = useState<PickerProduct[] | null>(null)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    getOccasionProductPicker(occasionId).then((rows) => {
+      setProducts(rows)
+      setSelected(new Set(rows.filter((r) => r.tagAssignments.length > 0).map((r) => r.id)))
+    })
+  }, [occasionId])
+
+  const toggle = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  const save = async () => {
+    setSaving(true)
+    await setOccasionProducts(occasionId, [...selected])
+    setSaving(false)
+    onSaved()
+    onClose()
+  }
+
+  return (
+    <div className="mt-2 rounded-lg border border-border-light bg-bg p-3">
+      {products === null ? (
+        <p className="py-4 text-center text-sm text-muted-warm">Loading products…</p>
+      ) : products.length === 0 ? (
+        <p className="py-4 text-center text-sm text-muted-warm">No active products yet.</p>
+      ) : (
+        <div className="flex max-h-64 flex-col gap-1 overflow-y-auto">
+          {products.map((p) => (
+            <label key={p.id} className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-border-light">
+              <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggle(p.id)} className="size-4 rounded border-border accent-brand-primary" />
+              <span className="flex-1 text-sm text-fg">{p.name}</span>
+              <span className="text-xs text-muted-warm">₹{Number(p.price).toLocaleString('en-IN')}</span>
+            </label>
+          ))}
+        </div>
+      )}
+      <div className="mt-3 flex justify-end gap-2">
+        <button type="button" onClick={onClose} className="rounded-lg px-3 py-1.5 text-sm font-semibold text-muted-warm">Cancel</button>
+        <button type="button" onClick={save} disabled={saving || products === null} className="rounded-lg bg-brand-primary px-4 py-1.5 text-sm font-semibold text-surface disabled:opacity-50">
+          {saving ? 'Saving…' : 'Save products'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function OccasionsTab() {
+  const [occasions, setOccasions] = useState<OccasionRow[] | null>(null)
+  const [name, setName] = useState('')
+  const [emoji, setEmoji] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [creating, setCreating] = useState(false)
+  const [managingId, setManagingId] = useState<string | null>(null)
+
+  const refresh = useCallback(() => {
+    getOccasions().then(setOccasions)
+  }, [])
+
+  useEffect(() => {
+    refresh()
+  }, [refresh])
+
+  const handleCreate = async () => {
+    if (!name.trim()) return
+    setCreating(true)
+    setError(null)
+    const result = await createOccasion({ name: name.trim(), emoji: emoji.trim() || undefined })
+    setCreating(false)
+    if (result.error) {
+      setError(result.error)
+      return
+    }
+    setName('')
+    setEmoji('')
+    refresh()
+  }
+
+  const handleDelete = async (id: string) => {
+    const result = await deleteOccasion(id)
+    if (result.error) {
+      setError(result.error)
+      return
+    }
+    refresh()
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div>
+        <SectionLabel>Occasions</SectionLabel>
+        <p className="mb-3 text-xs text-muted-warm">
+          Occasions power the storefront&apos;s &quot;Shop by Occasion&quot; strip and each occasion&apos;s own page.
+          Diwali and Pongal are platform defaults and can&apos;t be deleted — create your own for anything else (Wedding Season, Anniversary Sale, etc).
+        </p>
+
+        {error && <p className="mb-3 rounded-lg bg-danger/5 px-3 py-2 text-sm text-danger">{error}</p>}
+
+        {occasions === null ? (
+          <p className="py-6 text-center text-sm text-muted-warm">Loading…</p>
+        ) : (
+          <div className="flex flex-col divide-y divide-border-light rounded-lg border border-border">
+            {occasions.map((o) => (
+              <div key={o.id} className="flex flex-col px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl leading-none">{o.emoji || '🎉'}</span>
+                  <div className="flex-1">
+                    <p className="text-md font-semibold text-fg">
+                      {o.name}
+                      {o.isDefault && <span className="ml-2 rounded-full bg-brand-primary/10 px-2 py-0.5 text-2xs font-semibold text-brand-primary">Default</span>}
+                    </p>
+                    <p className="text-xs text-muted-warm">{o._count.products} product{o._count.products === 1 ? '' : 's'}</p>
+                  </div>
+                  <button type="button" onClick={() => setManagingId(managingId === o.id ? null : o.id)} className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-fg">
+                    {managingId === o.id ? 'Close' : 'Manage products'}
+                  </button>
+                  {!o.isDefault && (
+                    <button type="button" onClick={() => handleDelete(o.id)} className="text-muted-warm hover:text-danger">
+                      <X className="size-4" />
+                    </button>
+                  )}
+                </div>
+                {managingId === o.id && (
+                  <OccasionProductPicker occasionId={o.id} onClose={() => setManagingId(null)} onSaved={refresh} />
+                )}
+              </div>
+            ))}
+            {occasions.length === 0 && <p className="px-4 py-6 text-center text-sm text-muted-warm">No occasions yet.</p>}
+          </div>
+        )}
+
+        <div className="mt-3 flex items-center gap-2 rounded-lg border border-border p-3">
+          <input value={emoji} onChange={(e) => setEmoji(e.target.value)} placeholder="🪔" className="w-12 shrink-0 bg-transparent text-center text-xl outline-none" maxLength={2} />
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="New occasion name…" className="min-w-0 flex-1 bg-transparent text-md text-fg outline-none" />
+          <button type="button" onClick={handleCreate} disabled={creating || !name.trim()} className="shrink-0 rounded-lg border border-brand-primary px-3 py-1.5 text-sm font-semibold text-brand-primary disabled:opacity-50">
+            {creating ? 'Adding…' : 'Add'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -723,6 +899,7 @@ export default function AdminSettingsPage() {
         {activeTab === 'About' && <AboutTab />}
         {activeTab === 'Store' && <StoreTab />}
         {activeTab === 'Alerts' && <AlertsTab />}
+        {activeTab === 'Occasions' && <OccasionsTab />}
         {activeTab === 'Promotions' && <PromotionsTab />}
         {activeTab === 'Subscription' && <SubscriptionTab />}
         {activeTab === 'Payments' && <PaymentsTab />}

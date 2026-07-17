@@ -4,7 +4,7 @@ import { CartBadge } from './cart-badge'
 import { AccountMenu } from './account-menu'
 
 type Props = {
-  tenant: Pick<TenantStorefront, 'name' | 'logoUrl'>
+  tenant: Pick<TenantStorefront, 'name' | 'logoUrl' | 'ownerId'>
 }
 
 export function StoreHeader({ tenant }: Props) {
@@ -26,8 +26,8 @@ export function StoreHeader({ tenant }: Props) {
         <StoreLink href="/" className="font-body font-medium text-fg text-md/snug">
           Men
         </StoreLink>
-        <StoreLink href="/?occasion=Festive" className="font-body font-medium text-fg text-md/snug">
-          Festive
+        <StoreLink href="/offers" className="font-body font-medium text-fg text-md/snug">
+          Offers
         </StoreLink>
         <StoreLink href="/?sort=newest" className="font-body font-medium text-fg text-md/snug">
           New Arrivals
@@ -50,7 +50,7 @@ export function StoreHeader({ tenant }: Props) {
           </svg>
         </StoreIconButton>
         <CartBadge />
-        <AccountMenu />
+        <AccountMenu ownerId={tenant.ownerId} />
       </div>
     </header>
   )

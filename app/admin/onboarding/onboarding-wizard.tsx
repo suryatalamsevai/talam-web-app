@@ -153,7 +153,11 @@ export function OnboardingWizard({
       try {
         const result = await runStepAction(step)
         if (result.error) {
-          setServerError(result.error)
+          if (step === 0) {
+            setErrors({ storeName: result.error, slug: result.error })
+          } else {
+            setServerError(result.error)
+          }
           return
         }
         setStep((current) => Math.min(current + 1, STEPS.length - 1))

@@ -3,6 +3,7 @@ import { prisma, withTenant } from '@/lib/prisma'
 
 export type TenantStorefront = {
   id: string
+  ownerId: string
   name: string
   tagline: string | null
   brandColor: string | null
@@ -44,6 +45,7 @@ export async function getTenantStorefront(tenantId: string): Promise<TenantStore
       where: { id: tenantId },
       select: {
         id: true,
+        ownerId: true,
         name: true,
         tagline: true,
         brandColor: true,

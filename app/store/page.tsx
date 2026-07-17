@@ -1,20 +1,21 @@
 import { notFound } from 'next/navigation'
 import { getRequestTenantId, getTenantStorefront } from '@/lib/data/tenant'
 import { getStoreBanners, getStorePromotions, getProductTags } from '@/lib/data/storefront'
-import { getCategories, getProducts } from '@/lib/data/products'
+import { getCategories, getProducts, getOfferProducts } from '@/lib/data/products'
 import { StorePageClient } from './store-page-client'
 
 export default async function StorePage() {
   const tenantId = await getRequestTenantId()
   if (!tenantId) return notFound()
 
-  const [tenant, banners, promotions, tags, categories, products] = await Promise.all([
+  const [tenant, banners, promotions, tags, categories, products, offerProducts] = await Promise.all([
     getTenantStorefront(tenantId),
     getStoreBanners(tenantId),
     getStorePromotions(tenantId),
     getProductTags(tenantId),
     getCategories(tenantId),
     getProducts(tenantId),
+    getOfferProducts(tenantId),
   ])
 
   if (!tenant) return notFound()
@@ -71,6 +72,19 @@ export default async function StorePage() {
 
   const categoryData = categories.map((c) => ({ id: c.id, name: c.name, slug: c.slug }))
 
+  const offerData = offerProducts.map((p) => ({
+    name: p.name,
+    slug: p.slug,
+    price: Number(p.price),
+    comparePrice: p.comparePrice ? Number(p.comparePrice) : null,
+    category: p.category?.name ?? '',
+    sizes: p.sizes,
+    images: p.images,
+    reviewCount: p.reviewCount,
+    averageRating: p.averageRating ?? 0,
+    isNew: p.isNew,
+  }))
+
   return (
     <StorePageClient
       banners={bannersWithReviews}
@@ -79,6 +93,7 @@ export default async function StorePage() {
       tags={tagData}
       categories={categoryData}
       products={productData}
+      offers={offerData}
     />
   )
 }

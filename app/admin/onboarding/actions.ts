@@ -9,12 +9,17 @@ import type { PaymentId } from './onboarding-data'
 type ActionResult = { error?: string }
 
 function isSlugCollision(err: unknown): boolean {
-  return (
-    err instanceof Prisma.PrismaClientKnownRequestError &&
-    err.code === 'P2002' &&
-    Array.isArray(err.meta?.target) &&
-    (err.meta.target as string[]).includes('slug')
-  )
+  if (!(err instanceof Prisma.PrismaClientKnownRequestError) || err.code !== 'P2002') return false
+
+  // With the query engine, the offending fields are at err.meta.target.
+  if (Array.isArray(err.meta?.target) && (err.meta.target as string[]).includes('slug')) return true
+
+  // With the @prisma/adapter-pg driver adapter, meta.target is absent — the fields
+  // are nested under meta.driverAdapterError.cause.constraint.fields instead.
+  const adapterFields = (
+    err.meta?.driverAdapterError as { cause?: { constraint?: { fields?: unknown } } } | undefined
+  )?.cause?.constraint?.fields
+  return Array.isArray(adapterFields) && adapterFields.includes('slug')
 }
 
 function slugify(value: string): string {
@@ -140,13 +145,54 @@ export async function savePaymentStep(input: { paymentId: PaymentId }): Promise<
   return {}
 }
 
+async function seedStarterContent(tenantId: string): Promise<void> {
+  const [categoryCount, bannerCount, promotionCount, tagCount] = await Promise.all([
+    prisma.productCategory.count({ where: { tenantId } }),
+    prisma.storeBanner.count({ where: { tenantId } }),
+    prisma.storePromotion.count({ where: { tenantId } }),
+    prisma.productTag.count({ where: { tenantId } }),
+  ])
+
+  if (categoryCount === 0) {
+    await prisma.productCategory.createMany({
+      data: [1, 2, 3].map((n) => ({ tenantId, name: `Sample Category ${n}`, slug: `sample-category-${n}`, sortOrder: n })),
+    })
+  }
+
+  if (tagCount === 0) {
+    await prisma.productTag.createMany({
+      data: [
+        { tenantId, name: 'Diwali', slug: 'diwali', emoji: '🪔', isDefault: true, themeKey: 'diwali', sortOrder: 0 },
+        { tenantId, name: 'Pongal', slug: 'pongal', emoji: '🌾', isDefault: true, themeKey: 'pongal', sortOrder: 1 },
+      ],
+    })
+  }
+
+  if (bannerCount === 0) {
+    const firstProduct = await prisma.product.findFirst({ where: { tenantId }, orderBy: { createdAt: 'asc' }, select: { id: true } })
+    if (firstProduct) {
+      await prisma.storeBanner.create({
+        data: { tenantId, productId: firstProduct.id, headline: 'Sample Hero Banner — edit in Settings', sortOrder: 0 },
+      })
+    }
+  }
+
+  if (promotionCount === 0) {
+    await prisma.storePromotion.create({
+      data: { tenantId, offerText: 'Sample Offer — edit in Settings', subtitle: null, sortOrder: 0 },
+    })
+  }
+}
+
 export async function completeOnboarding(): Promise<ActionResult & { storeUrl?: string }> {
   const { userId } = await requireOwnerSession()
   const tenant = await prisma.tenant.update({
     where: { ownerId: userId },
     data: { isOnboarded: true, onboardingStep: 7 },
-    select: { slug: true },
+    select: { id: true, slug: true },
   })
+
+  await seedStarterContent(tenant.id)
 
   const host = (await headers()).get('host')
   const isLocalDev = host?.includes('localhost') ?? false

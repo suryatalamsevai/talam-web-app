@@ -1,18 +1,23 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { StoreLink } from '@/components/store/store-context'
+import { useRouter } from 'next/navigation'
+import { StoreLink, useStoreBase } from '@/components/store/store-context'
+import { createBrowserClient } from '@/lib/supabase/client'
+import type { User } from '@supabase/supabase-js'
 
-// ponytail: mock auth state until real auth lands
-const mockUser = {
-  name: 'Priya Rajan',
-  phone: '+91 98765 43210',
-  initial: 'P',
+function displayUser(user: User) {
+  const name = user.user_metadata?.full_name ?? user.phone ?? user.email ?? 'Account'
+  const avatarUrl = user.user_metadata?.avatar_url as string | undefined
+  return { name, phone: user.phone ?? '', initial: name.charAt(0).toUpperCase() || '?', avatarUrl }
 }
 
-export function AccountMenu() {
+export function AccountMenu({ ownerId }: { ownerId: string }) {
   const [open, setOpen] = useState(false)
+  const [authUser, setAuthUser] = useState<User | null | undefined>(undefined)
   const ref = useRef<HTMLDivElement>(null)
+  const router = useRouter()
+  const storeBase = useStoreBase()
 
   useEffect(() => {
     if (!open) return
@@ -23,7 +28,25 @@ export function AccountMenu() {
     return () => document.removeEventListener('mousedown', handler)
   }, [open])
 
-  const user = mockUser // swap for real auth check
+  useEffect(() => {
+    const supabase = createBrowserClient()
+    supabase.auth.getUser().then(({ data }) => setAuthUser(data.user))
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => setAuthUser(session?.user ?? null))
+    return () => subscription.unsubscribe()
+  }, [])
+
+  async function handleSignOut() {
+    const supabase = createBrowserClient()
+    await supabase.auth.signOut()
+    setOpen(false)
+    router.push(`${storeBase}/auth`)
+    router.refresh()
+  }
+
+  const user = authUser ? displayUser(authUser) : null
+  const isAdmin = authUser?.id === ownerId
 
   return (
     <div className="relative" ref={ref}>
@@ -32,8 +55,13 @@ export function AccountMenu() {
         className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-border-light sm:size-10"
       >
         {user ? (
-          <span className="flex size-9 items-center justify-center rounded-lg bg-store-primary/15 font-body text-xs font-bold text-store-primary sm:size-10">
-            {user.initial}
+          <span className="flex size-9 items-center justify-center overflow-hidden rounded-lg bg-store-primary/15 font-body text-xs font-bold text-store-primary sm:size-10">
+            {user.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={user.avatarUrl} alt="" className="size-full object-cover" />
+            ) : (
+              user.initial
+            )}
           </span>
         ) : (
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -49,11 +77,23 @@ export function AccountMenu() {
             <>
               <div className="px-4 py-3 border-b border-border-light">
                 <div className="flex items-center gap-3">
-                  <span className="flex size-9 items-center justify-center rounded-full bg-store-primary/15 font-body text-xs font-bold text-store-primary">
-                    {user.initial}
+                  <span className="flex size-9 items-center justify-center overflow-hidden rounded-full bg-store-primary/15 font-body text-xs font-bold text-store-primary">
+                    {user.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={user.avatarUrl} alt="" className="size-full object-cover" />
+                    ) : (
+                      user.initial
+                    )}
                   </span>
                   <div>
-                    <div className="font-body text-sm font-semibold text-fg">{user.name}</div>
+                    <div className="flex items-center gap-1.5 font-body text-sm font-semibold text-fg">
+                      {user.name}
+                      {isAdmin && (
+                        <span className="rounded-full bg-store-primary/15 px-2 py-0.5 font-body text-2xs font-bold uppercase tracking-[0.04em] text-store-primary">
+                          Admin
+                        </span>
+                      )}
+                    </div>
                     <div className="font-body text-xs text-muted-warm">{user.phone}</div>
                   </div>
                 </div>
@@ -71,7 +111,7 @@ export function AccountMenu() {
                 Settings
               </StoreLink>
               <div className="mx-3 my-1 border-t border-border-light" />
-              <button className="flex w-full items-center gap-3 px-4 py-2.5 font-body text-sm text-danger hover:bg-bg">
+              <button type="button" onClick={handleSignOut} className="flex w-full items-center gap-3 px-4 py-2.5 font-body text-sm text-danger hover:bg-bg">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16,17 21,12 16,7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
                 Log Out
               </button>

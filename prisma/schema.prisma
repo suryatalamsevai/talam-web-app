@@ -92,6 +92,7 @@ model Tenant {
   banners       StoreBanner[]
   promotions    StorePromotion[]
   tags          ProductTag[]
+  addresses     Address[]
 
   @@map("tenants")
 }
@@ -118,6 +119,7 @@ model Product {
   reviews      ProductReview[]
   banners        StoreBanner[]
   tagAssignments ProductTagAssignment[]
+  promotionAssignments StorePromotionProduct[]
 
   @@unique([tenantId, slug])
   @@map("products")
@@ -150,8 +152,30 @@ model Customer {
   orders    Order[]
   wishlists Wishlist[]
   reviews   ProductReview[]
+  addresses Address[]
 
   @@map("customers")
+}
+
+model Address {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @db.Uuid @map("tenant_id")
+  customerId String   @db.Uuid @map("customer_id")
+  label      String
+  name       String
+  line1      String
+  line2      String?
+  city       String
+  state      String
+  pincode    String
+  phone      String
+  isDefault  Boolean  @default(false) @map("is_default")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  @@map("addresses")
 }
 
 model Order {
@@ -319,9 +343,23 @@ model StorePromotion {
   sortOrder Int       @default(0) @map("sort_order")
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
 
-  tenant    Tenant    @relation(fields: [tenantId], references: [id])
+  tenant    Tenant                    @relation(fields: [tenantId], references: [id])
+  products  StorePromotionProduct[]
 
   @@map("store_promotions")
+}
+
+model StorePromotionProduct {
+  id           String         @id @default(uuid()) @db.Uuid
+  tenantId     String         @db.Uuid @map("tenant_id")
+  promotionId  String         @db.Uuid @map("promotion_id")
+  productId    String         @db.Uuid @map("product_id")
+
+  promotion    StorePromotion @relation(fields: [promotionId], references: [id])
+  product      Product        @relation(fields: [productId], references: [id])
+
+  @@unique([tenantId, promotionId, productId])
+  @@map("store_promotion_products")
 }
 
 model ProductTag {
@@ -330,6 +368,8 @@ model ProductTag {
   name      String
   slug      String
   emoji     String?
+  isDefault Boolean  @default(false) @map("is_default") // platform-seeded occasion (e.g. Diwali, Pongal) — not owner-deletable
+  themeKey  String?  @map("theme_key") // key into the code-level OCCASION_THEMES registry; null = generic fallback banner
   sortOrder Int      @default(0) @map("sort_order")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 

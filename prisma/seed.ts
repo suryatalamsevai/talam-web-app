@@ -354,13 +354,15 @@ async function main() {
   await prisma.productTag.deleteMany({ where: { tenantId: tid } })
 
   const tagData = [
-    { name: 'Festive', slug: 'festive', emoji: '🎉', sortOrder: 0 },
-    { name: 'Wedding', slug: 'wedding', emoji: '💍', sortOrder: 1 },
-    { name: 'Casual', slug: 'casual', emoji: '☀️', sortOrder: 2 },
-    { name: 'Office', slug: 'office', emoji: '💼', sortOrder: 3 },
-    { name: 'Daily', slug: 'daily', emoji: '🌿', sortOrder: 4 },
-    { name: 'Party', slug: 'party', emoji: '🎊', sortOrder: 5 },
-    { name: 'Travel', slug: 'travel', emoji: '✈️', sortOrder: 6 },
+    { name: 'Diwali', slug: 'diwali', emoji: '🪔', sortOrder: 0, isDefault: true, themeKey: 'diwali' },
+    { name: 'Pongal', slug: 'pongal', emoji: '🌾', sortOrder: 1, isDefault: true, themeKey: 'pongal' },
+    { name: 'Festive', slug: 'festive', emoji: '🎉', sortOrder: 2 },
+    { name: 'Wedding', slug: 'wedding', emoji: '💍', sortOrder: 3 },
+    { name: 'Casual', slug: 'casual', emoji: '☀️', sortOrder: 4 },
+    { name: 'Office', slug: 'office', emoji: '💼', sortOrder: 5 },
+    { name: 'Daily', slug: 'daily', emoji: '🌿', sortOrder: 6 },
+    { name: 'Party', slug: 'party', emoji: '🎊', sortOrder: 7 },
+    { name: 'Travel', slug: 'travel', emoji: '✈️', sortOrder: 8 },
   ]
 
   const tags: Record<string, { id: string }> = {}
@@ -370,6 +372,9 @@ async function main() {
 
   // Tag assignments matching the hardcoded occasions in the old store page
   const tagAssignments: [string, string][] = [
+    ['kanjivaram-silk-saree', 'diwali'],
+    ['teal-chanderi-set', 'diwali'],
+    ['patola-silk-saree', 'pongal'],
     ['kanjivaram-silk-saree', 'festive'],
     ['block-print-kurti-set', 'casual'],
     ['zari-border-dupatta', 'festive'],

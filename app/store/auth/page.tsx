@@ -1,9 +1,17 @@
+import { headers } from 'next/headers'
 import { OtpForm } from '@/components/auth/otp-form'
 import { GoogleButton } from '@/components/auth/google-button'
 import { BackButton } from '@/components/auth/back-button'
 import { Logo } from '@/components/logo'
 
-export default function AuthPage() {
+export default async function AuthPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>
+}) {
+  const { next } = await searchParams
+  const storeBase = (await headers()).get('x-store-base') ?? ''
+
   return (
     <div className="min-h-screen flex flex-col bg-surface md:items-center md:justify-center md:bg-bg">
       <div className="flex flex-col w-full p-6 bg-surface md:w-[420px] md:p-10 md:rounded-xl md:border md:border-border">
@@ -33,7 +41,7 @@ export default function AuthPage() {
         </div>
 
         <div className="pt-5">
-          <GoogleButton />
+          <GoogleButton redirectPath={`${storeBase}/auth/callback`} next={next} />
         </div>
 
         <p className="font-body text-muted-warm text-2xs leading-[18px] pt-6">

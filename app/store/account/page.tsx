@@ -1,14 +1,7 @@
 import { MapPin, CreditCard, Bell, User, ChevronRight, Pencil } from 'lucide-react'
 import { StoreLink } from '@/components/store/store-context'
-
-// ponytail: hardcoded mock user until auth is wired
-const user = {
-  name: 'Priya Rajan',
-  phone: '+91 98765 43210',
-  email: 'priya.rajan@gmail.com',
-  initial: 'P',
-  stats: { orders: 8, wishlist: 12, totalSpent: '₹14.2K' },
-}
+import { requireAuth, requireTenant } from '@/lib/auth-guard'
+import { getCustomerAccountSummary } from '@/lib/data/customer-account'
 
 const settingsNav = [
   { label: 'Addresses', desc: 'Manage saved addresses', href: '/account/addresses', icon: MapPin, tint: 'bg-pink-100 text-pink-600' },
@@ -17,7 +10,26 @@ const settingsNav = [
   { label: 'Account', desc: 'Profile, logout & more', href: '/account/actions', icon: User, tint: 'bg-purple-100 text-purple-600' },
 ]
 
-export default function AccountPage() {
+export const dynamic = 'force-dynamic'
+
+export default async function AccountPage() {
+  const authUser = await requireAuth('/account')
+  const { tenantId } = await requireTenant()
+  const summary = await getCustomerAccountSummary(tenantId, authUser.id)
+
+  const name = summary.name ?? authUser.email ?? 'Customer'
+  const user = {
+    name,
+    phone: summary.phone ?? '—',
+    email: summary.email ?? authUser.email ?? '—',
+    initial: name.charAt(0).toUpperCase() || '?',
+    stats: {
+      orders: summary.orderCount,
+      wishlist: summary.wishlistCount,
+      totalSpent: `₹${(summary.totalSpent / 1000).toFixed(1)}K`,
+    },
+  }
+
   return (
     <>
       {/* ── Mobile hub ── */}

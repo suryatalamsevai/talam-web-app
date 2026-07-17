@@ -54,6 +54,7 @@ type StorePageClientProps = {
   tags: TagData[]
   categories: CategoryData[]
   products: ProductData[]
+  offers: ProductData[]
 }
 
 // ponytail: fixed palette cycled by index for category card backgrounds — no per-category color field in schema.
@@ -146,7 +147,7 @@ export function StorePageClient(props: StorePageClientProps) {
   )
 }
 
-function StorePageInner({ banners, promotions, countdownTarget, tags, categories, products }: StorePageClientProps) {
+function StorePageInner({ banners, promotions, countdownTarget, tags, categories, products, offers }: StorePageClientProps) {
   // ── Header nav filter params (Women/Men/Festive/New Arrivals — see StoreHeader) ──
   const searchParams = useSearchParams()
 
@@ -477,18 +478,47 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
           <section className="py-10">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-[18px] font-bold text-fg font-body leading-[22px]">Shop by Occasion</h2>
-              <span className="text-store-primary text-[13px] font-semibold font-body cursor-pointer hover:underline">See all occasions</span>
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
               {tags.map(tag => (
-                <button key={tag.id} className="flex items-center gap-3 shrink-0 pl-3 pr-5 py-2.5 rounded-full border border-store-primary/15 hover:border-store-primary/40 transition-colors" style={{ backgroundImage: 'linear-gradient(135deg, rgba(232,87,126,0.08), rgba(232,87,126,0.02))', boxShadow: '0 4px 14px rgba(232,87,126,0.12)' }}>
+                <StoreLink key={tag.id} href={`/occasion/${tag.slug}`} className="flex items-center gap-3 shrink-0 pl-3 pr-5 py-2.5 rounded-full border border-store-primary/15 hover:border-store-primary/40 transition-colors" style={{ backgroundImage: 'linear-gradient(135deg, rgba(232,87,126,0.08), rgba(232,87,126,0.02))', boxShadow: '0 4px 14px rgba(232,87,126,0.12)' }}>
                   <span className="text-4xl leading-none">{tag.emoji}</span>
                   <span className="flex flex-col items-start">
                     <span className="text-fg text-[13px] font-semibold font-body">{tag.name}</span>
                     <span className="text-[#8B7D7A] text-[11px] font-body">{tag.productCount} items</span>
                   </span>
-                </button>
+                </StoreLink>
               ))}
+            </div>
+          </section>
+        )}
+
+        {/* Shop by Offers */}
+        {offers.length > 0 && (
+          <section className="pb-10">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-[18px] font-bold text-fg font-body leading-[22px]">Shop by Offers</h2>
+              <StoreLink href="/offers" className="text-store-primary text-[13px] font-semibold font-body hover:underline">See all offers →</StoreLink>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+              {offers.slice(0, 5).map((p, i) => {
+                const label = discountLabel(p.price, p.comparePrice)
+                return (
+                  <StoreLink key={i} href={`/product/${p.slug}`} className="bg-white rounded-xl border-[1.5px] border-[#F0E8D8] overflow-hidden block hover:border-store-primary hover:shadow-md transition">
+                    <div className="aspect-[3/4] relative bg-bg">
+                      {p.images[0] && <Image src={p.images[0]} alt={p.name} fill sizes="(min-width:768px) 20vw, 50vw" className="object-cover" />}
+                      {label && <span className="absolute top-2 left-2 px-2 py-[3px] bg-danger rounded text-white text-[10px] font-bold font-body leading-3">{label}</span>}
+                    </div>
+                    <div className="p-2.5">
+                      <p className="text-fg text-[13px] font-semibold font-body line-clamp-1">{p.name}</p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-fg text-[13px] font-bold font-body">₹{p.price.toLocaleString('en-IN')}</span>
+                        {p.comparePrice && <span className="text-[#8B7D7A] text-[11px] font-body line-through">₹{p.comparePrice.toLocaleString('en-IN')}</span>}
+                      </div>
+                    </div>
+                  </StoreLink>
+                )
+              })}
             </div>
           </section>
         )}

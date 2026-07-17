@@ -34,9 +34,9 @@ export function StoreStep({
             invalid={Boolean(errors.storeName)}
           />
         </Field>
-        <Field label="Website name">
+        <Field label="Website name" error={errors.slug}>
           <FieldHint>Once created, this cannot be changed. Customer would use this to access your store.</FieldHint>
-          <TextInput value={slug.replaceAll('-', '')} readOnly />
+          <TextInput value={slug.replaceAll('-', '')} readOnly invalid={Boolean(errors.slug)} />
         </Field>
         <Field label="Category" error={errors.category}>
           <SelectField value={category} onChange={(event) => setCategory(event.target.value)} invalid={Boolean(errors.category)}>

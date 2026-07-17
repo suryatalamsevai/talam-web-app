@@ -64,6 +64,43 @@ export async function getProducts(tenantId: string, filters?: ProductFilters) {
   return mapped
 }
 
+// "Shop by Offers" — products on sale (comparePrice set) OR tagged to a currently-active promotion.
+export async function getOfferProducts(tenantId: string) {
+  const products = await withTenant(tenantId, (db) =>
+    db.product.findMany({
+      where: {
+        tenantId,
+        isActive: true,
+        OR: [
+          { comparePrice: { not: null } },
+          {
+            promotionAssignments: {
+              some: {
+                promotion: {
+                  isActive: true,
+                  OR: [{ endsAt: null }, { endsAt: { gt: new Date() } }],
+                },
+              },
+            },
+          },
+        ],
+      },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        category: { select: { name: true } },
+        reviews: { where: { isDeleted: false }, select: { rating: true } },
+      },
+    })
+  )
+
+  return products.map(({ reviews, ...product }) => ({
+    ...product,
+    reviewCount: reviews.length,
+    averageRating: reviews.length ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : null,
+    isNew: Date.now() - product.createdAt.getTime() < NEW_PRODUCT_WINDOW_MS,
+  }))
+}
+
 export async function getProductBySlug(tenantId: string, slug: string) {
   const product = await withTenant(tenantId, (db) =>
     db.product.findFirst({
