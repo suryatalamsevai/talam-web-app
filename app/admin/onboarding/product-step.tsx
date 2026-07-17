@@ -24,7 +24,7 @@ export function ProductStep({
   return (
     <div className="animate-[fadeIn_0.2s_ease-out]">
       <StepTitle
-        step={3}
+        step={5}
         title="Add your first product"
         description="Upload a product photo, set the price, and stock quantity."
       />
@@ -44,6 +44,7 @@ export function ProductStep({
             fileName={productPhoto?.name ?? null}
             onFileChange={setProductPhoto}
           />
+          {errors.productPhoto ? <span className="mt-1.5 block font-body text-xs font-medium text-danger">{errors.productPhoto}</span> : null}
         </div>
         <Field label="Price" error={errors.productPrice}>
           <FieldHint>Selling price in INR</FieldHint>

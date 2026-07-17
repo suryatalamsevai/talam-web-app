@@ -11,7 +11,7 @@ export function PaymentStep({
   return (
     <div className="animate-[fadeIn_0.2s_ease-out]">
       <StepTitle
-        step={4}
+        step={6}
         title="Connect payments"
         description="Choose how you want to receive payments from customers."
       />
