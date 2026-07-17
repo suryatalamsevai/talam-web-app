@@ -150,12 +150,16 @@ export function OnboardingWizard({
     setErrors({})
     setServerError(null)
     startTransition(async () => {
-      const result = await runStepAction(step)
-      if (result.error) {
-        setServerError(result.error)
-        return
+      try {
+        const result = await runStepAction(step)
+        if (result.error) {
+          setServerError(result.error)
+          return
+        }
+        setStep((current) => Math.min(current + 1, STEPS.length - 1))
+      } catch {
+        setServerError('Something went wrong — try again.')
       }
-      setStep((current) => Math.min(current + 1, STEPS.length - 1))
     })
   }
 
@@ -168,13 +172,18 @@ export function OnboardingWizard({
   function goLive() {
     setIsLaunching(true)
     startTransition(async () => {
-      const [result] = await Promise.all([completeOnboarding(), new Promise((resolve) => setTimeout(resolve, 1200))])
-      if (result.error || !result.storeUrl) {
-        setServerError(result.error ?? 'Something went wrong — try again.')
+      try {
+        const [result] = await Promise.all([completeOnboarding(), new Promise((resolve) => setTimeout(resolve, 1200))])
+        if (result.error || !result.storeUrl) {
+          setServerError(result.error ?? 'Something went wrong — try again.')
+          setIsLaunching(false)
+          return
+        }
+        router.push(result.storeUrl)
+      } catch {
+        setServerError('Something went wrong — try again.')
         setIsLaunching(false)
-        return
       }
-      router.push(result.storeUrl)
     })
   }
 
