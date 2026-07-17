@@ -4,9 +4,11 @@ import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { useOwnerCta } from './use-owner-cta'
 
 export function CtaBand() {
   const scope = useRef<HTMLElement>(null)
+  const cta = useOwnerCta()
 
   useEffect(() => {
     if (!scope.current) return
@@ -47,12 +49,14 @@ export function CtaBand() {
         </h2>
         <div data-cta-button className="mt-10">
           <Link
-            href="/auth"
+            href={cta?.href ?? '/auth'}
             className="inline-block px-10 py-4 rounded-full bg-brand-primary text-white text-base font-semibold font-body hover:opacity-90 transition-opacity"
           >
-            Start free
+            {cta?.label ?? 'Start free'}
           </Link>
-          <p className="mt-4 text-sm text-white/40 font-body">14-day free trial · No credit card · No GST needed</p>
+          <p className="mt-4 text-sm text-white/40 font-body">
+            {cta?.subtext ?? '14-day free trial · No credit card · No GST needed'}
+          </p>
         </div>
       </div>
     </section>
