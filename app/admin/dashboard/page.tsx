@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ChevronRight, Clock, Package, AlertTriangle, ExternalLink, TrendingUp, TrendingDown } from 'lucide-react'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { getLiveStoreUrl } from './actions'
 
 type MockStat = { label: string; value: string; change: string; up: boolean }
 const MOCK_STATS: MockStat[] = [
@@ -50,6 +51,11 @@ const TODAY = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'nu
 
 export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState('This Week')
+  const [liveStoreUrl, setLiveStoreUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    getLiveStoreUrl().then(setLiveStoreUrl)
+  }, [])
 
   return (
     <div className="px-4 pb-24 md:px-0 md:pb-0">
@@ -62,7 +68,12 @@ export default function AdminDashboardPage() {
             Overview
           </h1>
         </div>
-        <a href="/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs font-medium text-muted-warm hover:text-brand-primary">
+        <a
+          href={liveStoreUrl ?? '#'}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1 text-xs font-medium text-muted-warm hover:text-brand-primary"
+        >
           Live store <ExternalLink className="size-3" />
         </a>
       </div>
