@@ -26,6 +26,14 @@ export const STEPS = [
   },
 ] as const
 
+export const STEP_ACCENTS = [
+  { wash: '#c1502e', solid: 'bg-brand-primary', text: 'text-brand-primary' },
+  { wash: '#e8577e', solid: 'bg-store-primary', text: 'text-store-primary' },
+  { wash: '#f59e0b', solid: 'bg-amber', text: 'text-amber' },
+  { wash: '#0ea5e9', solid: 'bg-sky-500', text: 'text-sky-500' },
+  { wash: '#10b981', solid: 'bg-emerald-500', text: 'text-emerald-500' },
+] as const
+
 export const STORE_TYPES = ['Ethnic wear', 'Bakery', 'Handicrafts', 'Salon', 'Other'] as const
 
 export const BRAND_COLORS = ['#4F3FF0', '#EC4899', '#06B6D4', '#8B5CF6'] as const

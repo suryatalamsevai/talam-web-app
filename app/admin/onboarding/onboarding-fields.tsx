@@ -1,6 +1,8 @@
 import { ChevronDown, ImagePlus } from 'lucide-react'
 import { useState } from 'react'
 
+import { STEP_ACCENTS } from './onboarding-data'
+
 export function StepTitle({
   step,
   title,
@@ -14,9 +16,10 @@ export function StepTitle({
   readonly mobileTitle?: string
   readonly mobileDescription?: string
 }) {
+  const accent = STEP_ACCENTS[step - 1]
   return (
     <div className="mb-11 animate-[fadeIn_0.2s_ease-out] md:mb-11">
-      <p className="font-body text-xs font-medium uppercase leading-tight tracking-[0.08em] text-brand-primary">Step {step} of 5</p>
+      <p className={['font-body text-xs font-medium uppercase leading-tight tracking-[0.08em] transition-colors duration-500', accent.text].join(' ')}>Step {step} of 5</p>
       <h1 className="mt-2.5 font-heading text-[32px] font-bold leading-[36px] tracking-[-0.02em] text-[#1F2937] md:text-[36px] md:leading-[44px]">
         {mobileTitle ? <span className="md:hidden">{mobileTitle}</span> : null}
         <span className={mobileTitle ? 'hidden md:inline' : undefined}>{title}</span>
