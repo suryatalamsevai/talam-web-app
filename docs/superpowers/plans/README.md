@@ -1,5 +1,7 @@
 # Talam Implementation Plans
 
+**2026-07-17:** [2026-07-17-talam-onboarding-persistence.md](2026-07-17-talam-onboarding-persistence.md) — post-login routing (both Google and OTP) + per-step onboarding persistence, keyed by owner id, resumable across sessions. Depends on Google/OTP sign-in already being live. Not part of the storefront-first sequence below — pick this up whenever onboarding/auth work is next, independent of where the storefront-first track below currently stands.
+
 Revised 2026-07-09 into a **storefront-first execution sequence**:
 
 1. **Storefront routes first, on local root routes:** finish the tenant-facing storefront experience at `http://localhost:3000/` and its related routes (`/category/[categorySlug]`, `/product/[slug]`, `/about`, `/cart`, `/checkout`, `/wishlist`, `/account`, `/auth`) using the seeded dev-tenant fallback. Treat these routes as the primary delivery surface until the storefront is complete and stable.

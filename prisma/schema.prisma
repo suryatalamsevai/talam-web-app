@@ -6,6 +6,16 @@ datasource db {
   provider = "postgresql"
 }
 
+model User {
+  id        String   @id @db.Uuid
+  email     String?
+  name      String?
+  avatarUrl String?  @map("avatar_url")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("users")
+}
+
 enum Tier {
   trial
   starter

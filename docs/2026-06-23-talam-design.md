@@ -1,10 +1,23 @@
 # Talam — Full Product Design Spec
 
 **Date:** 2026-06-23  
-**Last updated:** 2026-07-11  
-**Status:** Approved — v1.6  
+**Last updated:** 2026-07-17  
+**Status:** Approved — v1.9  
 **Author:** Surya Prakash  
-**Version:** 1.6 (Settings hub+subpages; storefront-first delivery)
+**Version:** 1.9 (Onboarding persistence: per-step save, resumable wizard, one store per owner)
+
+**Changelog v1.9 (2026-07-17)**
+- **Onboarding is now per-step, not "write everything at the end":** §5.1 step 4 previously said the wizard "writes the `Tenant` row" as a single event on final submit. Revised: the `Tenant` row is created as soon as Step 1 (Store name/slug/category) is submitted — those are exactly the fields the schema requires as non-null — and each subsequent step (Brand, Product, Payment) persists immediately via its own Server Action, keyed by the signed-in user's id (`Tenant.ownerId`), not by anything the client supplies. Leaving mid-wizard and returning resumes at the last completed step instead of restarting.
+- **New schema fields on `tenants`:** `owner_id` is now `UNIQUE` (one store per owner in V1 — matches §5.1's "owns a Tenant already" check, which assumes a single tenant per owner). `onboarding_step int DEFAULT 0` records the furthest completed wizard step, so a returning owner resumes instead of restarting from Step 1. `is_onboarded boolean DEFAULT false` (already specified in v1.8) is what actually flips at Go Live now that a real wizard writes it, rather than being an unwired placeholder.
+- **Post-login redirect is now a single shared resolver**, used by both login methods (§5 lists Phone OTP and Google as the two built providers): no `Tenant` row for this owner → `/admin/onboarding`; a `Tenant` row exists but `is_onboarded` is false → `/admin/onboarding` (resumes at `onboarding_step`); `is_onboarded` true → that tenant's own admin dashboard. Previously only the Google callback redirected anywhere; OTP verify had no post-login navigation at all.
+- **Redirect target is subdomain-aware:** because a tenant's admin panel is served from `{slug}.talam4shop.com/admin` in production (§3.1) but the onboarding wizard itself runs on the root domain (no subdomain exists until Step 1 creates the `Tenant`), the resolver builds an absolute cross-subdomain URL in production and the `/dev/store/{slug}/admin/...` local-preview path in dev (matching the existing dev-only proxy alias) — never a bare relative `/admin/dashboard`, which would resolve on the root domain and find no tenant context.
+- **Confirmed gap, still not built:** logo upload (Brand step) and product photo upload (Product step) are not persisted — there is no Cloudinary upload pipeline in code yet (confirmed: no Cloudinary SDK usage anywhere but `next.config.ts` image remote patterns). Those two fields stay client-only placeholders until an upload pipeline exists; every other onboarding field now persists for real.
+- **Confirmed gap, now fixed as a prerequisite:** `app/admin/layout.tsx` (the tenant-admin dashboard chrome — sidebar + header) unconditionally wrapped every route under `/admin/*`, including `/admin/onboarding`, which has its own full-screen wizard header/sidebar. Since this changelog is what makes `/admin/onboarding` reachable by a real signed-in owner for the first time, the layout now skips the dashboard chrome for that one route.
+
+**Changelog v1.8 (2026-07-17)**
+- **Owner onboarding & storefront-access flow formalized:** The end-to-end journey from marketing landing page through to a live, browsable storefront was previously implicit (scattered across §3.2's route list and §5's OTP diagram) rather than stated as a single sequence. See new §5.1 below for the explicit flow: Marketing → "Start free" → OTP sign-in → **post-login routing** (no tenant → onboarding, has tenant → dashboard) → onboarding wizard writes the `Tenant` row → admin dashboard → mandatory settings → storefront unlocked. Any owner who accesses the storefront before mandatory settings are done sees an interstitial with a link back to `/admin/settings`, instead of the live store.
+- **New schema field:** `tenants.is_onboarded boolean DEFAULT false` (§6) — a single fact ("has this owner finished mandatory setup"), not derivable from existing fields, so it gets a real column rather than being computed or hardcoded. Gates storefront access per §5.1.
+- **Confirmed gap, not yet built:** as of this changelog entry, none of §5.1's flow exists in code — OTP verify has no post-login redirect, the onboarding wizard UI has no backend wiring (no tenant row is ever created), and there is no `is_onboarded` gate or interstitial. Tracked as two Notion tracker rows ("Post-login routing…", Phase 1; "Onboarding completion gate…", Phase 6) and in `docs/superpowers/plans/2026-07-06-talam-phase-6-platform-data.md`'s Known Gaps section.
 
 **Changelog v1.7 (2026-07-11)**
 - **Production domain updated:** `talam4shop.com` is now the production root domain. Root and `www` render the marketing site, `{store}.talam4shop.com` renders the tenant storefront, `{store}.talam4shop.com/admin/*` renders tenant admin, and `admin.talam4shop.com` renders super admin.
@@ -270,6 +283,34 @@ User enters phone → rate limit check (Upstash Redis: 5/10 min per phone)
 
 **Session management:** Supabase Auth handles JWT issuance, refresh, and expiry. HttpOnly cookies via `@supabase/ssr`. Session refreshed on every request in middleware.
 
+### 5.1 Owner Onboarding & Storefront Access Gate
+
+The full owner journey, marketing landing page to a live storefront:
+
+```
+1. Marketing page (talam4shop.com) → "Start free" → /auth
+2. Phone OTP or Google sign-in (§5 above)
+3. Post-login routing (one shared resolver, both login methods):
+     no Tenant row owned by this user       → /admin/onboarding
+     Tenant row exists, is_onboarded=false  → /admin/onboarding, resumes at onboarding_step
+     is_onboarded=true                      → that tenant's own /admin/dashboard
+                                               (subdomain-aware URL — see Changelog v1.9)
+4. Onboarding wizard (5 steps: Store → Brand → Product → Payment → Go Live)
+     → Step 1 (Store name/slug/category) submit creates the Tenant row
+       (owner_id = authenticated user, onboarding_step = 1)
+     → each later step persists immediately via its own action, bumping onboarding_step
+     → Go Live sets is_onboarded = true, redirects to the tenant's /admin/dashboard
+5. Owner configures mandatory settings (Store, Brand, Payment at minimum —
+   the same fields captured in onboarding, editable again under /admin/settings)
+6. Once `tenants.is_onboarded = true`, {store}.talam4shop.com serves the real storefront
+7. Before that: any request to the storefront shows an interstitial —
+   "Your store isn't ready yet" — with a link to /admin/settings, instead of
+   the live store. The admin panel itself is never blocked by this gate;
+   only the public-facing storefront is.
+```
+
+This formalizes what was previously implicit across §3.2's route list and §5's OTP diagram. See Changelog v1.9 for the per-step persistence model and Changelog v1.8 for the `is_onboarded` schema field this was originally scoped against.
+
 ---
 
 ## 6. Database Schema (Key Tables)
@@ -277,7 +318,10 @@ User enters phone → rate limit check (Upstash Redis: 5/10 min per phone)
 ```sql
 tenants
   id uuid PK
-  owner_id uuid FK → auth.users  -- Supabase Auth user who created the store
+  owner_id uuid UNIQUE FK → auth.users  -- Supabase Auth user who created the store;
+                                 -- UNIQUE = one store per owner in V1 (see §5.1, Changelog v1.9)
+  onboarding_step int DEFAULT 0  -- furthest completed onboarding wizard step; lets a returning
+                                 -- owner resume instead of restarting (Changelog v1.9)
   slug text UNIQUE               -- "silk" in silk.talam4shop.com
   name text
   tier enum('trial','starter','pro')
@@ -294,6 +338,8 @@ tenants
   payment_config jsonb           -- encrypted gateway keys
   store_type text                -- 'ethnic_wear' | 'bakery' | 'salon' | 'handicrafts' | 'other'
                                  -- captured at onboarding, used for PostHog segmentation
+  is_onboarded boolean DEFAULT false  -- true once mandatory onboarding/settings are complete;
+                                 -- gates public storefront access, see §5.1
   free_delivery_above numeric    -- NULL = shipping_fee always applies
   shipping_fee numeric DEFAULT 0 -- flat fee when order doesn't qualify
   delivery_estimate_text text    -- "5–7 business days"
