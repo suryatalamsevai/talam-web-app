@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { useOwnerCta } from './use-owner-cta'
 
 const MARQUEE_ITEMS = [
   'Ethnic Wear', 'Bakeries', 'Salons', 'Handicrafts', 'Tutors', 'Home Food', 'Jewellery', 'Boutiques',
@@ -87,6 +88,7 @@ function StoreCarousel() {
 
 export function Hero() {
   const scope = useRef<HTMLElement>(null)
+  const cta = useOwnerCta()
 
   useEffect(() => {
     if (!scope.current) return
@@ -150,10 +152,10 @@ export function Hero() {
 
           <div data-hero-fade className="mt-8 flex flex-wrap items-center gap-4">
             <Link
-              href="/auth"
+              href={cta?.href ?? '/auth'}
               className="px-8 py-4 rounded-full bg-brand-primary text-white text-base font-semibold font-body hover:opacity-90 transition-opacity"
             >
-              Start free
+              {cta?.label ?? 'Start free'}
             </Link>
             <a
               href="https://silk.talam4shop.com"
@@ -164,6 +166,9 @@ export function Hero() {
               See a live store →
             </a>
           </div>
+          {cta?.subtext && (
+            <p className="mt-3 text-sm text-white/50 font-body">{cta.subtext}</p>
+          )}
         </div>
 
         <div data-phone className="relative w-[280px] md:w-[320px] shrink-0 rotate-3">
