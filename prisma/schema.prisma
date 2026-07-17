@@ -42,7 +42,9 @@ enum DiscountType {
 
 model Tenant {
   id                    String          @id @default(uuid()) @db.Uuid
-  ownerId               String          @db.Uuid @map("owner_id")
+  ownerId               String          @unique @db.Uuid @map("owner_id")
+  onboardingStep        Int             @default(0) @map("onboarding_step")
+  isOnboarded           Boolean         @default(false) @map("is_onboarded")
   slug                  String          @unique
   name                  String
   tagline               String?
