@@ -2,15 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, Plus, X, ChevronUp, ChevronDown, GripVertical } from 'lucide-react'
+import { Search, Plus, X } from 'lucide-react'
 import { Dialog } from '@/components/ui/dialog'
 import { OCCASION_THEMES, SELECTABLE_OCCASION_THEMES } from '@/lib/occasion-themes'
 import {
-  getNewOccasionProductPicker,
-  getOccasionProductPicker,
   createOccasionAction,
   deleteOccasion,
-  setOccasionProducts,
   setOccasionSettings,
   setOccasionStatusAction,
 } from './actions'
@@ -27,8 +24,6 @@ type OccasionRow = {
   _count: { products: number }
 }
 
-type PickerProduct = { id: string; name: string; price: unknown; images: string[] }
-
 /* ── Small controls ── */
 
 function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
@@ -37,7 +32,6 @@ function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (
       type="button"
       disabled={disabled}
       onClick={() => onChange(!checked)}
-      title={disabled ? 'Add a product before turning this on' : undefined}
       className={`flex h-[26px] w-12 shrink-0 items-center rounded-full px-[2px] transition-colors ${disabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'} ${checked ? 'bg-brand-primary' : 'bg-[#D1D5DB]'}`}
     >
       <div className={`size-[22px] rounded-full bg-surface shadow-sm transition-transform ${checked ? 'translate-x-[22px]' : 'translate-x-0'}`} />
@@ -102,8 +96,6 @@ function OccasionEditor({
   const [emoji, setEmoji] = useState('')
   const [themeKey, setThemeKey] = useState<string>(SELECTABLE_OCCASION_THEMES[0])
   const [layout, setLayout] = useState<'grid' | 'carousel'>('grid')
-  const [products, setProducts] = useState<PickerProduct[] | null>(null)
-  const [order, setOrder] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -114,47 +106,22 @@ function OccasionEditor({
     setEmoji(occasion?.emoji ?? '')
     setThemeKey(occasion?.themeKey ?? SELECTABLE_OCCASION_THEMES[0])
     setLayout(occasion?.layout ?? 'grid')
-    setProducts(null)
-
-    const picker = isEdit ? getOccasionProductPicker(occasion.id) : getNewOccasionProductPicker()
-    picker.then((rows) => {
-      setProducts(rows as PickerProduct[])
-      const assigned = (rows as { id: string; tagAssignments?: { id: string }[] }[]).filter((r) => (r.tagAssignments?.length ?? 0) > 0)
-      setOrder(assigned.map((r) => r.id))
-    })
   }, [open, occasion, isEdit])
-
-  const toggle = (id: string) => setOrder((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
-
-  const move = (id: string, direction: -1 | 1) => {
-    setOrder((prev) => {
-      const index = prev.indexOf(id)
-      const swapWith = index + direction
-      if (swapWith < 0 || swapWith >= prev.length) return prev
-      const next = [...prev]
-      ;[next[index], next[swapWith]] = [next[swapWith], next[index]]
-      return next
-    })
-  }
 
   async function handleSave() {
     if (!isEdit && !name.trim()) { setError('Name is required.'); return }
-    if (order.length === 0) { setError('Select at least one product.'); return }
 
     setSaving(true)
     setError(null)
     const result = isEdit
-      ? await Promise.all([setOccasionProducts(occasion.id, order), setOccasionSettings(occasion.id, { themeKey, layout })]).then(([a, b]) => a.error || b.error ? { error: a.error || b.error } : {})
-      : await createOccasionAction({ name: name.trim(), emoji: emoji.trim() || undefined, themeKey, layout, productIds: order })
+      ? await setOccasionSettings(occasion.id, { name: name.trim() || undefined, themeKey, layout })
+      : await createOccasionAction({ name: name.trim(), emoji: emoji.trim() || undefined, themeKey, layout })
     setSaving(false)
 
     if (result.error) { setError(result.error); return }
     onSaved()
     onClose()
   }
-
-  const byId = new Map((products ?? []).map((p) => [p.id, p]))
-  const unassigned = (products ?? []).filter((p) => !order.includes(p.id))
 
   return (
     <Dialog open={open} onClose={onClose} className="md:max-w-[560px]">
@@ -181,52 +148,21 @@ function OccasionEditor({
               </div>
             )}
 
+            {isEdit && (
+              <label className="flex flex-col gap-1.5">
+                <span className="text-sm font-bold text-fg">Name</span>
+                <input value={name} onChange={(e) => setName(e.target.value)} className="rounded-lg border border-border bg-bg px-3 py-[11px] text-md outline-none focus:border-brand-primary focus:bg-surface" />
+              </label>
+            )}
+
             <ThemePicker value={themeKey} onChange={setThemeKey} />
             <LayoutToggle value={layout} onChange={setLayout} />
-
-            <div className="flex flex-col gap-2">
-              <span className="text-sm font-bold text-fg">Products * (min 1)</span>
-              {products === null ? (
-                <p className="py-4 text-center text-sm text-muted-warm">Loading products…</p>
-              ) : (
-                <div className="flex max-h-72 flex-col gap-1 overflow-y-auto">
-                  {order.map((id, index) => {
-                    const p = byId.get(id)
-                    if (!p) return null
-                    return (
-                      <div key={id} className="flex items-center gap-2 rounded-md bg-bg px-2 py-1.5">
-                        <GripVertical className="size-3.5 shrink-0 text-border" />
-                        <span className="flex-1 text-sm text-fg">{p.name}</span>
-                        <span className="text-xs text-muted-warm">₹{Number(p.price).toLocaleString('en-IN')}</span>
-                        <button type="button" onClick={() => move(id, -1)} disabled={index === 0} className="text-muted-warm hover:text-fg disabled:opacity-30">
-                          <ChevronUp className="size-3.5" />
-                        </button>
-                        <button type="button" onClick={() => move(id, 1)} disabled={index === order.length - 1} className="text-muted-warm hover:text-fg disabled:opacity-30">
-                          <ChevronDown className="size-3.5" />
-                        </button>
-                        <button type="button" onClick={() => toggle(id)} className="text-muted-warm hover:text-danger">
-                          <X className="size-3.5" />
-                        </button>
-                      </div>
-                    )
-                  })}
-                  {unassigned.map((p) => (
-                    <label key={p.id} className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-bg">
-                      <input type="checkbox" checked={false} onChange={() => toggle(p.id)} className="size-4 rounded border-border accent-brand-primary" />
-                      <span className="flex-1 text-sm text-fg">{p.name}</span>
-                      <span className="text-xs text-muted-warm">₹{Number(p.price).toLocaleString('en-IN')}</span>
-                    </label>
-                  ))}
-                  {products.length === 0 && <p className="py-4 text-center text-sm text-muted-warm">No active products yet.</p>}
-                </div>
-              )}
-            </div>
           </div>
         </div>
 
         <div className="flex shrink-0 gap-3 border-t border-border p-4">
           <button type="button" onClick={onClose} className="grow cursor-pointer rounded-lg border border-border py-3 text-md font-semibold text-fg transition-colors active:bg-bg">Cancel</button>
-          <button type="button" onClick={handleSave} disabled={saving || products === null} className="grow cursor-pointer rounded-lg bg-brand-primary py-3 text-md font-semibold text-surface transition-transform active:scale-[0.98] disabled:opacity-60">
+          <button type="button" onClick={handleSave} disabled={saving} className="grow cursor-pointer rounded-lg bg-brand-primary py-3 text-md font-semibold text-surface transition-transform active:scale-[0.98] disabled:opacity-60">
             {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Occasion'}
           </button>
         </div>
@@ -287,7 +223,7 @@ export function OccasionsClient({ initialOccasions }: { initialOccasions: Occasi
               <div className="flex flex-col gap-2 p-3">
                 <div className="flex items-center justify-between gap-2">
                   <p className="truncate text-md font-semibold text-fg">{o.name}</p>
-                  <Toggle checked={live} disabled={!live && o._count.products === 0} onChange={() => toggleStatus(o)} />
+                  <Toggle checked={live} onChange={() => toggleStatus(o)} />
                 </div>
                 <p className="text-xs text-muted-warm capitalize">
                   {o._count.products} product{o._count.products === 1 ? '' : 's'} · {o.layout} · {live ? 'Live' : 'Off'}
