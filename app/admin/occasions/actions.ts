@@ -3,7 +3,7 @@
 import { Prisma } from '@prisma/client'
 import { requireOwnerTenant } from '@/lib/admin-guard'
 import { withTenant } from '@/lib/prisma'
-import { listOccasions, listProductsForOccasionPicker, updateOccasionSettings } from '@/lib/data/occasions'
+import { listOccasions, listActiveProductsForPicker, listProductsForOccasionPicker, updateOccasionSettings } from '@/lib/data/occasions'
 
 type ActionResult = { error?: string }
 
@@ -36,12 +36,39 @@ export async function getOccasionProductPicker(occasionId: string) {
   return listProductsForOccasionPicker(tenantId, occasionId)
 }
 
-export async function createOccasion(input: { name: string; emoji?: string }): Promise<ActionResult> {
+export async function getNewOccasionProductPicker() {
+  const { tenantId } = await requireOwnerTenant()
+  return listActiveProductsForPicker(tenantId)
+}
+
+// Creates an occasion with its theme, layout, and products all in one step.
+export async function createOccasionAction(input: {
+  name: string
+  emoji?: string
+  themeKey: string
+  layout: 'grid' | 'carousel'
+  productIds: string[]
+}): Promise<ActionResult> {
+  if (input.productIds.length === 0) return { error: 'Select at least one product.' }
+
   const { tenantId } = await requireOwnerTenant()
   try {
-    await withTenant(tenantId, (db) =>
+    const occasion = await withTenant(tenantId, (db) =>
       db.productTag.create({
-        data: { tenantId, name: input.name, slug: slugify(input.name), emoji: input.emoji || null, status: 'draft' },
+        data: {
+          tenantId,
+          name: input.name,
+          slug: slugify(input.name),
+          emoji: input.emoji || null,
+          themeKey: input.themeKey,
+          layout: input.layout,
+          status: 'draft',
+        },
+      })
+    )
+    await withTenant(tenantId, (db) =>
+      db.productTagAssignment.createMany({
+        data: input.productIds.map((productId, index) => ({ tenantId, tagId: occasion.id, productId, sortOrder: index })),
       })
     )
     return {}
@@ -104,5 +131,21 @@ export async function setOccasionSettings(
   if (!occasion) return { error: 'Occasion not found.' }
 
   await updateOccasionSettings(tenantId, occasionId, input)
+  return {}
+}
+
+// On/off toggle — sets published/draft directly for this one occasion, independent of the
+// tenant-wide "Publish changes" batch used elsewhere for pending content edits.
+export async function setOccasionStatusAction(occasionId: string, enabled: boolean): Promise<ActionResult> {
+  const { tenantId } = await requireOwnerTenant()
+  const occasion = await withTenant(tenantId, (db) =>
+    db.productTag.findFirst({ where: { tenantId, id: occasionId }, select: { _count: { select: { products: true } } } })
+  )
+  if (!occasion) return { error: 'Occasion not found.' }
+  if (enabled && occasion._count.products === 0) return { error: 'Add a product before turning this on.' }
+
+  await withTenant(tenantId, (db) =>
+    db.productTag.update({ where: { id: occasionId, tenantId }, data: { status: enabled ? 'published' : 'draft' } })
+  )
   return {}
 }

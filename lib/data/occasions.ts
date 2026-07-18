@@ -41,6 +41,17 @@ export async function listProductsForOccasionPicker(tenantId: string, occasionId
   return [...assigned, ...unassigned]
 }
 
+// For the create-occasion modal — no occasion id exists yet, so no tag assignments to check.
+export async function listActiveProductsForPicker(tenantId: string) {
+  return withTenant(tenantId, (db) =>
+    db.product.findMany({
+      where: { tenantId, isActive: true },
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true, price: true, images: true },
+    })
+  )
+}
+
 export async function updateOccasionSettings(
   tenantId: string,
   occasionId: string,

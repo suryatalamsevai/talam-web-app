@@ -23,6 +23,34 @@ export const OCCASION_THEMES: Record<string, OccasionTheme> = {
     gradient: 'linear-gradient(135deg, #6d4c41, #3e2723)',
     headline: 'Curated for the occasion',
   },
+  puthandu: {
+    gradient: 'linear-gradient(135deg, #f9a825, #43a047)',
+    headline: 'New year, new beginnings',
+  },
+  'aadi-perukku': {
+    gradient: 'linear-gradient(135deg, #0277bd, #00838f)',
+    headline: 'The season’s biggest sale',
+  },
+  navaratri: {
+    gradient: 'linear-gradient(135deg, #ad1457, #6a1b9a)',
+    headline: 'Nine nights of colour',
+  },
+  'karthigai-deepam': {
+    gradient: 'linear-gradient(135deg, #ef6c00, #b71c1c)',
+    headline: 'A festival of lights',
+  },
+  'vinayagar-chaturthi': {
+    gradient: 'linear-gradient(135deg, #d84315, #4e342e)',
+    headline: 'Blessings for new beginnings',
+  },
+  'akshaya-tritiya': {
+    gradient: 'linear-gradient(135deg, #f9a825, #8d6e63)',
+    headline: 'An auspicious day to shop',
+  },
+  'christmas-new-year': {
+    gradient: 'linear-gradient(135deg, #1b5e20, #b71c1c)',
+    headline: 'Season’s greetings, festive picks',
+  },
 }
 
 // Presets an owner can pick for a custom (non-default) occasion — same registry, just the

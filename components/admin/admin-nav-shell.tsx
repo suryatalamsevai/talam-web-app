@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Package, ClipboardList, Users, Settings } from 'lucide-react'
+import { LayoutDashboard, Package, ClipboardList, Users, Settings, PartyPopper } from 'lucide-react'
 import { StoreLink, useStoreBase } from '@/components/store/store-context'
 import { PublishButton } from './publish-button'
 
@@ -9,6 +9,7 @@ const NAV = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/orders', label: 'Orders', icon: ClipboardList },
   { href: '/admin/products', label: 'Products', icon: Package },
+  { href: '/admin/occasions', label: 'Occasions', icon: PartyPopper },
   { href: '/admin/customers', label: 'Customers', icon: Users },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ]
@@ -17,6 +18,7 @@ const MOBILE_NAV = [
   { href: '/admin/dashboard', label: 'DASHBOARD', icon: LayoutDashboard },
   { href: '/admin/products', label: 'PRODUCTS', icon: Package },
   { href: '/admin/orders', label: 'ORDERS', icon: ClipboardList },
+  { href: '/admin/occasions', label: 'OCCASIONS', icon: PartyPopper },
   { href: '/admin/customers', label: 'CUSTOMERS', icon: Users },
   { href: '/admin/settings', label: 'SETTINGS', icon: Settings },
 ]

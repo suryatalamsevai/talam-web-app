@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import { prisma } from '../lib/prisma'
+import { DEFAULT_OCCASIONS } from '../lib/default-occasions'
 
 async function main() {
   // ── Tenant: D'Mystique Boutique ──
@@ -73,12 +74,12 @@ async function main() {
 
   // ── Categories (6) ──
   const catData = [
-    { name: 'Sarees', slug: 'sarees', sortOrder: 0 },
-    { name: 'Kurtis', slug: 'kurtis', sortOrder: 1 },
-    { name: 'Dupattas', slug: 'dupattas', sortOrder: 2 },
-    { name: 'Sets & Suits', slug: 'sets-suits', sortOrder: 3 },
-    { name: 'Lehengas', slug: 'lehengas', sortOrder: 4 },
-    { name: 'Accessories', slug: 'accessories', sortOrder: 5 },
+    { name: 'Sarees', slug: 'sarees', sortOrder: 0, department: 'women' as const, isDefault: true },
+    { name: 'Kurtis', slug: 'kurtis', sortOrder: 1, department: 'women' as const, isDefault: true },
+    { name: 'Dupattas', slug: 'dupattas', sortOrder: 2, department: 'women' as const, isDefault: true },
+    { name: 'Sets & Suits', slug: 'sets-suits', sortOrder: 3, department: 'women' as const, isDefault: true },
+    { name: 'Lehengas', slug: 'lehengas', sortOrder: 4, department: 'women' as const, isDefault: true },
+    { name: 'Accessories', slug: 'accessories', sortOrder: 5, department: null, isDefault: true },
   ]
   const categories: Record<string, { id: string }> = {}
   for (const c of catData) {
@@ -354,15 +355,14 @@ async function main() {
   await prisma.productTag.deleteMany({ where: { tenantId: tid } })
 
   const tagData = [
-    { name: 'Diwali', slug: 'diwali', emoji: '🪔', sortOrder: 0, isDefault: true, themeKey: 'diwali' },
-    { name: 'Pongal', slug: 'pongal', emoji: '🌾', sortOrder: 1, isDefault: true, themeKey: 'pongal' },
-    { name: 'Festive', slug: 'festive', emoji: '🎉', sortOrder: 2 },
-    { name: 'Wedding', slug: 'wedding', emoji: '💍', sortOrder: 3 },
-    { name: 'Casual', slug: 'casual', emoji: '☀️', sortOrder: 4 },
-    { name: 'Office', slug: 'office', emoji: '💼', sortOrder: 5 },
-    { name: 'Daily', slug: 'daily', emoji: '🌿', sortOrder: 6 },
-    { name: 'Party', slug: 'party', emoji: '🎊', sortOrder: 7 },
-    { name: 'Travel', slug: 'travel', emoji: '✈️', sortOrder: 8 },
+    ...DEFAULT_OCCASIONS.map((o) => ({ name: o.name, slug: o.slug, emoji: o.emoji, sortOrder: o.sortOrder, isDefault: true, themeKey: o.themeKey })),
+    { name: 'Festive', slug: 'festive', emoji: '🎉', sortOrder: 9 },
+    { name: 'Wedding', slug: 'wedding', emoji: '💍', sortOrder: 10 },
+    { name: 'Casual', slug: 'casual', emoji: '☀️', sortOrder: 11 },
+    { name: 'Office', slug: 'office', emoji: '💼', sortOrder: 12 },
+    { name: 'Daily', slug: 'daily', emoji: '🌿', sortOrder: 13 },
+    { name: 'Party', slug: 'party', emoji: '🎊', sortOrder: 14 },
+    { name: 'Travel', slug: 'travel', emoji: '✈️', sortOrder: 15 },
   ]
 
   const tags: Record<string, { id: string }> = {}
