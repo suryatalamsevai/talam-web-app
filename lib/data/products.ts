@@ -3,7 +3,9 @@ import { withTenant } from '@/lib/prisma'
 export type ProductSort = 'newest' | 'price-asc' | 'price-desc' | 'popular'
 
 export type ProductFilters = {
-  categoryId?: string // UUID — not a name string
+  categoryId?: string
+  department?: string
+  offersOnly?: boolean
   size?: string
   minPrice?: number
   maxPrice?: number
@@ -11,7 +13,7 @@ export type ProductFilters = {
   tagId?: string
 }
 
-export type CategoryMeta = { id: string; name: string; slug: string }
+export type CategoryMeta = { id: string; name: string; slug: string; department: string | null }
 
 export type AdminProduct = {
   id: string
@@ -130,6 +132,17 @@ export async function getProducts(tenantId: string, filters?: ProductFilters) {
         isActive: true,
         status: 'published',
         ...(filters?.categoryId ? { categoryId: filters.categoryId } : {}),
+        ...(filters?.department
+          ? { category: { OR: [{ department: filters.department }, { department: null }] } }
+          : {}),
+        ...(filters?.offersOnly
+          ? {
+              OR: [
+                { comparePrice: { not: null } },
+                { promotionAssignments: { some: { promotion: { isActive: true, OR: [{ endsAt: null }, { endsAt: { gt: new Date() } }] } } } },
+              ],
+            }
+          : {}),
         ...(filters?.size ? { sizes: { has: filters.size } } : {}),
         ...(filters?.minPrice || filters?.maxPrice
           ? {
@@ -247,12 +260,15 @@ export async function getProductReviews(tenantId: string, productId: string) {
   )
 }
 
-export async function getCategories(tenantId: string): Promise<CategoryMeta[]> {
+export async function getCategories(tenantId: string, department?: string): Promise<CategoryMeta[]> {
   return withTenant(tenantId, (db) =>
     db.productCategory.findMany({
-      where: { tenantId },
+      where: {
+        tenantId,
+        ...(department ? { OR: [{ department }, { department: null }] } : {}),
+      },
       orderBy: { sortOrder: 'asc' },
-      select: { id: true, name: true, slug: true },
+      select: { id: true, name: true, slug: true, department: true },
     })
   )
 }

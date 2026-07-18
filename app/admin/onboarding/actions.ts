@@ -4,6 +4,7 @@ import { headers } from 'next/headers'
 import { Prisma } from '@prisma/client'
 import { requireOwnerSession } from '@/lib/admin-guard'
 import { prisma } from '@/lib/prisma'
+import { DEFAULT_OCCASIONS } from '@/lib/default-occasions'
 import type { PaymentId } from './onboarding-data'
 
 type ActionResult = { error?: string }
@@ -146,25 +147,32 @@ export async function savePaymentStep(input: { paymentId: PaymentId }): Promise<
 }
 
 async function seedStarterContent(tenantId: string): Promise<void> {
-  const [categoryCount, bannerCount, promotionCount, tagCount] = await Promise.all([
+  const [categoryCount, bannerCount, promotionCount] = await Promise.all([
     prisma.productCategory.count({ where: { tenantId } }),
     prisma.storeBanner.count({ where: { tenantId } }),
     prisma.storePromotion.count({ where: { tenantId } }),
-    prisma.productTag.count({ where: { tenantId } }),
   ])
 
   if (categoryCount === 0) {
+    const defaultCats = [
+      { name: 'Sarees', slug: 'sarees', sortOrder: 0, department: 'women', isDefault: true },
+      { name: 'Kurtis', slug: 'kurtis', sortOrder: 1, department: 'women', isDefault: true },
+      { name: 'Dupattas', slug: 'dupattas', sortOrder: 2, department: 'women', isDefault: true },
+      { name: 'Sets & Suits', slug: 'sets-suits', sortOrder: 3, department: 'women', isDefault: true },
+      { name: 'Lehengas', slug: 'lehengas', sortOrder: 4, department: 'women', isDefault: true },
+      { name: 'Accessories', slug: 'accessories', sortOrder: 5, department: null, isDefault: true },
+    ]
     await prisma.productCategory.createMany({
-      data: [1, 2, 3].map((n) => ({ tenantId, name: `Sample Category ${n}`, slug: `sample-category-${n}`, sortOrder: n })),
+      data: defaultCats.map((c) => ({ ...c, tenantId })),
     })
   }
 
-  if (tagCount === 0) {
-    await prisma.productTag.createMany({
-      data: [
-        { tenantId, name: 'Diwali', slug: 'diwali', emoji: '🪔', isDefault: true, themeKey: 'diwali', sortOrder: 0 },
-        { tenantId, name: 'Pongal', slug: 'pongal', emoji: '🌾', isDefault: true, themeKey: 'pongal', sortOrder: 1 },
-      ],
+  // Upsert (not gated on empty) so re-running this backfills any default occasions a tenant is missing.
+  for (const occasion of DEFAULT_OCCASIONS) {
+    await prisma.productTag.upsert({
+      where: { tenantId_slug: { tenantId, slug: occasion.slug } },
+      create: { tenantId, name: occasion.name, slug: occasion.slug, emoji: occasion.emoji, isDefault: true, themeKey: occasion.themeKey, sortOrder: occasion.sortOrder },
+      update: {},
     })
   }
 

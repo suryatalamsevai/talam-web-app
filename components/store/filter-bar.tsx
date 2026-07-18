@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import type { CategoryMeta } from '@/lib/data/products'
 
 type Props = {
+  basePath: string
   categories: CategoryMeta[]
   activeCategory?: string
   activeSize?: string
@@ -21,9 +22,14 @@ const SORTS = [
   { value: 'popular', label: 'Most Popular' },
 ]
 
-export function FilterBar({ categories, activeCategory, activeSize, minPrice, maxPrice, activeSort }: Props) {
+export function FilterBar({ basePath, categories, activeCategory, activeSize, minPrice, maxPrice, activeSort }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
+
+  function push(params: URLSearchParams) {
+    const qs = params.toString()
+    router.push(qs ? `${basePath}?${qs}` : basePath)
+  }
 
   function setParam(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString())
@@ -32,7 +38,7 @@ export function FilterBar({ categories, activeCategory, activeSize, minPrice, ma
     } else {
       params.set(key, value)
     }
-    router.push(`/?${params.toString()}`)
+    push(params)
   }
 
   function handlePriceSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -43,7 +49,7 @@ export function FilterBar({ categories, activeCategory, activeSize, minPrice, ma
     const max = form.get('maxPrice')?.toString().trim()
     min ? params.set('minPrice', min) : params.delete('minPrice')
     max ? params.set('maxPrice', max) : params.delete('maxPrice')
-    router.push(`/?${params.toString()}`)
+    push(params)
   }
 
   const panel = (

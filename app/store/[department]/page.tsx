@@ -1,45 +1,48 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { getRequestTenantId } from '@/lib/data/tenant'
-import { getCategories, getProducts } from '@/lib/data/products'
+import { getProducts, getCategories } from '@/lib/data/products'
 import { parseListingParams } from '@/lib/parse-listing-params'
 import { ProductGrid } from '@/components/store/product-grid'
 import { FilterBar } from '@/components/store/filter-bar'
 
+const DEPARTMENTS: Record<string, string> = { men: 'Men', women: 'Women', kids: 'Kids' }
+
 type Props = {
-  params: Promise<{ categorySlug: string }>
+  params: Promise<{ department: string }>
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { categorySlug } = await params
-  const tenantId = await getRequestTenantId()
-  const category = tenantId ? (await getCategories(tenantId)).find(c => c.slug === categorySlug) : null
-  return category ? { title: category.name } : {}
+  const { department } = await params
+  const label = DEPARTMENTS[department]
+  return label ? { title: `${label} — Shop` } : {}
 }
 
-export default async function CategoryPage({ params, searchParams }: Props) {
-  const { categorySlug } = await params
-  const tenantId = await getRequestTenantId()
-  const categories = tenantId ? await getCategories(tenantId) : []
-  const category = categories.find(c => c.slug === categorySlug)
-  if (!category || !tenantId) notFound()
+export default async function DepartmentPage({ params, searchParams }: Props) {
+  const { department } = await params
+  const label = DEPARTMENTS[department]
+  if (!label) notFound()
 
+  const tenantId = await getRequestTenantId()
+  if (!tenantId) notFound()
+
+  const categories = await getCategories(tenantId, department)
   const sp = await searchParams
   const filters = parseListingParams(sp, categories)
-  const products = await getProducts(tenantId, { ...filters, categoryId: category.id })
+  const products = await getProducts(tenantId, { ...filters, department })
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-6 sm:px-16 sm:py-10">
-      <h1 className="mb-2 font-heading text-xl font-bold text-fg sm:text-2xl">{category.name}</h1>
+      <h1 className="mb-2 font-heading text-xl font-bold text-fg sm:text-2xl">{label}</h1>
       <p className="mb-4 font-body text-sm text-muted-warm">
         {products.length} {products.length === 1 ? 'item' : 'items'}
       </p>
       <div className="flex gap-8">
         <FilterBar
-          basePath={`/category/${categorySlug}`}
+          basePath={`/${department}`}
           categories={categories}
-          activeCategory={categorySlug}
+          activeCategory={typeof sp.category === 'string' ? sp.category : undefined}
           activeSize={typeof sp.size === 'string' ? sp.size : undefined}
           minPrice={typeof sp.minPrice === 'string' ? sp.minPrice : undefined}
           maxPrice={typeof sp.maxPrice === 'string' ? sp.maxPrice : undefined}
