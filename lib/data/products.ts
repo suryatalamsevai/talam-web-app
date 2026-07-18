@@ -13,6 +13,104 @@ export type ProductFilters = {
 
 export type CategoryMeta = { id: string; name: string; slug: string }
 
+export type AdminProduct = {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  price: number
+  comparePrice: number | null
+  categoryId: string | null
+  categoryName: string | null
+  sizes: string[]
+  images: string[]
+  stockBySize: Record<string, number>
+  isActive: boolean
+}
+
+export type ProductInput = {
+  name: string
+  description: string | null
+  price: number
+  comparePrice: number | null
+  categoryId: string | null
+  sizes: string[]
+  images: string[]
+  stockBySize: Record<string, number>
+}
+
+function slugify(name: string) {
+  return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+}
+
+export async function listProductsForAdmin(tenantId: string): Promise<AdminProduct[]> {
+  const products = await withTenant(tenantId, (db) =>
+    db.product.findMany({
+      where: { tenantId },
+      orderBy: { createdAt: 'desc' },
+      include: { category: { select: { name: true } } },
+    })
+  )
+
+  return products.map((p) => ({
+    id: p.id,
+    name: p.name,
+    slug: p.slug,
+    description: p.description,
+    price: Number(p.price),
+    comparePrice: p.comparePrice !== null ? Number(p.comparePrice) : null,
+    categoryId: p.categoryId,
+    categoryName: p.category?.name ?? null,
+    sizes: p.sizes,
+    images: p.images,
+    stockBySize: p.stockBySize as Record<string, number>,
+    isActive: p.isActive,
+  }))
+}
+
+export async function createProduct(tenantId: string, input: ProductInput) {
+  // ponytail: slug is name-derived + a time suffix for uniqueness, no collision-retry needed at this scale
+  const slug = `${slugify(input.name)}-${Date.now().toString(36).slice(-4)}`
+  return withTenant(tenantId, (db) =>
+    db.product.create({
+      data: {
+        tenantId,
+        slug,
+        name: input.name,
+        description: input.description,
+        price: input.price,
+        comparePrice: input.comparePrice,
+        categoryId: input.categoryId,
+        sizes: input.sizes,
+        images: input.images,
+        stockBySize: input.stockBySize,
+      },
+    })
+  )
+}
+
+export async function updateProduct(tenantId: string, id: string, input: ProductInput) {
+  return withTenant(tenantId, (db) =>
+    db.product.update({
+      where: { id, tenantId },
+      data: {
+        name: input.name,
+        description: input.description,
+        price: input.price,
+        comparePrice: input.comparePrice,
+        categoryId: input.categoryId,
+        sizes: input.sizes,
+        images: input.images,
+        stockBySize: input.stockBySize,
+      },
+    })
+  )
+}
+
+export async function setProductActive(tenantId: string, id: string, isActive: boolean) {
+  return withTenant(tenantId, (db) => db.product.update({ where: { id, tenantId }, data: { isActive } }))
+}
+
 const NEW_PRODUCT_WINDOW_MS = 14 * 24 * 60 * 60 * 1000
 
 export async function getProducts(tenantId: string, filters?: ProductFilters) {
@@ -28,6 +126,7 @@ export async function getProducts(tenantId: string, filters?: ProductFilters) {
       where: {
         tenantId,
         isActive: true,
+        status: 'published',
         ...(filters?.categoryId ? { categoryId: filters.categoryId } : {}),
         ...(filters?.size ? { sizes: { has: filters.size } } : {}),
         ...(filters?.minPrice || filters?.maxPrice
@@ -46,22 +145,29 @@ export async function getProducts(tenantId: string, filters?: ProductFilters) {
       include: {
         category: { select: { name: true } },
         reviews: { where: { isDeleted: false }, select: { rating: true } },
+        ...(filters?.tagId
+          ? { tagAssignments: { where: { tagId: filters.tagId }, select: { sortOrder: true } } }
+          : {}),
       },
     })
   )
 
-  const mapped = products.map(({ reviews, ...product }) => ({
+  const mapped = products.map(({ reviews, tagAssignments, ...product }) => ({
     ...product,
     reviewCount: reviews.length,
     averageRating: reviews.length ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : null,
     isNew: Date.now() - product.createdAt.getTime() < NEW_PRODUCT_WINDOW_MS,
+    _occasionSortOrder: tagAssignments?.[0]?.sortOrder ?? 0,
   }))
 
   if (filters?.sort === 'popular') {
     mapped.sort((a, b) => b.reviewCount - a.reviewCount)
+  } else if (filters?.tagId && !filters.sort) {
+    // Occasion pages default to the owner's manually curated order, not createdAt.
+    mapped.sort((a, b) => a._occasionSortOrder - b._occasionSortOrder)
   }
 
-  return mapped
+  return mapped.map(({ _occasionSortOrder, ...product }) => product)
 }
 
 // "Shop by Offers" — products on sale (comparePrice set) OR tagged to a currently-active promotion.
@@ -71,6 +177,7 @@ export async function getOfferProducts(tenantId: string) {
       where: {
         tenantId,
         isActive: true,
+        status: 'published',
         OR: [
           { comparePrice: { not: null } },
           {
@@ -104,7 +211,7 @@ export async function getOfferProducts(tenantId: string) {
 export async function getProductBySlug(tenantId: string, slug: string) {
   const product = await withTenant(tenantId, (db) =>
     db.product.findFirst({
-      where: { tenantId, slug, isActive: true },
+      where: { tenantId, slug, isActive: true, status: 'published' },
       include: {
         category: { select: { id: true, name: true } },
         reviews: { where: { isDeleted: false }, select: { rating: true } },

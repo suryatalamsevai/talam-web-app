@@ -42,7 +42,7 @@ export async function getStorePromotions(tenantId: string) {
 export async function getProductTags(tenantId: string) {
   return withTenant(tenantId, (db) =>
     db.productTag.findMany({
-      where: { tenantId },
+      where: { tenantId, status: 'published' },
       orderBy: { sortOrder: 'asc' },
       include: { _count: { select: { products: true } } },
     })

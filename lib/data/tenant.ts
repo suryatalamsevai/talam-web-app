@@ -1,6 +1,8 @@
 import { headers } from 'next/headers'
 import { prisma, withTenant } from '@/lib/prisma'
 
+export type SocialLink = { platform: string; url: string }
+
 export type TenantStorefront = {
   id: string
   ownerId: string
@@ -25,6 +27,7 @@ export type TenantStorefront = {
     instagramUrl: string | null
     facebookUrl: string | null
     youtubeUrl: string | null
+    socialLinks: SocialLink[]
   } | null
   branch: { address: string | null; city: string | null; hours: string | null } | null
 }
@@ -68,6 +71,8 @@ export async function getTenantStorefront(tenantId: string): Promise<TenantStore
             instagramUrl: true,
             facebookUrl: true,
             youtubeUrl: true,
+            socialLinks: true,
+            status: true,
           },
         },
         branches: {
@@ -81,11 +86,21 @@ export async function getTenantStorefront(tenantId: string): Promise<TenantStore
 
   if (!tenant) return null
 
-  const { branches, ...rest } = tenant
+  const { branches, about, ...rest } = tenant
 
   // Prisma returns Decimal for these two — narrow to number to match the TenantStorefront contract.
   return {
     ...rest,
+    about: about && about.status === 'published'
+      ? {
+          storyTitle: about.storyTitle,
+          description: about.description,
+          instagramUrl: about.instagramUrl,
+          facebookUrl: about.facebookUrl,
+          youtubeUrl: about.youtubeUrl,
+          socialLinks: (about.socialLinks as SocialLink[]) ?? [],
+        }
+      : null,
     branch: branches[0] ?? null,
     freeDeliveryAbove: rest.freeDeliveryAbove ? Number(rest.freeDeliveryAbove) : null,
     shippingFee: Number(rest.shippingFee),

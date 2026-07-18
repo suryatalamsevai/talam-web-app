@@ -7,11 +7,13 @@ vi.mock('@/lib/prisma', () => ({
       images: ['url1'], categoryId: 'cat-1',
       category: { id: 'cat-1', name: 'Sarees', slug: 'sarees', sortOrder: 0 },
       reviews: [{ rating: 4 }, { rating: 5 }],
-      sizes: ['S', 'M', 'L'], isActive: true, createdAt: new Date(),
+      sizes: ['S', 'M', 'L'], isActive: true, status: 'published', createdAt: new Date(),
     }
     const mockClient = {
       product: {
-        findMany: vi.fn().mockResolvedValue([mockProduct]),
+        findMany: vi.fn((args: { where?: { status?: string } }) =>
+          Promise.resolve(args?.where?.status === 'published' ? [mockProduct] : [mockProduct])
+        ),
         findFirst: vi.fn().mockResolvedValue(mockProduct),
       },
       productCategory: {
@@ -32,6 +34,23 @@ describe('getProducts', () => {
     expect(products).toHaveLength(1)
     expect(products[0].name).toBe('Silk Saree')
     expect(products[0]).toMatchObject({ reviewCount: 2, averageRating: 4.5, isNew: true })
+  })
+
+  it('filters to published status', async () => {
+    const { withTenant } = await import('@/lib/prisma')
+    await getProducts('tenant-1')
+    const mockCall = vi.mocked(withTenant).mock.calls[0][1]
+    let capturedWhere: { status?: string } | undefined
+    await mockCall({
+      product: {
+        findMany: vi.fn((args: { where?: { status?: string } }) => {
+          capturedWhere = args?.where
+          return Promise.resolve([])
+        }),
+      },
+      productCategory: { findMany: vi.fn().mockResolvedValue([]) },
+    } as unknown as Parameters<typeof mockCall>[0])
+    expect(capturedWhere?.status).toBe('published')
   })
 })
 
