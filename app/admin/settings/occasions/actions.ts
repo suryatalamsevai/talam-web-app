@@ -3,7 +3,7 @@
 import { Prisma } from '@prisma/client'
 import { requireOwnerTenant } from '@/lib/admin-guard'
 import { withTenant } from '@/lib/prisma'
-import { listOccasions, listProductsForOccasionPicker } from '@/lib/data/occasions'
+import { listOccasions, listProductsForOccasionPicker, updateOccasionSettings } from '@/lib/data/occasions'
 
 type ActionResult = { error?: string }
 
@@ -41,7 +41,7 @@ export async function createOccasion(input: { name: string; emoji?: string }): P
   try {
     await withTenant(tenantId, (db) =>
       db.productTag.create({
-        data: { tenantId, name: input.name, slug: slugify(input.name), emoji: input.emoji || null },
+        data: { tenantId, name: input.name, slug: slugify(input.name), emoji: input.emoji || null, status: 'draft' },
       })
     )
     return {}
@@ -69,6 +69,7 @@ export async function deleteOccasion(occasionId: string): Promise<ActionResult> 
 }
 
 // Replaces the full set of products assigned to an occasion with the given list.
+// Array order is saved as each assignment's sortOrder — drives display order on the storefront.
 export async function setOccasionProducts(occasionId: string, productIds: string[]): Promise<ActionResult> {
   const { tenantId } = await requireOwnerTenant()
   const occasion = await withTenant(tenantId, (db) =>
@@ -82,11 +83,26 @@ export async function setOccasionProducts(occasionId: string, productIds: string
       ...(productIds.length
         ? [
             db.productTagAssignment.createMany({
-              data: productIds.map((productId) => ({ tenantId, tagId: occasionId, productId })),
+              data: productIds.map((productId, index) => ({ tenantId, tagId: occasionId, productId, sortOrder: index })),
             }),
           ]
         : []),
+      db.productTag.update({ where: { id: occasionId, tenantId }, data: { status: 'draft' } }),
     ])
   )
+  return {}
+}
+
+export async function setOccasionSettings(
+  occasionId: string,
+  input: { themeKey?: string; layout?: 'grid' | 'carousel' }
+): Promise<ActionResult> {
+  const { tenantId } = await requireOwnerTenant()
+  const occasion = await withTenant(tenantId, (db) =>
+    db.productTag.findFirst({ where: { tenantId, id: occasionId }, select: { id: true } })
+  )
+  if (!occasion) return { error: 'Occasion not found.' }
+
+  await updateOccasionSettings(tenantId, occasionId, input)
   return {}
 }

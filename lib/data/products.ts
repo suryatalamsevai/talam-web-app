@@ -84,6 +84,7 @@ export async function createProduct(tenantId: string, input: ProductInput) {
         sizes: input.sizes,
         images: input.images,
         stockBySize: input.stockBySize,
+        status: 'draft',
       },
     })
   )
@@ -102,6 +103,7 @@ export async function updateProduct(tenantId: string, id: string, input: Product
         sizes: input.sizes,
         images: input.images,
         stockBySize: input.stockBySize,
+        status: 'draft',
       },
     })
   )

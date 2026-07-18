@@ -52,6 +52,7 @@ export async function updateOccasionSettings(
       data: {
         ...(input.themeKey !== undefined ? { themeKey: input.themeKey } : {}),
         ...(input.layout !== undefined ? { layout: input.layout } : {}),
+        status: 'draft',
       },
     })
   )
