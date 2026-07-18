@@ -28,6 +28,7 @@ export type AdminProduct = {
   images: string[]
   stockBySize: Record<string, number>
   isActive: boolean
+  occasionIds: string[]
 }
 
 export type ProductInput = {
@@ -48,9 +49,12 @@ function slugify(name: string) {
 export async function listProductsForAdmin(tenantId: string): Promise<AdminProduct[]> {
   const products = await withTenant(tenantId, (db) =>
     db.product.findMany({
-      where: { tenantId },
+      where: { tenantId, deletedAt: null },
       orderBy: { createdAt: 'desc' },
-      include: { category: { select: { name: true } } },
+      include: {
+        category: { select: { name: true } },
+        tagAssignments: { select: { tagId: true } },
+      },
     })
   )
 
@@ -67,6 +71,7 @@ export async function listProductsForAdmin(tenantId: string): Promise<AdminProdu
     images: p.images,
     stockBySize: p.stockBySize as Record<string, number>,
     isActive: p.isActive,
+    occasionIds: p.tagAssignments.map((a) => a.tagId),
   }))
 }
 
@@ -131,6 +136,7 @@ export async function getProducts(tenantId: string, filters?: ProductFilters) {
         tenantId,
         isActive: true,
         status: 'published',
+        deletedAt: null,
         ...(filters?.categoryId ? { categoryId: filters.categoryId } : {}),
         ...(filters?.department
           ? { category: { OR: [{ department: filters.department }, { department: null }] } }
@@ -193,6 +199,7 @@ export async function getOfferProducts(tenantId: string) {
         tenantId,
         isActive: true,
         status: 'published',
+        deletedAt: null,
         OR: [
           { comparePrice: { not: null } },
           {
@@ -226,7 +233,7 @@ export async function getOfferProducts(tenantId: string) {
 export async function getProductBySlug(tenantId: string, slug: string) {
   const product = await withTenant(tenantId, (db) =>
     db.product.findFirst({
-      where: { tenantId, slug, isActive: true, status: 'published' },
+      where: { tenantId, slug, isActive: true, status: 'published', deletedAt: null },
       include: {
         category: { select: { id: true, name: true } },
         reviews: { where: { isDeleted: false }, select: { rating: true } },
@@ -270,5 +277,43 @@ export async function getCategories(tenantId: string, department?: string): Prom
       orderBy: { sortOrder: 'asc' },
       select: { id: true, name: true, slug: true, department: true },
     })
+  )
+}
+
+export async function softDeleteProducts(tenantId: string, productIds: string[]): Promise<void> {
+  await withTenant(tenantId, (db) =>
+    db.product.updateMany({
+      where: { tenantId, id: { in: productIds } },
+      data: { deletedAt: new Date() },
+    })
+  )
+}
+
+export async function bulkSetProductsCategory(tenantId: string, productIds: string[], categoryId: string | null): Promise<void> {
+  await withTenant(tenantId, (db) =>
+    db.product.updateMany({
+      where: { tenantId, id: { in: productIds } },
+      data: { categoryId },
+    })
+  )
+}
+
+export async function bulkSetProductsActive(tenantId: string, productIds: string[], isActive: boolean): Promise<void> {
+  await withTenant(tenantId, (db) =>
+    db.product.updateMany({
+      where: { tenantId, id: { in: productIds } },
+      data: { isActive },
+    })
+  )
+}
+
+// Clears a product's occasion and offer associations only — name, price, images, category,
+// and active/deleted state are untouched.
+export async function resetProductsToDefault(tenantId: string, productIds: string[]): Promise<void> {
+  await withTenant(tenantId, (db) =>
+    db.$transaction([
+      db.productTagAssignment.deleteMany({ where: { tenantId, productId: { in: productIds } } }),
+      db.storePromotionProduct.deleteMany({ where: { tenantId, productId: { in: productIds } } }),
+    ])
   )
 }
