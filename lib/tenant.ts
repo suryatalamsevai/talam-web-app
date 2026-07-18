@@ -6,8 +6,15 @@ export type TenantMeta = {
   tier: string
 }
 
+const TTL_MS = 60_000
+// ponytail: module-level Map, per-instance only, add Redis/shared cache if edge instances multiply and hit rate matters
+const cache = new Map<string, { tenant: TenantMeta | null; expires: number }>()
+
 export async function getTenantBySlug(slug: string): Promise<TenantMeta | null> {
   if (!slug) return null
+
+  const cached = cache.get(slug)
+  if (cached && cached.expires > Date.now()) return cached.tenant
 
   const supabase = createAdminClient()
   const { data, error } = await supabase
@@ -16,6 +23,7 @@ export async function getTenantBySlug(slug: string): Promise<TenantMeta | null> 
     .eq('slug', slug)
     .single()
 
-  if (error || !data) return null
-  return data as TenantMeta
+  const tenant = error || !data ? null : (data as TenantMeta)
+  cache.set(slug, { tenant, expires: Date.now() + TTL_MS })
+  return tenant
 }

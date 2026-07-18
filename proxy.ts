@@ -16,8 +16,12 @@ export async function proxy(request: NextRequest) {
   const hostname = request.headers.get('host') ?? ''
   const pathname = request.nextUrl.pathname
   const host = normalizeHost(hostname.split(':')[0])
-  const sessionResponse = await updateSession(request)
   const decision = getRouteDecision(host, pathname)
+  // ponytail: skip the Supabase session refresh (network round-trip) on plain storefront
+  // browsing — only surfaces that actually read the session server-side need it
+  const sessionResponse = needsSessionRefresh(decision, pathname)
+    ? await updateSession(request)
+    : NextResponse.next({ request })
 
   switch (decision.kind) {
     case 'passThrough':
@@ -29,6 +33,14 @@ export async function proxy(request: NextRequest) {
     case 'tenant':
       return createTenantResponse(request, sessionResponse, decision)
   }
+}
+
+function needsSessionRefresh(decision: RouteDecision, pathname: string): boolean {
+  if (decision.kind === 'superAdmin') return true
+  if (decision.kind === 'passThrough') return pathname.startsWith('/auth') || pathname.startsWith('/welcome')
+
+  if (decision.surface === 'admin' || decision.surface === 'checkout') return true
+  return decision.pathname.startsWith('/account') || decision.pathname.startsWith('/auth')
 }
 
 function getRouteDecision(host: string, pathname: string): RouteDecision {

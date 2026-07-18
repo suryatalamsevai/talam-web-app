@@ -11,8 +11,18 @@ const DEFAULT_TRIGGER_CLASS =
 
 export function ProfileMenu({ user, triggerClassName }: { user: User; triggerClassName?: string }) {
   const [open, setOpen] = useState(false)
+  const [homeHref, setHomeHref] = useState('/welcome')
   const ref = useRef<HTMLDivElement>(null)
   const router = useRouter()
+
+  useEffect(() => {
+    const host = window.location.hostname
+    const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'talam4shop.com'
+    // ponytail: tenant admin subdomains can't reach /welcome relatively, only the root domain hosts it
+    if (host !== 'localhost' && host !== rootDomain) {
+      setHomeHref(`https://${rootDomain}/welcome`)
+    }
+  }, [])
 
   useEffect(() => {
     if (!open) return
@@ -53,7 +63,7 @@ export function ProfileMenu({ user, triggerClassName }: { user: User; triggerCla
       {open && (
         <div className="absolute right-0 top-full mt-2 z-50 w-[200px] rounded-xl border border-white/10 bg-bg-dark py-2 shadow-lg">
           <Link
-            href="/welcome"
+            href={homeHref}
             onClick={() => setOpen(false)}
             className="block px-4 py-2.5 font-body text-sm text-white/80 hover:bg-white/5 hover:text-white"
           >
