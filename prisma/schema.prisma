@@ -104,20 +104,21 @@ model Tenant {
 }
 
 model Product {
-  id           String   @id @default(uuid()) @db.Uuid
-  tenantId     String   @map("tenant_id") @db.Uuid
+  id           String        @id @default(uuid()) @db.Uuid
+  tenantId     String        @map("tenant_id") @db.Uuid
   name         String
   slug         String
   description  String?
-  price        Decimal  @db.Decimal(10, 2)
-  comparePrice Decimal? @map("compare_price") @db.Decimal(10, 2)
-  categoryId   String?  @map("category_id") @db.Uuid
+  price        Decimal       @db.Decimal(10, 2)
+  comparePrice Decimal?      @map("compare_price") @db.Decimal(10, 2)
+  categoryId   String?       @map("category_id") @db.Uuid
   sizes        String[]
   images       String[]
-  stockBySize  Json     @default("{}") @map("stock_by_size")
-  isActive     Boolean  @default(true) @map("is_active")
+  stockBySize  Json          @default("{}") @map("stock_by_size")
+  isActive     Boolean       @default(true) @map("is_active")
   status       PublishStatus @default(published)
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  deletedAt    DateTime?     @map("deleted_at") @db.Timestamptz
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz
 
   tenant               Tenant                  @relation(fields: [tenantId], references: [id])
   category             ProductCategory?        @relation(fields: [categoryId], references: [id])
@@ -257,19 +258,19 @@ model DiscountCode {
 }
 
 model StoreAbout {
-  id                String   @id @default(uuid()) @db.Uuid
-  tenantId          String   @unique @map("tenant_id") @db.Uuid
-  storyTitle        String?  @map("story_title")
+  id                String        @id @default(uuid()) @db.Uuid
+  tenantId          String        @unique @map("tenant_id") @db.Uuid
+  storyTitle        String?       @map("story_title")
   description       String?
-  ownerPhotoUrl     String?  @map("owner_photo_url")
-  instagramUrl      String?  @map("instagram_url")
-  facebookUrl       String?  @map("facebook_url")
-  youtubeUrl        String?  @map("youtube_url")
-  googleBusinessUrl String?  @map("google_business_url")
-  socialLinks       Json     @default("[]") @map("social_links")
+  ownerPhotoUrl     String?       @map("owner_photo_url")
+  instagramUrl      String?       @map("instagram_url")
+  facebookUrl       String?       @map("facebook_url")
+  youtubeUrl        String?       @map("youtube_url")
+  googleBusinessUrl String?       @map("google_business_url")
+  socialLinks       Json          @default("[]") @map("social_links")
   status            PublishStatus @default(published)
-  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime      @updatedAt @map("updated_at") @db.Timestamptz
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
 
