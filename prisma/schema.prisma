@@ -29,6 +29,11 @@ enum PaymentProvider {
   // phonepe — V2 only
 }
 
+enum PublishStatus {
+  draft
+  published
+}
+
 enum OrderStatus {
   pending
   confirmed
@@ -51,74 +56,76 @@ enum DiscountType {
 }
 
 model Tenant {
-  id                    String          @id @default(uuid()) @db.Uuid
-  ownerId               String          @unique @db.Uuid @map("owner_id")
-  onboardingStep        Int             @default(0) @map("onboarding_step")
-  isOnboarded           Boolean         @default(false) @map("is_onboarded")
-  slug                  String          @unique
-  name                  String
-  tagline               String?
-  tier                  Tier            @default(trial)
-  trialEndsAt           DateTime?       @map("trial_ends_at") @db.Timestamptz
-  brandColor            String?         @map("brand_color")
-  logoUrl               String?         @map("logo_url")
-  whatsappNumber        String?         @map("whatsapp_number")
-  contactPhone          String?         @map("contact_phone")
-  contactEmail          String?         @map("contact_email")
-  showWhatsappButton    Boolean         @default(true) @map("show_whatsapp_button")
-  notifyEmailOnOrder    Boolean         @default(true) @map("notify_email_on_order")
-  paymentProvider       PaymentProvider @default(upi_manual) @map("payment_provider")
-  paymentConfig         Json?           @map("payment_config")
-  storeType             String?         @map("store_type")
-  freeDeliveryAbove     Decimal?        @db.Decimal(10, 2) @map("free_delivery_above")
-  shippingFee           Decimal         @default(0) @db.Decimal(10, 2) @map("shipping_fee")
-  deliveryEstimateText  String?         @map("delivery_estimate_text")
-  returnWindowDays      Int?            @map("return_window_days")
-  trustBadgeText        String?         @map("trust_badge_text")
-  sizeGuideUrl          String?         @map("size_guide_url")
-  deletedAt             DateTime?       @map("deleted_at") @db.Timestamptz
-  createdAt             DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  id                   String          @id @default(uuid()) @db.Uuid
+  ownerId              String          @unique @map("owner_id") @db.Uuid
+  onboardingStep       Int             @default(0) @map("onboarding_step")
+  isOnboarded          Boolean         @default(false) @map("is_onboarded")
+  slug                 String          @unique
+  name                 String
+  tagline              String?
+  tier                 Tier            @default(trial)
+  trialEndsAt          DateTime?       @map("trial_ends_at") @db.Timestamptz
+  brandColor           String?         @map("brand_color")
+  logoUrl              String?         @map("logo_url")
+  whatsappNumber       String?         @map("whatsapp_number")
+  contactPhone         String?         @map("contact_phone")
+  contactEmail         String?         @map("contact_email")
+  showWhatsappButton   Boolean         @default(true) @map("show_whatsapp_button")
+  notifyEmailOnOrder   Boolean         @default(true) @map("notify_email_on_order")
+  paymentProvider      PaymentProvider @default(upi_manual) @map("payment_provider")
+  paymentConfig        Json?           @map("payment_config")
+  storeType            String?         @map("store_type")
+  freeDeliveryAbove    Decimal?        @map("free_delivery_above") @db.Decimal(10, 2)
+  shippingFee          Decimal         @default(0) @map("shipping_fee") @db.Decimal(10, 2)
+  deliveryEstimateText String?         @map("delivery_estimate_text")
+  returnWindowDays     Int?            @map("return_window_days")
+  trustBadgeText       String?         @map("trust_badge_text")
+  sizeGuideUrl         String?         @map("size_guide_url")
+  deletedAt            DateTime?       @map("deleted_at") @db.Timestamptz
+  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz
 
-  products              Product[]
-  customers             Customer[]
-  orders                Order[]
-  orderItems            OrderItem[]
-  wishlists             Wishlist[]
-  discountCodes         DiscountCode[]
-  categories            ProductCategory[]
-  about                 StoreAbout?
-  branches              StoreBranch[]
-  reviews               ProductReview[]
+  products      Product[]
+  customers     Customer[]
+  orders        Order[]
+  orderItems    OrderItem[]
+  wishlists     Wishlist[]
+  discountCodes DiscountCode[]
+  categories    ProductCategory[]
+  about         StoreAbout?
+  branches      StoreBranch[]
+  reviews       ProductReview[]
   banners       StoreBanner[]
   promotions    StorePromotion[]
   tags          ProductTag[]
   addresses     Address[]
+  publishLogs   PublishLog[]
 
   @@map("tenants")
 }
 
 model Product {
-  id           String    @id @default(uuid()) @db.Uuid
-  tenantId     String    @db.Uuid @map("tenant_id")
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
   name         String
   slug         String
   description  String?
-  price        Decimal   @db.Decimal(10, 2)
-  comparePrice Decimal?  @db.Decimal(10, 2) @map("compare_price")
-  categoryId   String?   @db.Uuid @map("category_id")
+  price        Decimal  @db.Decimal(10, 2)
+  comparePrice Decimal? @map("compare_price") @db.Decimal(10, 2)
+  categoryId   String?  @map("category_id") @db.Uuid
   sizes        String[]
   images       String[]
-  stockBySize  Json      @default("{}") @map("stock_by_size")
-  isActive     Boolean   @default(true) @map("is_active")
-  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  stockBySize  Json     @default("{}") @map("stock_by_size")
+  isActive     Boolean  @default(true) @map("is_active")
+  status       PublishStatus @default(published)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  tenant       Tenant          @relation(fields: [tenantId], references: [id])
-  category     ProductCategory? @relation(fields: [categoryId], references: [id])
-  orderItems   OrderItem[]
-  wishlists    Wishlist[]
-  reviews      ProductReview[]
-  banners        StoreBanner[]
-  tagAssignments ProductTagAssignment[]
+  tenant               Tenant                  @relation(fields: [tenantId], references: [id])
+  category             ProductCategory?        @relation(fields: [categoryId], references: [id])
+  orderItems           OrderItem[]
+  wishlists            Wishlist[]
+  reviews              ProductReview[]
+  banners              StoreBanner[]
+  tagAssignments       ProductTagAssignment[]
   promotionAssignments StorePromotionProduct[]
 
   @@unique([tenantId, slug])
@@ -126,15 +133,15 @@ model Product {
 }
 
 model ProductCategory {
-  id        String    @id @default(uuid()) @db.Uuid
-  tenantId  String    @db.Uuid @map("tenant_id")
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
   name      String
   slug      String
-  sortOrder Int       @default(0) @map("sort_order")
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  tenant    Tenant    @relation(fields: [tenantId], references: [id])
-  products  Product[]
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  products Product[]
 
   @@unique([tenantId, slug])
   @@map("product_categories")
@@ -142,13 +149,13 @@ model ProductCategory {
 
 model Customer {
   id        String   @id @db.Uuid
-  tenantId  String   @db.Uuid @map("tenant_id")
+  tenantId  String   @map("tenant_id") @db.Uuid
   name      String?
   phone     String?
   email     String?
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  tenant    Tenant          @relation(fields: [tenantId], references: [id])
   orders    Order[]
   wishlists Wishlist[]
   reviews   ProductReview[]
@@ -159,8 +166,8 @@ model Customer {
 
 model Address {
   id         String   @id @default(uuid()) @db.Uuid
-  tenantId   String   @db.Uuid @map("tenant_id")
-  customerId String   @db.Uuid @map("customer_id")
+  tenantId   String   @map("tenant_id") @db.Uuid
+  customerId String   @map("customer_id") @db.Uuid
   label      String
   name       String
   line1      String
@@ -172,16 +179,16 @@ model Address {
   isDefault  Boolean  @default(false) @map("is_default")
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  tenant     Tenant   @relation(fields: [tenantId], references: [id])
-  customer   Customer @relation(fields: [customerId], references: [id])
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id])
 
   @@map("addresses")
 }
 
 model Order {
   id              String        @id @default(uuid()) @db.Uuid
-  tenantId        String        @db.Uuid @map("tenant_id")
-  customerId      String        @db.Uuid @map("customer_id")
+  tenantId        String        @map("tenant_id") @db.Uuid
+  customerId      String        @map("customer_id") @db.Uuid
   status          OrderStatus   @default(pending)
   total           Decimal       @db.Decimal(10, 2)
   paymentProvider String?       @map("payment_provider")
@@ -191,39 +198,39 @@ model Order {
   trackingId      String?       @map("tracking_id")
   createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz
 
-  tenant          Tenant        @relation(fields: [tenantId], references: [id])
-  customer        Customer      @relation(fields: [customerId], references: [id])
-  items           OrderItem[]
+  tenant   Tenant      @relation(fields: [tenantId], references: [id])
+  customer Customer    @relation(fields: [customerId], references: [id])
+  items    OrderItem[]
 
   @@map("orders")
 }
 
 model OrderItem {
-  id          String   @id @default(uuid()) @db.Uuid
-  orderId     String   @db.Uuid @map("order_id")
-  tenantId    String   @db.Uuid @map("tenant_id")
-  productId   String   @db.Uuid @map("product_id")
-  productName String   @map("product_name")
+  id          String  @id @default(uuid()) @db.Uuid
+  orderId     String  @map("order_id") @db.Uuid
+  tenantId    String  @map("tenant_id") @db.Uuid
+  productId   String  @map("product_id") @db.Uuid
+  productName String  @map("product_name")
   size        String?
   quantity    Int
-  unitPrice   Decimal  @db.Decimal(10, 2) @map("unit_price")
+  unitPrice   Decimal @map("unit_price") @db.Decimal(10, 2)
 
-  order       Order    @relation(fields: [orderId], references: [id])
-  tenant      Tenant   @relation(fields: [tenantId], references: [id])
-  product     Product  @relation(fields: [productId], references: [id])
+  order   Order   @relation(fields: [orderId], references: [id])
+  tenant  Tenant  @relation(fields: [tenantId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
 
   @@map("order_items")
 }
 
 model Wishlist {
-  id         String   @id @default(uuid()) @db.Uuid
-  tenantId   String   @db.Uuid @map("tenant_id")
-  customerId String   @db.Uuid @map("customer_id")
-  productId  String   @db.Uuid @map("product_id")
+  id         String @id @default(uuid()) @db.Uuid
+  tenantId   String @map("tenant_id") @db.Uuid
+  customerId String @map("customer_id") @db.Uuid
+  productId  String @map("product_id") @db.Uuid
 
-  tenant     Tenant   @relation(fields: [tenantId], references: [id])
-  customer   Customer @relation(fields: [customerId], references: [id])
-  product    Product  @relation(fields: [productId], references: [id])
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id])
+  product  Product  @relation(fields: [productId], references: [id])
 
   @@unique([tenantId, customerId, productId])
   @@map("wishlists")
@@ -231,43 +238,45 @@ model Wishlist {
 
 model DiscountCode {
   id        String       @id @default(uuid()) @db.Uuid
-  tenantId  String       @db.Uuid @map("tenant_id")
+  tenantId  String       @map("tenant_id") @db.Uuid
   code      String
   type      DiscountType
   value     Decimal      @db.Decimal(10, 2)
-  minOrder  Decimal?     @db.Decimal(10, 2) @map("min_order")
+  minOrder  Decimal?     @map("min_order") @db.Decimal(10, 2)
   usesLimit Int?         @map("uses_limit")
   usesCount Int          @default(0) @map("uses_count")
   expiresAt DateTime?    @map("expires_at") @db.Timestamptz
   isActive  Boolean      @default(true) @map("is_active")
 
-  tenant    Tenant       @relation(fields: [tenantId], references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id])
 
   @@unique([tenantId, code])
   @@map("discount_codes")
 }
 
 model StoreAbout {
-  id               String   @id @default(uuid()) @db.Uuid
-  tenantId         String   @unique @db.Uuid @map("tenant_id")
-  storyTitle       String?  @map("story_title")
-  description      String?
-  ownerPhotoUrl    String?  @map("owner_photo_url")
-  instagramUrl     String?  @map("instagram_url")
-  facebookUrl      String?  @map("facebook_url")
-  youtubeUrl       String?  @map("youtube_url")
-  googleBusinessUrl String? @map("google_business_url")
-  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  id                String   @id @default(uuid()) @db.Uuid
+  tenantId          String   @unique @map("tenant_id") @db.Uuid
+  storyTitle        String?  @map("story_title")
+  description       String?
+  ownerPhotoUrl     String?  @map("owner_photo_url")
+  instagramUrl      String?  @map("instagram_url")
+  facebookUrl       String?  @map("facebook_url")
+  youtubeUrl        String?  @map("youtube_url")
+  googleBusinessUrl String?  @map("google_business_url")
+  socialLinks       Json     @default("[]") @map("social_links")
+  status            PublishStatus @default(published)
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  tenant           Tenant   @relation(fields: [tenantId], references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id])
 
   @@map("store_about")
 }
 
 model StoreBranch {
   id        String   @id @default(uuid()) @db.Uuid
-  tenantId  String   @db.Uuid @map("tenant_id")
+  tenantId  String   @map("tenant_id") @db.Uuid
   name      String
   address   String?
   city      String?
@@ -277,40 +286,40 @@ model StoreBranch {
   sortOrder Int      @default(0) @map("sort_order")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id])
 
   @@map("store_branches")
 }
 
 model ProductReview {
-  id                 String    @id @default(uuid()) @db.Uuid
-  tenantId           String    @db.Uuid @map("tenant_id")
-  productId          String    @db.Uuid @map("product_id")
-  customerId         String    @db.Uuid @map("customer_id")
+  id                 String   @id @default(uuid()) @db.Uuid
+  tenantId           String   @map("tenant_id") @db.Uuid
+  productId          String   @map("product_id") @db.Uuid
+  customerId         String   @map("customer_id") @db.Uuid
   rating             Int
   comment            String?
-  isVerifiedPurchase Boolean   @default(false) @map("is_verified_purchase")
-  isDeleted          Boolean   @default(false) @map("is_deleted")
-  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  isVerifiedPurchase Boolean  @default(false) @map("is_verified_purchase")
+  isDeleted          Boolean  @default(false) @map("is_deleted")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  tenant             Tenant    @relation(fields: [tenantId], references: [id])
-  product            Product   @relation(fields: [productId], references: [id])
-  customer           Customer  @relation(fields: [customerId], references: [id])
-  reports            ReviewReport[]
+  tenant   Tenant         @relation(fields: [tenantId], references: [id])
+  product  Product        @relation(fields: [productId], references: [id])
+  customer Customer       @relation(fields: [customerId], references: [id])
+  reports  ReviewReport[]
 
   @@unique([tenantId, productId, customerId])
   @@map("product_reviews")
 }
 
 model ReviewReport {
-  id         String        @id @default(uuid()) @db.Uuid
-  tenantId   String        @db.Uuid @map("tenant_id")
-  reviewId   String        @db.Uuid @map("review_id")
-  reporterId String        @db.Uuid @map("reporter_id")
-  reason     String        // 'spam' | 'inappropriate' | 'fake' | 'other'
-  createdAt  DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  reviewId   String   @map("review_id") @db.Uuid
+  reporterId String   @map("reporter_id") @db.Uuid
+  reason     String // 'spam' | 'inappropriate' | 'fake' | 'other'
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  review     ProductReview @relation(fields: [reviewId], references: [id])
+  review ProductReview @relation(fields: [reviewId], references: [id])
 
   @@unique([tenantId, reviewId, reporterId])
   @@map("review_reports")
@@ -318,23 +327,23 @@ model ReviewReport {
 
 model StoreBanner {
   id        String   @id @default(uuid()) @db.Uuid
-  tenantId  String   @db.Uuid @map("tenant_id")
-  productId String?  @db.Uuid @map("product_id")
+  tenantId  String   @map("tenant_id") @db.Uuid
+  productId String?  @map("product_id") @db.Uuid
   headline  String?
   subtitle  String?
   sortOrder Int      @default(0) @map("sort_order")
   isActive  Boolean  @default(true) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
-  product   Product? @relation(fields: [productId], references: [id])
+  tenant  Tenant   @relation(fields: [tenantId], references: [id])
+  product Product? @relation(fields: [productId], references: [id])
 
   @@map("store_banners")
 }
 
 model StorePromotion {
   id        String    @id @default(uuid()) @db.Uuid
-  tenantId  String    @db.Uuid @map("tenant_id")
+  tenantId  String    @map("tenant_id") @db.Uuid
   offerText String    @map("offer_text")
   subtitle  String?
   linkUrl   String?   @map("link_url")
@@ -343,52 +352,72 @@ model StorePromotion {
   sortOrder Int       @default(0) @map("sort_order")
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
 
-  tenant    Tenant                    @relation(fields: [tenantId], references: [id])
-  products  StorePromotionProduct[]
+  tenant   Tenant                  @relation(fields: [tenantId], references: [id])
+  products StorePromotionProduct[]
 
   @@map("store_promotions")
 }
 
 model StorePromotionProduct {
-  id           String         @id @default(uuid()) @db.Uuid
-  tenantId     String         @db.Uuid @map("tenant_id")
-  promotionId  String         @db.Uuid @map("promotion_id")
-  productId    String         @db.Uuid @map("product_id")
+  id          String @id @default(uuid()) @db.Uuid
+  tenantId    String @map("tenant_id") @db.Uuid
+  promotionId String @map("promotion_id") @db.Uuid
+  productId   String @map("product_id") @db.Uuid
 
-  promotion    StorePromotion @relation(fields: [promotionId], references: [id])
-  product      Product        @relation(fields: [productId], references: [id])
+  promotion StorePromotion @relation(fields: [promotionId], references: [id])
+  product   Product        @relation(fields: [productId], references: [id])
 
   @@unique([tenantId, promotionId, productId])
   @@map("store_promotion_products")
 }
 
+enum OccasionLayout {
+  grid
+  carousel
+}
+
 model ProductTag {
-  id        String   @id @default(uuid()) @db.Uuid
-  tenantId  String   @db.Uuid @map("tenant_id")
+  id        String         @id @default(uuid()) @db.Uuid
+  tenantId  String         @map("tenant_id") @db.Uuid
   name      String
   slug      String
   emoji     String?
-  isDefault Boolean  @default(false) @map("is_default") // platform-seeded occasion (e.g. Diwali, Pongal) — not owner-deletable
-  themeKey  String?  @map("theme_key") // key into the code-level OCCASION_THEMES registry; null = generic fallback banner
-  sortOrder Int      @default(0) @map("sort_order")
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  isDefault Boolean        @default(false) @map("is_default") // platform-seeded occasion (e.g. Diwali, Pongal) — not owner-deletable
+  themeKey  String?        @map("theme_key") // key into the code-level OCCASION_THEMES registry; null = generic fallback banner
+  layout    OccasionLayout @default(grid) // how the storefront occasion page displays its products
+  sortOrder Int            @default(0) @map("sort_order")
+  status    PublishStatus  @default(published)
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz
 
-  tenant    Tenant              @relation(fields: [tenantId], references: [id])
-  products  ProductTagAssignment[]
+  tenant   Tenant                 @relation(fields: [tenantId], references: [id])
+  products ProductTagAssignment[]
 
   @@unique([tenantId, slug])
   @@map("product_tags")
 }
 
 model ProductTagAssignment {
-  id        String     @id @default(uuid()) @db.Uuid
-  tenantId  String     @db.Uuid @map("tenant_id")
-  productId String     @db.Uuid @map("product_id")
-  tagId     String     @db.Uuid @map("tag_id")
+  id        String @id @default(uuid()) @db.Uuid
+  tenantId  String @map("tenant_id") @db.Uuid
+  productId String @map("product_id") @db.Uuid
+  tagId     String @map("tag_id") @db.Uuid
+  sortOrder Int    @default(0) @map("sort_order") // manual product order within the occasion — drives carousel + grid order
 
-  product   Product    @relation(fields: [productId], references: [id])
-  tag       ProductTag @relation(fields: [tagId], references: [id])
+  product Product    @relation(fields: [productId], references: [id])
+  tag     ProductTag @relation(fields: [tagId], references: [id])
 
   @@unique([tenantId, productId, tagId])
   @@map("product_tag_assignments")
+}
+
+model PublishLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  publishedAt DateTime @default(now()) @map("published_at") @db.Timestamptz
+  itemCount   Int      @map("item_count")
+  summary     String
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@map("publish_logs")
 }
