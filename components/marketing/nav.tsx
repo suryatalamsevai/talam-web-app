@@ -7,6 +7,7 @@ import { Logo } from '@/components/logo'
 import { cn } from '@/lib/utils'
 import { createBrowserClient } from '@/lib/supabase/client'
 import { useOwnerCta } from './use-owner-cta'
+import { ProfileMenu } from './profile-menu'
 
 export function MarketingNav() {
   const [scrolled, setScrolled] = useState(false)
@@ -50,7 +51,7 @@ export function MarketingNav() {
           FAQ
         </a>
         {user ? (
-          <Avatar user={user} />
+          <ProfileMenu user={user} />
         ) : user === null ? (
           <>
             <Link
@@ -77,37 +78,11 @@ export function MarketingNav() {
         </Link>
       )}
       {user && (
-        <Link
-          href="/welcome"
-          className="md:hidden flex items-center justify-center w-9 h-9 rounded-full overflow-hidden bg-white/10 text-white text-sm font-semibold"
-        >
-          <AvatarContent user={user} />
-        </Link>
+        <ProfileMenu
+          user={user}
+          triggerClassName="md:hidden flex items-center justify-center w-9 h-9 rounded-full overflow-hidden bg-white/10 text-white text-sm font-semibold"
+        />
       )}
     </nav>
-  )
-}
-
-function Avatar({ user }: { user: User }) {
-  return (
-    <Link
-      href="/welcome"
-      className="flex items-center justify-center w-9 h-9 rounded-full overflow-hidden bg-white/10 text-white text-sm font-semibold hover:opacity-80 transition-opacity"
-    >
-      <AvatarContent user={user} />
-    </Link>
-  )
-}
-
-function AvatarContent({ user }: { user: User }) {
-  const name = user.user_metadata.full_name ?? user.email ?? ''
-  const avatarUrl = user.user_metadata.avatar_url as string | undefined
-  const initial = name.charAt(0).toUpperCase() || '?'
-
-  return avatarUrl ? (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
-  ) : (
-    <>{initial}</>
   )
 }
