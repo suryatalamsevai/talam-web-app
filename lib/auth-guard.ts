@@ -1,8 +1,12 @@
+import { cache } from 'react'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createServerClient } from '@/lib/supabase/server'
 
-export async function requireAuth(nextPath?: string) {
+// cache(): dedupe repeated calls within one request — layouts, pages, and server
+// actions on the same route each call this, and without memoization every call
+// re-hits Supabase Auth over the network.
+export const requireAuth = cache(async function requireAuth(nextPath?: string) {
   const supabase = await createServerClient()
   const {
     data: { user },
@@ -19,9 +23,9 @@ export async function requireAuth(nextPath?: string) {
   }
 
   return user
-}
+})
 
-export async function requireTenant() {
+export const requireTenant = cache(async function requireTenant() {
   const headersList = await headers()
   const tenantId = headersList.get('x-tenant-id')
   const subdomain = headersList.get('x-subdomain') ?? ''
@@ -30,4 +34,4 @@ export async function requireTenant() {
   if (!tenantId) redirect('/not-found')
 
   return { tenantId, subdomain, tier }
-}
+})
