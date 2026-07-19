@@ -8,6 +8,7 @@ import type { AdminProduct, CategoryMeta, ProductInput } from '@/lib/data/produc
 import {
   createProductAction,
   updateProductAction,
+  updateProductOccasionsAction,
   setProductActiveAction,
   bulkAssignToOccasionAction,
   bulkSetCategoryAction,
@@ -209,13 +210,14 @@ function MobileFilterSheet({
 /* ── Product editor modal (Add / Edit) ── */
 
 function ProductEditor({
-  open, onClose, editProduct, categories,
+  open, onClose, editProduct, categories, occasions,
 }: {
-  open: boolean; onClose: () => void; editProduct: AdminProduct | null; categories: CategoryMeta[]
+  open: boolean; onClose: () => void; editProduct: AdminProduct | null; categories: CategoryMeta[]; occasions: OccasionOption[]
 }) {
   const router = useRouter()
   const [selectedSizes, setSelectedSizes] = useState<string[]>([])
   const [images, setImages] = useState<string[]>([])
+  const [selectedOccasions, setSelectedOccasions] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -223,6 +225,7 @@ function ProductEditor({
     if (open) {
       setSelectedSizes(editProduct?.sizes ?? [])
       setImages(editProduct?.images ?? [])
+      setSelectedOccasions(editProduct?.occasionIds ?? [])
       setError(null)
     }
   }, [open, editProduct])
@@ -262,8 +265,9 @@ function ProductEditor({
     setSaving(true)
     setError(null)
     try {
+      const productId = isEdit ? editProduct.id : await createProductAction(input)
       if (isEdit) await updateProductAction(editProduct.id, input)
-      else await createProductAction(input)
+      await updateProductOccasionsAction(productId, selectedOccasions)
       router.refresh()
       onClose()
     } catch {
@@ -363,6 +367,24 @@ function ProductEditor({
                     {size}
                   </label>
                 ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <span className="text-sm font-bold text-fg">Occasions</span>
+              <div className="flex flex-wrap gap-2">
+                {occasions.map((o) => (
+                  <label key={o.id} className="flex cursor-pointer items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm text-fg has-[:checked]:border-brand-primary has-[:checked]:bg-brand-primary/10">
+                    <input
+                      type="checkbox"
+                      checked={selectedOccasions.includes(o.id)}
+                      onChange={() => setSelectedOccasions((prev) => prev.includes(o.id) ? prev.filter((id) => id !== o.id) : [...prev, o.id])}
+                      className="size-4 rounded border-border accent-brand-primary"
+                    />
+                    {o.emoji || '🎉'} {o.name}
+                  </label>
+                ))}
+                {occasions.length === 0 && <p className="text-sm text-muted-warm">No occasions yet — create one under Occasions.</p>}
               </div>
             </div>
           </form>
@@ -685,7 +707,7 @@ export function AdminProductsClient({ products, categories, occasions }: { produ
         onApply={() => setMobileFilterOpen(false)}
       />
 
-      <ProductEditor open={editorOpen} onClose={() => setEditorOpen(false)} editProduct={editProduct} categories={categories} />
+      <ProductEditor open={editorOpen} onClose={() => setEditorOpen(false)} editProduct={editProduct} categories={categories} occasions={occasions} />
     </div>
   )
 }
