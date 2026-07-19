@@ -72,7 +72,6 @@ export async function publishChangesAction(input?: { force?: boolean }): Promise
   revalidatePath('/admin/products')
   revalidatePath('/admin/settings')
   revalidatePath('/store')
-  revalidatePath('/welcome')
 
   return {}
 }

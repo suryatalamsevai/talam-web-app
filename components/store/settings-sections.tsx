@@ -91,7 +91,7 @@ function AddPaymentDialog({ open, onClose, onAdd }: { open: boolean; onClose: ()
   }
 
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog open={open} onClose={onClose} position="center">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-5">
         <div className="flex items-center justify-between">
           <h3 className="font-body text-base font-bold text-fg">Add Payment Method</h3>
@@ -104,7 +104,7 @@ function AddPaymentDialog({ open, onClose, onAdd }: { open: boolean; onClose: ()
             value={upiId}
             onChange={(e) => setUpiId(e.target.value)}
             placeholder="yourname@bank"
-            className="rounded-lg border border-border bg-bg px-3 py-[11px] font-body text-md text-fg outline-none focus:border-store-primary"
+            className="rounded-lg border border-border bg-bg px-3 py-[11px] font-body text-base text-fg outline-none focus:border-store-primary"
           />
           {error && <span className="font-body text-xs text-danger">{error}</span>}
         </label>

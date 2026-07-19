@@ -1,4 +1,4 @@
-import { MapPin, CreditCard, Bell, User, ChevronRight, Pencil } from 'lucide-react'
+import { MapPin, CreditCard, Bell, User, ChevronRight, Pencil, ArrowLeft } from 'lucide-react'
 import { StoreLink } from '@/components/store/store-context'
 import { requireAuth, requireTenant } from '@/lib/auth-guard'
 import { getCustomerAccountSummary } from '@/lib/data/customer-account'
@@ -35,6 +35,10 @@ export default async function AccountPage() {
       {/* ── Mobile hub ── */}
       <div className="lg:hidden min-h-screen bg-bg">
         <div className="px-5 pt-4 pb-3">
+          <StoreLink href="/" className="mb-2 flex w-fit items-center gap-1 font-body text-sm text-muted-warm hover:text-fg">
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back to shopping
+          </StoreLink>
           <h1 className="font-heading text-2xl font-bold text-fg">Settings</h1>
         </div>
 
@@ -117,6 +121,10 @@ export default async function AccountPage() {
       <div className="hidden lg:block min-h-screen bg-bg py-10 px-12">
         <div className="mx-auto max-w-[1100px] flex gap-8">
           <div className="w-[280px] shrink-0">
+            <StoreLink href="/" className="mb-4 flex w-fit items-center gap-1.5 font-body text-sm text-muted-warm hover:text-fg">
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Back to shopping
+            </StoreLink>
             <div className="rounded-xl border border-border bg-surface p-6 mb-6">
               <div className="flex flex-col items-center">
                 <div className="flex size-16 items-center justify-center rounded-full bg-store-primary/15 text-2xl font-bold text-store-primary font-body mb-3">

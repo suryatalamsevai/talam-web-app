@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import type { User } from '@supabase/supabase-js'
 import { createBrowserClient } from '@/lib/supabase/client'
 
@@ -11,18 +10,8 @@ const DEFAULT_TRIGGER_CLASS =
 
 export function ProfileMenu({ user, triggerClassName }: { user: User; triggerClassName?: string }) {
   const [open, setOpen] = useState(false)
-  const [homeHref, setHomeHref] = useState('/welcome')
   const ref = useRef<HTMLDivElement>(null)
   const router = useRouter()
-
-  useEffect(() => {
-    const host = window.location.hostname
-    const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'talam4shop.com'
-    // ponytail: tenant admin subdomains can't reach /welcome relatively, only the root domain hosts it
-    if (host !== 'localhost' && host !== rootDomain) {
-      setHomeHref(`https://${rootDomain}/welcome`)
-    }
-  }, [])
 
   useEffect(() => {
     if (!open) return
@@ -37,6 +26,17 @@ export function ProfileMenu({ user, triggerClassName }: { user: User; triggerCla
     const supabase = createBrowserClient()
     await supabase.auth.signOut()
     setOpen(false)
+
+    const host = window.location.hostname
+    const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'talam4shop.com'
+    // ponytail: on a tenant subdomain, '/' is that tenant's storefront, not the
+    // marketing site — the marketing home only lives on the root domain, so a
+    // subdomain sign-out needs a full cross-origin redirect, not a client-side push.
+    if (host !== 'localhost' && host !== rootDomain) {
+      window.location.href = `https://${rootDomain}`
+      return
+    }
+
     router.push('/')
     router.refresh()
   }
@@ -62,13 +62,6 @@ export function ProfileMenu({ user, triggerClassName }: { user: User; triggerCla
 
       {open && (
         <div className="absolute right-0 top-full mt-2 z-50 w-[200px] rounded-xl border border-white/10 bg-bg-dark py-2 shadow-lg">
-          <Link
-            href={homeHref}
-            onClick={() => setOpen(false)}
-            className="block px-4 py-2.5 font-body text-sm text-white/80 hover:bg-white/5 hover:text-white"
-          >
-            Go to Home Page
-          </Link>
           <button
             type="button"
             onClick={handleSignOut}

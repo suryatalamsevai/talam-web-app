@@ -214,29 +214,29 @@ export function OccasionsClient({ initialOccasions }: { initialOccasions: Occasi
 
       {error && <p className="mb-3 rounded-lg bg-danger/5 px-3 py-2 text-sm text-danger">{error}</p>}
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {occasions.map((o) => {
           const theme = o.themeKey ? OCCASION_THEMES[o.themeKey] : undefined
           const live = o.status === 'published'
           return (
             <div key={o.id} className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
-              <div className="flex h-16 items-center justify-center text-3xl" style={{ backgroundImage: theme?.gradient ?? 'linear-gradient(135deg, #6d4c41, #3e2723)' }}>
+              <div className="flex h-12 items-center justify-center text-2xl" style={{ backgroundImage: theme?.gradient ?? 'linear-gradient(135deg, #6d4c41, #3e2723)' }}>
                 {o.emoji || '🎉'}
               </div>
-              <div className="flex flex-col gap-2 p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="truncate text-md font-semibold text-fg">{o.name}</p>
+              <div className="flex flex-col gap-1.5 p-2">
+                <div className="flex items-center justify-between gap-1.5">
+                  <p className="truncate text-sm font-semibold text-fg">{o.name}</p>
                   <Toggle checked={live} onChange={() => toggleStatus(o)} />
                 </div>
-                <p className="text-xs text-muted-warm capitalize">
-                  {o._count.products} product{o._count.products === 1 ? '' : 's'} · {o.layout} · {live ? 'Live' : 'Off'}
-                  {o.isDefault && <span className="ml-1.5 rounded-full bg-brand-primary/10 px-2 py-0.5 text-2xs font-semibold text-brand-primary">Default</span>}
+                <p className="truncate text-2xs text-muted-warm capitalize">
+                  {o._count.products} product{o._count.products === 1 ? '' : 's'} · {live ? 'Live' : 'Off'}
+                  {o.isDefault && <span className="ml-1.5 rounded-full bg-brand-primary/10 px-1.5 py-0.5 text-2xs font-semibold text-brand-primary">Default</span>}
                 </p>
-                <div className="flex gap-2">
-                  <button type="button" onClick={() => openEdit(o)} className="flex-1 cursor-pointer rounded-lg border border-border py-1.5 text-xs font-semibold text-fg hover:bg-bg">Configure</button>
+                <div className="flex gap-1.5">
+                  <button type="button" onClick={() => openEdit(o)} className="flex-1 cursor-pointer rounded-lg border border-border py-1.5 text-2xs font-semibold text-fg hover:bg-bg">Configure</button>
                   {!o.isDefault && (
-                    <button type="button" onClick={() => handleDelete(o)} className="cursor-pointer rounded-lg border border-border px-2.5 text-muted-warm hover:border-danger hover:text-danger">
-                      <X className="size-4" />
+                    <button type="button" onClick={() => handleDelete(o)} className="cursor-pointer rounded-lg border border-border px-2 text-muted-warm hover:border-danger hover:text-danger">
+                      <X className="size-3.5" />
                     </button>
                   )}
                 </div>

@@ -171,7 +171,7 @@ function Field({
         value={value}
         required={required}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 font-body text-sm text-fg outline-none focus:border-store-primary focus:ring-1 focus:ring-store-primary"
+        className="w-full rounded-lg border border-border bg-bg px-3.5 py-2.5 font-body text-base text-fg outline-none focus:border-store-primary focus:ring-1 focus:ring-store-primary"
       />
     </div>
   )

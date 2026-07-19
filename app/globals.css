@@ -225,6 +225,16 @@
     transform: scale(0.96);
     transition: transform 80ms ease-out;
   }
+
+  /* iOS Safari auto-zooms the viewport on focusing any input/select/textarea with a
+     computed font-size under 16px — including when it scrolls to a field for native
+     `required` validation. Floor all form-field text at 16px on mobile so focusing
+     (including validation focus) never triggers zoom; desktop is unaffected. */
+  @media (max-width: 767px) {
+    input, select, textarea {
+      font-size: 16px !important;
+    }
+  }
 }
 
 @layer utilities {

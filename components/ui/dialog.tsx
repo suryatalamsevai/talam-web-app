@@ -8,11 +8,14 @@ export function Dialog({
   onClose,
   children,
   className = '',
+  position = 'bottom',
 }: {
   open: boolean
   onClose: () => void
   children: React.ReactNode
   className?: string
+  /** 'bottom' (default) slides up from the bottom on mobile; 'center' stays centered on all screens. */
+  position?: 'bottom' | 'center'
 }) {
   const [visible, setVisible] = useState(false)
 
@@ -23,16 +26,24 @@ export function Dialog({
 
   if (!open) return null
 
+  const centered = position === 'center'
+
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-end bg-black/50 transition-opacity duration-200 md:items-center md:justify-center ${visible ? 'opacity-100' : 'opacity-0'}`}
+      className={`fixed inset-0 z-50 flex ${centered ? 'items-center justify-center p-4' : 'items-end md:items-center md:justify-center'} bg-black/50 transition-opacity duration-200 ${visible ? 'opacity-100' : 'opacity-0'}`}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
     >
       <div
-        className={`flex w-full flex-col rounded-t-2xl bg-surface transition-transform duration-250 ease-out md:max-w-[480px] md:rounded-2xl ${
-          visible ? 'translate-y-0 md:scale-100' : 'translate-y-full md:translate-y-0 md:scale-95'
+        className={`flex w-full flex-col bg-surface transition-transform duration-250 ease-out md:max-w-[480px] ${
+          centered ? 'rounded-2xl' : 'rounded-t-2xl md:rounded-2xl'
+        } ${
+          visible
+            ? 'translate-y-0 md:scale-100'
+            : centered
+              ? 'scale-95'
+              : 'translate-y-full md:translate-y-0 md:scale-95'
         } ${className}`}
       >
         {children}

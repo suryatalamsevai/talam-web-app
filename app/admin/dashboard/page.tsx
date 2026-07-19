@@ -1,9 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { ChevronRight, Clock, Package, AlertTriangle, ExternalLink, TrendingUp, TrendingDown } from 'lucide-react'
+import { useState } from 'react'
+import { ChevronRight, Clock, Package, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
-import { getLiveStoreUrl } from './actions'
 
 type MockStat = { label: string; value: string; change: string; up: boolean }
 const MOCK_STATS: MockStat[] = [
@@ -36,46 +35,71 @@ const MOCK_PRODUCTS: MockProduct[] = [
 
 const TABS = ['Today', 'Yesterday', 'This Week', 'This Month']
 
-type RevenuePoint = { day: string; revenue: number }
-const REVENUE_TREND: RevenuePoint[] = [
-  { day: 'Mon', revenue: 4000 },
-  { day: 'Tue', revenue: 9000 },
-  { day: 'Wed', revenue: 17000 },
-  { day: 'Thu', revenue: 19000 },
-  { day: 'Fri', revenue: 22400 },
-  { day: 'Sat', revenue: 23000 },
-  { day: 'Sun', revenue: 27000 },
+type TrendPoint = { day: string; value: number }
+
+type ChartMetric = { key: 'revenue' | 'orders' | 'customers'; label: string; data: TrendPoint[]; format: (v: number) => string }
+
+const CHART_METRICS: ChartMetric[] = [
+  {
+    key: 'revenue',
+    label: 'Revenue',
+    format: (v) => `₹${v.toLocaleString('en-IN')}`,
+    data: [
+      { day: 'Mon', value: 4000 },
+      { day: 'Tue', value: 9000 },
+      { day: 'Wed', value: 17000 },
+      { day: 'Thu', value: 19000 },
+      { day: 'Fri', value: 22400 },
+      { day: 'Sat', value: 23000 },
+      { day: 'Sun', value: 27000 },
+    ],
+  },
+  {
+    key: 'orders',
+    label: 'Orders',
+    format: (v) => `${v}`,
+    data: [
+      { day: 'Mon', value: 5 },
+      { day: 'Tue', value: 9 },
+      { day: 'Wed', value: 14 },
+      { day: 'Thu', value: 12 },
+      { day: 'Fri', value: 18 },
+      { day: 'Sat', value: 22 },
+      { day: 'Sun', value: 38 },
+    ],
+  },
+  {
+    key: 'customers',
+    label: 'Customers',
+    format: (v) => `${v}`,
+    data: [
+      { day: 'Mon', value: 12 },
+      { day: 'Tue', value: 20 },
+      { day: 'Wed', value: 35 },
+      { day: 'Thu', value: 48 },
+      { day: 'Fri', value: 70 },
+      { day: 'Sat', value: 96 },
+      { day: 'Sun', value: 142 },
+    ],
+  },
 ]
 
 const TODAY = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })
 
 export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState('This Week')
-  const [liveStoreUrl, setLiveStoreUrl] = useState<string | null>(null)
-
-  useEffect(() => {
-    getLiveStoreUrl().then(setLiveStoreUrl)
-  }, [])
+  const [activeMetric, setActiveMetric] = useState<ChartMetric['key']>('revenue')
+  const metric = CHART_METRICS.find((m) => m.key === activeMetric)!
 
   return (
     <div className="px-4 pb-24 md:px-0 md:pb-0">
 
       {/* ── Header ── */}
-      <div className="flex items-end justify-between pb-5 pt-1 md:pt-0">
-        <div>
-          <p className="text-2xs font-medium uppercase tracking-[0.08em] text-muted-warm">{TODAY}</p>
-          <h1 className="font-marketing mt-0.5 text-[24px] font-semibold leading-tight text-fg md:text-[28px]">
-            Overview
-          </h1>
-        </div>
-        <a
-          href={liveStoreUrl ?? '#'}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1 text-xs font-medium text-muted-warm hover:text-brand-primary"
-        >
-          Live store <ExternalLink className="size-3" />
-        </a>
+      <div className="pb-5 pt-1 md:pt-0">
+        <p className="text-2xs font-medium uppercase tracking-[0.08em] text-muted-warm">{TODAY}</p>
+        <h1 className="font-marketing mt-0.5 text-[24px] font-semibold leading-tight text-fg md:text-[28px]">
+          Overview
+        </h1>
       </div>
 
       {/* ── Time pills ── */}
@@ -119,10 +143,25 @@ export default function AdminDashboardPage() {
 
           {/* Chart */}
           <section className="mb-6 rounded-lg bg-surface p-4">
-            <p className="mb-3 text-2xs font-medium uppercase tracking-[0.06em] text-muted-warm">Revenue Trend</p>
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <p className="text-2xs font-medium uppercase tracking-[0.06em] text-muted-warm">{metric.label} Trend</p>
+              <div className="flex shrink-0 gap-1 overflow-x-auto rounded-full bg-bg p-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {CHART_METRICS.map((m) => (
+                  <button
+                    key={m.key}
+                    onClick={() => setActiveMetric(m.key)}
+                    className={`shrink-0 cursor-pointer rounded-full px-2.5 py-1 text-2xs font-semibold transition-colors ${
+                      m.key === activeMetric ? 'bg-fg text-surface' : 'text-muted-warm hover:text-fg'
+                    }`}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="h-[160px] w-full md:h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={REVENUE_TREND} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
+                <AreaChart data={metric.data} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#C1502E" stopOpacity="0.10" />
@@ -132,10 +171,10 @@ export default function AdminDashboardPage() {
                   <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#8B7D7A' }} />
                   <YAxis hide />
                   <Tooltip
-                    formatter={(value) => [`₹${Number(value).toLocaleString('en-IN')}`, 'Revenue']}
+                    formatter={(value) => [metric.format(Number(value)), metric.label]}
                     contentStyle={{ borderRadius: 8, borderColor: '#E8E8E8', fontSize: 12 }}
                   />
-                  <Area type="monotone" dataKey="revenue" stroke="#C1502E" strokeWidth={2} fill="url(#chartGrad)" dot={false} activeDot={{ r: 4, fill: '#C1502E', stroke: 'white', strokeWidth: 2 }} />
+                  <Area type="monotone" dataKey="value" stroke="#C1502E" strokeWidth={2} fill="url(#chartGrad)" dot={false} activeDot={{ r: 4, fill: '#C1502E', stroke: 'white', strokeWidth: 2 }} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>

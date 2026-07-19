@@ -22,6 +22,10 @@ export async function withTenant<T>(
   tenantId: string,
   fn: (client: PrismaClient) => Promise<T>
 ): Promise<T> {
-  await prisma.$executeRaw`SELECT set_config('app.tenant_id', ${tenantId}, true)`
-  return fn(prisma)
+  // ponytail: set_config(..., true) is transaction-local — must run on the same
+  // pooled connection as the query it scopes, or RLS silently hides every row
+  return prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT set_config('app.tenant_id', ${tenantId}, true)`
+    return fn(tx as PrismaClient)
+  })
 }

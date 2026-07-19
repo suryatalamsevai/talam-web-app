@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
+import { resolveSignedInDestination } from '@/app/auth/page'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/'
+  const explicitNext = searchParams.get('next')
 
   if (!code) {
     return NextResponse.redirect(new URL('/auth?error=oauth_cancelled', request.url))
@@ -33,6 +34,13 @@ export async function GET(request: NextRequest) {
       avatarUrl: user.user_metadata.avatar_url ?? null,
     },
   })
+
+  let next = explicitNext
+  if (!next) {
+    const tenant = await prisma.tenant.findUnique({ where: { ownerId: user.id }, select: { slug: true, isOnboarded: true } })
+    const isLocalDev = request.headers.get('host')?.includes('localhost') ?? false
+    next = resolveSignedInDestination(tenant, isLocalDev)
+  }
 
   return NextResponse.redirect(new URL(next, request.url))
 }

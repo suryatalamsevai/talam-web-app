@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, SlidersHorizontal, MoreHorizontal, Plus, X, Image as ImageIcon, CheckSquare, Square } from 'lucide-react'
+import { Search, SlidersHorizontal, MoreHorizontal, Plus, X, Image as ImageIcon, CheckSquare, Square, Pencil, Trash2, Power, ChevronDown } from 'lucide-react'
 import { Dialog } from '@/components/ui/dialog'
 import type { AdminProduct, CategoryMeta, ProductInput } from '@/lib/data/products'
 import {
@@ -207,6 +207,62 @@ function MobileFilterSheet({
   )
 }
 
+/* ── Per-row "..." menu ── */
+
+function ProductRowMenu({ product, onEdit, onToggleActive, onDelete }: {
+  product: AdminProduct; onEdit: () => void; onToggleActive: () => void; onDelete: () => void
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v) }}
+        className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border transition-colors hover:bg-bg"
+      >
+        <MoreHorizontal className="size-4 text-muted-warm" />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full z-20 mt-1 w-[180px] rounded-lg border border-border bg-surface py-1 shadow-lg">
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setOpen(false); onEdit() }}
+            className="flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2.5 text-left text-sm text-fg hover:bg-bg"
+          >
+            <Pencil className="size-4 text-muted-warm" /> Edit Product
+          </button>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setOpen(false); onToggleActive() }}
+            className="flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2.5 text-left text-sm text-fg hover:bg-bg"
+          >
+            <Power className="size-4 text-muted-warm" /> {product.isActive ? 'Deactivate' : 'Activate'}
+          </button>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setOpen(false); onDelete() }}
+            className="flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2.5 text-left text-sm text-danger hover:bg-danger/10"
+          >
+            <Trash2 className="size-4" /> Delete Product
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 /* ── Product editor modal (Add / Edit) ── */
 
 function ProductEditor({
@@ -220,6 +276,17 @@ function ProductEditor({
   const [selectedOccasions, setSelectedOccasions] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [sizesOpen, setSizesOpen] = useState(false)
+  const sizesRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!sizesOpen) return
+    const handler = (e: MouseEvent) => {
+      if (sizesRef.current && !sizesRef.current.contains(e.target as Node)) setSizesOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [sizesOpen])
 
   useEffect(() => {
     if (open) {
@@ -279,7 +346,7 @@ function ProductEditor({
 
   return (
     <Dialog open={open} onClose={onClose} className="md:max-w-[560px]">
-      <div className="flex max-h-[95vh] flex-col md:max-h-[90vh]">
+      <div className="flex max-h-[80vh] flex-col md:max-h-[85vh]">
         <div className="flex shrink-0 items-center justify-between border-b border-border p-4">
           <span className="text-base font-bold text-fg">{title}</span>
           <button onClick={onClose} className="cursor-pointer transition-transform active:scale-90"><X className="size-6 text-muted-warm" /></button>
@@ -358,16 +425,33 @@ function ProductEditor({
               )}
             </div>
 
-            <div className="flex flex-col gap-1.5">
+            <div className="relative flex flex-col gap-1.5" ref={sizesRef}>
               <span className="text-sm font-bold text-fg">Sizes Available</span>
-              <div className="flex flex-wrap gap-3">
-                {ALL_SIZES.map((size) => (
-                  <label key={size} className="flex cursor-pointer items-center gap-1.5 text-sm text-fg">
-                    <input type="checkbox" checked={selectedSizes.includes(size)} onChange={() => setSelectedSizes((prev) => prev.includes(size) ? prev.filter((s) => s !== size) : [...prev, size])} className="size-4 rounded border-border accent-brand-primary" />
-                    {size}
-                  </label>
-                ))}
-              </div>
+              <button
+                type="button"
+                onClick={() => setSizesOpen((v) => !v)}
+                className="flex cursor-pointer items-center justify-between rounded-lg border border-border bg-bg px-3 py-[11px] text-md text-fg outline-none transition-colors focus:border-brand-primary focus:bg-surface"
+              >
+                <span className={selectedSizes.length === 0 ? 'text-muted-warm' : ''}>
+                  {selectedSizes.length === 0 ? 'Select sizes' : selectedSizes.join(', ')}
+                </span>
+                <ChevronDown className={`size-4 shrink-0 text-muted-warm transition-transform ${sizesOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {sizesOpen && (
+                <div className="absolute top-full z-20 mt-1 w-full rounded-lg border border-border bg-surface p-2 shadow-lg">
+                  <div className="mb-1 flex items-center justify-between px-1">
+                    <button type="button" onClick={() => setSelectedSizes(ALL_SIZES)} className="cursor-pointer text-xs font-semibold text-brand-primary">Select all</button>
+                    <button type="button" onClick={() => setSelectedSizes([])} className="cursor-pointer text-xs font-semibold text-muted-warm">Clear</button>
+                  </div>
+                  {ALL_SIZES.map((size) => (
+                    <label key={size} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-fg hover:bg-bg">
+                      <input type="checkbox" checked={selectedSizes.includes(size)} onChange={() => setSelectedSizes((prev) => prev.includes(size) ? prev.filter((s) => s !== size) : [...prev, size])} className="size-4 rounded border-border accent-brand-primary" />
+                      {size}
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -511,6 +595,11 @@ export function AdminProductsClient({ products, categories, occasions }: { produ
     await setProductActiveAction(p.id, !p.isActive)
     router.refresh()
   }
+  async function deleteProduct(p: AdminProduct) {
+    if (!window.confirm(`Delete "${p.name}"? This can't be undone.`)) return
+    await bulkDeleteAction([p.id])
+    router.refresh()
+  }
 
   return (
     <div className="px-4 pb-24 md:px-0 md:pb-0">
@@ -588,9 +677,9 @@ export function AdminProductsClient({ products, categories, occasions }: { produ
                   <span className="text-sm text-fg">₹{p.price.toLocaleString('en-IN')}</span>
                   <span className={`text-sm font-semibold ${stock.color}`}>{stock.label}</span>
                   <span className={`inline-flex w-fit rounded-full px-2.5 py-0.5 text-2xs font-semibold ${p.isActive ? 'bg-success/10 text-success' : 'bg-muted-warm/10 text-muted-warm'}`}>{p.isActive ? 'Active' : 'Inactive'}</span>
-                  <button onClick={(e) => { e.stopPropagation(); toggleActive(p) }} className="flex size-8 cursor-pointer items-center justify-center rounded-lg border border-border transition-colors hover:bg-bg" title={p.isActive ? 'Deactivate' : 'Activate'}>
-                    <MoreHorizontal className="size-4 text-muted-warm" />
-                  </button>
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <ProductRowMenu product={p} onEdit={() => openEdit(p)} onToggleActive={() => toggleActive(p)} onDelete={() => deleteProduct(p)} />
+                  </div>
                 </div>
               )
             })}
@@ -620,9 +709,9 @@ export function AdminProductsClient({ products, categories, occasions }: { produ
                     <p className="text-sm text-fg">₹{p.price.toLocaleString('en-IN')}</p>
                     <p className={`text-xs font-semibold ${stock.color}`}>{stock.label}</p>
                   </div>
-                  <button onClick={(e) => { e.stopPropagation(); toggleActive(p) }} className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border transition-colors hover:bg-bg">
-                    <MoreHorizontal className="size-4 text-muted-warm" />
-                  </button>
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <ProductRowMenu product={p} onEdit={() => openEdit(p)} onToggleActive={() => toggleActive(p)} onDelete={() => deleteProduct(p)} />
+                  </div>
                 </div>
               )
             })}

@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { ChevronRight } from 'lucide-react'
+import { ArrowLeft, ChevronRight } from 'lucide-react'
 import { StoreLink, useStoreBase } from '@/components/store/store-context'
 
 const sidebarItems = [
@@ -23,6 +23,10 @@ export function SettingsShell({ children, user: sidebarUser }: { children: React
     <div className="hidden lg:block min-h-screen bg-bg py-10 px-12">
       <div className="mx-auto max-w-[1100px] flex gap-8">
         <div className="w-[280px] shrink-0">
+          <StoreLink href="/" className="mb-4 flex w-fit items-center gap-1.5 font-body text-sm text-muted-warm hover:text-fg">
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back to shopping
+          </StoreLink>
           <div className="rounded-xl border border-border bg-surface p-6 mb-6">
             <div className="flex flex-col items-center">
               <div className="flex size-16 items-center justify-center overflow-hidden rounded-full bg-store-primary/15 text-2xl font-bold text-store-primary font-body mb-3">

@@ -30,7 +30,7 @@ export function HowItWorks() {
         {STEPS.map((step) => (
           <div
             key={step.n}
-            className="marketing-reveal flex flex-col justify-center"
+            className="marketing-reveal min-w-0 flex flex-col justify-center"
           >
             <div className="font-marketing font-semibold text-amber text-[90px] lg:text-[160px] leading-none opacity-90">
               {step.n}

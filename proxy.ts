@@ -37,7 +37,7 @@ export async function proxy(request: NextRequest) {
 
 function needsSessionRefresh(decision: RouteDecision, pathname: string): boolean {
   if (decision.kind === 'superAdmin') return true
-  if (decision.kind === 'passThrough') return pathname.startsWith('/auth') || pathname.startsWith('/welcome')
+  if (decision.kind === 'passThrough') return pathname === '/' || pathname.startsWith('/auth')
 
   if (decision.surface === 'admin' || decision.surface === 'checkout') return true
   return decision.pathname.startsWith('/account') || decision.pathname.startsWith('/auth')

@@ -9,8 +9,8 @@ type CtaCopy = { label: string; href: string; subtext?: string }
 
 const CTA_COPY: Record<OwnerCtaState, CtaCopy> = {
   'signed-out': { label: 'Start free', href: '/auth' },
-  'in-progress': { label: 'Finish Setting Up', href: '/welcome', subtext: 'Pick up where you left off' },
-  onboarded: { label: 'View My Store', href: '/welcome', subtext: 'Takes you to your store & admin' },
+  'in-progress': { label: 'Finish Setting Up', href: '/auth', subtext: 'Pick up where you left off' },
+  onboarded: { label: 'Go to Dashboard', href: '/auth', subtext: 'Takes you to your admin dashboard' },
 }
 
 export function useOwnerCta(): CtaCopy | null {

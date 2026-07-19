@@ -35,7 +35,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       <p className="mb-4 font-body text-sm text-muted-warm">
         {products.length} {products.length === 1 ? 'item' : 'items'}
       </p>
-      <div className="flex gap-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:gap-8">
         <FilterBar
           basePath={`/category/${categorySlug}`}
           categories={categories}
