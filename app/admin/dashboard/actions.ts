@@ -1,9 +1,11 @@
 'use server'
 
 import { headers } from 'next/headers'
-import { requireOwnerSession } from '@/lib/admin-guard'
+import { revalidatePath } from 'next/cache'
+import { requireOwnerSession, requireOwnerTenant } from '@/lib/admin-guard'
 import { prisma } from '@/lib/prisma'
 import { getStoreUrl } from '@/lib/tenant-url'
+import { getMissingStoreConfig, type MissingConfigItem } from '@/lib/data/tenant'
 
 export async function getLiveStoreUrl(): Promise<string | null> {
   const { userId } = await requireOwnerSession()
@@ -13,4 +15,24 @@ export async function getLiveStoreUrl(): Promise<string | null> {
   const host = (await headers()).get('host')
   const isLocalDev = host?.includes('localhost') ?? false
   return getStoreUrl(tenant.slug, isLocalDev)
+}
+
+export async function getTenantLiveStateAction(): Promise<{ isLive: boolean; missing: MissingConfigItem[] }> {
+  const { tenantId } = await requireOwnerTenant()
+  const [tenant, missing] = await Promise.all([
+    prisma.tenant.findUnique({ where: { id: tenantId }, select: { isLive: true } }),
+    getMissingStoreConfig(tenantId),
+  ])
+  return { isLive: tenant?.isLive ?? false, missing }
+}
+
+export async function goLiveAction(): Promise<{ error?: string }> {
+  const { tenantId } = await requireOwnerTenant()
+  const missing = await getMissingStoreConfig(tenantId)
+  if (missing.length > 0) return { error: 'Finish the remaining setup steps before going live.' }
+
+  await prisma.tenant.update({ where: { id: tenantId }, data: { isLive: true } })
+  revalidatePath('/admin/dashboard')
+  revalidatePath('/store')
+  return {}
 }

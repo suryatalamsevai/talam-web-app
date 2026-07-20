@@ -60,6 +60,7 @@ model Tenant {
   ownerId              String          @unique @map("owner_id") @db.Uuid
   onboardingStep       Int             @default(0) @map("onboarding_step")
   isOnboarded          Boolean         @default(false) @map("is_onboarded")
+  isLive               Boolean         @default(false) @map("is_live")
   slug                 String          @unique
   name                 String
   tagline              String?

@@ -68,6 +68,12 @@ export async function saveStoreStep(input: { storeName: string; slug: string; ca
   }
 }
 
+export async function checkSlugAvailability(slug: string): Promise<{ available: boolean }> {
+  const { userId } = await requireOwnerSession()
+  const existing = await prisma.tenant.findUnique({ where: { slug }, select: { ownerId: true } })
+  return { available: !existing || existing.ownerId === userId }
+}
+
 export async function getOnboardingCategories(): Promise<{ id: string; name: string }[]> {
   const { userId } = await requireOwnerSession()
   const tenant = await prisma.tenant.findUnique({ where: { ownerId: userId }, select: { id: true } })

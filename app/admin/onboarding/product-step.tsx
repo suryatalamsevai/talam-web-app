@@ -24,7 +24,7 @@ export function ProductStep({
           render={({ field, fieldState }) => (
             <Field label="Product name" error={fieldState.error?.message}>
               <FieldHint>E.g., &quot;Cotton Saree&quot; or &quot;Blue Kurta&quot;</FieldHint>
-              <TextInput value={field.value} onChange={field.onChange} invalid={Boolean(fieldState.error)} />
+              <TextInput value={field.value} onChange={field.onChange} onBlur={field.onBlur} invalid={Boolean(fieldState.error)} />
             </Field>
           )}
         />
@@ -33,7 +33,7 @@ export function ProductStep({
           name="categoryId"
           render={({ field }) => (
             <Field label="Category">
-              <SelectField value={field.value ?? ''} onChange={field.onChange}>
+              <SelectField value={field.value ?? ''} onChange={field.onChange} onBlur={field.onBlur}>
                 <option value="">No category</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -73,6 +73,7 @@ export function ProductStep({
                 <input
                   value={field.value}
                   onChange={field.onChange}
+                  onBlur={field.onBlur}
                   inputMode="numeric"
                   className="h-full w-full bg-transparent font-body text-base text-[#1F2937] outline-none"
                 />
@@ -86,7 +87,7 @@ export function ProductStep({
           render={({ field, fieldState }) => (
             <Field label="Stock quantity" error={fieldState.error?.message}>
               <FieldHint>How many units do you have?</FieldHint>
-              <TextInput value={field.value} onChange={field.onChange} inputMode="numeric" invalid={Boolean(fieldState.error)} />
+              <TextInput value={field.value} onChange={field.onChange} onBlur={field.onBlur} inputMode="numeric" invalid={Boolean(fieldState.error)} />
             </Field>
           )}
         />

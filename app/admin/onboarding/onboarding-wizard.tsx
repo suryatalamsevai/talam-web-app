@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 
 import {
+  checkSlugAvailability,
   completeOnboarding,
   getOnboardingCategories,
   saveBrandStep,
@@ -18,7 +19,6 @@ import {
 } from './actions'
 import { BrandStep } from './brand-step'
 import { ContactStep } from './contact-step'
-import { GoLiveStep } from './go-live-step'
 import { LaunchOverlay } from './launch-overlay'
 import { STEP_ACCENTS, STEPS, type BrandColor, type PaymentId } from './onboarding-data'
 import { onboardingSchema, STEP_FIELDS, type OnboardingValues } from './onboarding-schema'
@@ -73,6 +73,7 @@ export function OnboardingWizard({
 
   const { control, trigger, getValues, setError, watch } = useForm<OnboardingValues>({
     resolver: zodResolver(onboardingSchema),
+    mode: 'onTouched',
     defaultValues: {
       storeName: initialTenant?.name ?? "Priya's Boutique",
       category: initialTenant?.storeType ?? 'Clothing',
@@ -113,6 +114,24 @@ export function OnboardingWizard({
     }
   }, [step, categories.length])
 
+  const [slugStatus, setSlugStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle')
+
+  useEffect(() => {
+    if (step !== 0 || slug === 'your-store') {
+      setSlugStatus('idle')
+      return
+    }
+    if (slug === initialTenant?.slug) {
+      setSlugStatus('available')
+      return
+    }
+    setSlugStatus('checking')
+    const timeout = setTimeout(() => {
+      checkSlugAvailability(slug).then((result) => setSlugStatus(result.available ? 'available' : 'taken'))
+    }, 400)
+    return () => clearTimeout(timeout)
+  }, [slug, step, initialTenant?.slug])
+
   async function runStepAction(current: number, values: OnboardingValues): Promise<{ error?: string }> {
     if (current === 0) {
       const category = values.category === 'Other' ? (values.customCategory ?? '').trim() : values.category
@@ -142,7 +161,13 @@ export function OnboardingWizard({
   function goNext() {
     trigger(STEP_FIELDS[step]).then((valid) => {
       if (!valid) return
+      if (step === 0 && slugStatus === 'taken') {
+        setServerError('That store URL is taken — try another.')
+        return
+      }
       setServerError(null)
+      const isLastStep = step === STEPS.length - 1
+      if (isLastStep) setIsLaunching(true)
       startTransition(async () => {
         try {
           const values = getValues()
@@ -150,11 +175,25 @@ export function OnboardingWizard({
           if (result.error) {
             if (step === 0) setError('storeName', { type: 'server', message: result.error })
             setServerError(result.error)
+            setIsLaunching(false)
             return
           }
-          setStep((current) => Math.min(current + 1, STEPS.length - 1))
+
+          if (!isLastStep) {
+            setStep((current) => Math.min(current + 1, STEPS.length - 1))
+            return
+          }
+
+          const [completion] = await Promise.all([completeOnboarding(), new Promise((resolve) => setTimeout(resolve, 1200))])
+          if (completion.error || !completion.adminUrl) {
+            setServerError(completion.error ?? 'Something went wrong — try again.')
+            setIsLaunching(false)
+            return
+          }
+          router.push(completion.adminUrl)
         } catch {
           setServerError('Something went wrong — try again.')
+          setIsLaunching(false)
         }
       })
     })
@@ -163,24 +202,6 @@ export function OnboardingWizard({
   function goBack() {
     setServerError(null)
     setStep((current) => Math.max(current - 1, 0))
-  }
-
-  function goLive() {
-    setIsLaunching(true)
-    startTransition(async () => {
-      try {
-        const [result] = await Promise.all([completeOnboarding(), new Promise((resolve) => setTimeout(resolve, 1200))])
-        if (result.error || !result.adminUrl) {
-          setServerError(result.error ?? 'Something went wrong — try again.')
-          setIsLaunching(false)
-          return
-        }
-        router.push(result.adminUrl)
-      } catch {
-        setServerError('Something went wrong — try again.')
-        setIsLaunching(false)
-      }
-    })
   }
 
   return (
@@ -193,13 +214,12 @@ export function OnboardingWizard({
           <div className="flex-1 overflow-y-auto p-7 md:p-11">
             <BackNav step={step} goBack={goBack} />
             {serverError ? <p className="mb-4 font-body text-sm font-medium text-danger">{serverError}</p> : null}
-            {step === 0 ? <StoreStep control={control} slug={slug} serverError={serverError} /> : null}
+            {step === 0 ? <StoreStep control={control} slug={slug} serverError={serverError} slugStatus={slugStatus} /> : null}
             {step === 1 ? <BrandStep control={control} /> : null}
             {step === 2 ? <ContactStep control={control} /> : null}
             {step === 3 ? <StoryStep control={control} /> : null}
             {step === 4 ? <ProductStep control={control} categories={categories} /> : null}
             {step === 5 ? <PaymentStep control={control} /> : null}
-            {step === 6 ? <GoLiveStep onGoLive={goLive} isPending={isPending} /> : null}
           </div>
           <DesktopFooter step={step} goNext={goNext} isPending={isPending} />
         </section>
@@ -254,7 +274,7 @@ function ProgressHeader({ step }: { readonly step: number }) {
 }
 
 function BackNav({ step, goBack }: { readonly step: number; readonly goBack: () => void }) {
-  if (step === 0 || step === STEPS.length - 1) return null
+  if (step === 0) return null
 
   return (
     <button
@@ -269,7 +289,7 @@ function BackNav({ step, goBack }: { readonly step: number; readonly goBack: () 
 }
 
 function DesktopFooter({ step, goNext, isPending }: { readonly step: number; readonly goNext: () => void; readonly isPending: boolean }) {
-  if (step === STEPS.length - 1) return null
+  const isLastStep = step === STEPS.length - 1
   const accent = STEP_ACCENTS[step]
   return (
     <footer className="hidden shrink-0 items-center justify-end border-t border-[#F3F4F6] bg-surface/95 px-7 py-6 md:flex md:px-11">
@@ -282,14 +302,14 @@ function DesktopFooter({ step, goNext, isPending }: { readonly step: number; rea
         ].join(' ')}
         onClick={goNext}
       >
-        {isPending ? 'Saving…' : 'Next →'}
+        {isPending ? 'Saving…' : isLastStep ? 'Finish →' : 'Next →'}
       </button>
     </footer>
   )
 }
 
 function MobileFooter({ step, goNext, isPending }: { readonly step: number; readonly goNext: () => void; readonly isPending: boolean }) {
-  if (step === STEPS.length - 1) return null
+  const isLastStep = step === STEPS.length - 1
   const accent = STEP_ACCENTS[step]
   return (
     <footer className="fixed inset-x-0 bottom-0 z-30 flex h-[105px] items-center justify-end border-t border-[#F3F4F6] bg-surface/95 px-7 py-5 backdrop-blur-sm md:hidden">
@@ -302,7 +322,7 @@ function MobileFooter({ step, goNext, isPending }: { readonly step: number; read
         ].join(' ')}
         onClick={goNext}
       >
-        {isPending ? 'Saving…' : 'Next →'}
+        {isPending ? 'Saving…' : isLastStep ? 'Finish →' : 'Next →'}
       </button>
     </footer>
   )

@@ -1,19 +1,25 @@
 import { Controller, type Control, useWatch } from 'react-hook-form'
+import { Loader2 } from 'lucide-react'
 
 import { Field, FieldHint, SelectField, StepTitle, TextInput } from './onboarding-fields'
 import { STORE_TYPES } from './onboarding-data'
 import type { OnboardingValues } from './onboarding-schema'
 
+type SlugStatus = 'idle' | 'checking' | 'available' | 'taken'
+
 export function StoreStep({
   control,
   slug,
   serverError,
+  slugStatus,
 }: {
   readonly control: Control<OnboardingValues>
   readonly slug: string
   readonly serverError: string | null
+  readonly slugStatus: SlugStatus
 }) {
   const category = useWatch({ control, name: 'category' })
+  const slugError = serverError ?? (slugStatus === 'taken' ? 'That store URL is taken — try another.' : undefined)
 
   return (
     <div className="animate-[fadeIn_0.2s_ease-out]">
@@ -31,20 +37,28 @@ export function StoreStep({
           render={({ field, fieldState }) => (
             <Field label="Store name" error={fieldState.error?.message}>
               <FieldHint>This appears on your homepage</FieldHint>
-              <TextInput value={field.value} onChange={field.onChange} invalid={Boolean(fieldState.error)} />
+              <TextInput value={field.value} onChange={field.onChange} onBlur={field.onBlur} invalid={Boolean(fieldState.error)} />
             </Field>
           )}
         />
-        <Field label="Website name" error={serverError ?? undefined}>
+        <Field label="Website name" error={slugError}>
           <FieldHint>Once created, this cannot be changed. Customer would use this to access your store.</FieldHint>
-          <TextInput value={slug.replaceAll('-', '')} readOnly invalid={Boolean(serverError)} />
+          <div className="relative">
+            <TextInput value={slug.replaceAll('-', '')} readOnly invalid={Boolean(slugError)} />
+            {slugStatus === 'checking' ? (
+              <Loader2 className="absolute right-5 top-1/2 size-4 -translate-y-1/2 animate-spin text-[#9CA3AF]" />
+            ) : null}
+          </div>
+          {slugStatus === 'available' && !slugError ? (
+            <span className="font-body text-xs font-medium leading-tight text-success">That URL is available.</span>
+          ) : null}
         </Field>
         <Controller
           control={control}
           name="category"
           render={({ field, fieldState }) => (
             <Field label="Category" error={fieldState.error?.message}>
-              <SelectField value={field.value} onChange={field.onChange} invalid={Boolean(fieldState.error)}>
+              <SelectField value={field.value} onChange={field.onChange} onBlur={field.onBlur} invalid={Boolean(fieldState.error)}>
                 <option value="">Select a category</option>
                 <option>Clothing</option>
                 {STORE_TYPES.map((type) => (

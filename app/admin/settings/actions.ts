@@ -29,3 +29,43 @@ export async function updateAboutAction(input: { description: string; socialLink
   )
   revalidatePath('/admin/settings')
 }
+
+export type ContactSettings = { contactPhone: string; contactEmail: string; address: string; city: string }
+
+export async function getContactSettingsAction(): Promise<ContactSettings> {
+  const { tenantId } = await requireOwnerTenant()
+  const [tenant, branch] = await withTenant(tenantId, (db) =>
+    Promise.all([
+      db.tenant.findUnique({ where: { id: tenantId }, select: { contactPhone: true, contactEmail: true, name: true } }),
+      db.storeBranch.findFirst({ where: { tenantId }, orderBy: { sortOrder: 'asc' }, select: { address: true, city: true } }),
+    ])
+  )
+  return {
+    contactPhone: tenant?.contactPhone ?? '',
+    contactEmail: tenant?.contactEmail ?? '',
+    address: branch?.address ?? '',
+    city: branch?.city ?? '',
+  }
+}
+
+export async function updateContactSettingsAction(input: ContactSettings): Promise<void> {
+  const { tenantId } = await requireOwnerTenant()
+
+  await withTenant(tenantId, async (db) => {
+    const tenant = await db.tenant.update({
+      where: { id: tenantId },
+      data: { contactPhone: input.contactPhone, contactEmail: input.contactEmail },
+      select: { name: true },
+    })
+
+    const existingBranch = await db.storeBranch.findFirst({ where: { tenantId }, orderBy: { sortOrder: 'asc' }, select: { id: true } })
+    if (existingBranch) {
+      await db.storeBranch.update({ where: { id: existingBranch.id }, data: { address: input.address, city: input.city } })
+    } else {
+      await db.storeBranch.create({ data: { tenantId, name: tenant.name, address: input.address, city: input.city } })
+    }
+  })
+
+  revalidatePath('/admin/settings')
+  revalidatePath('/admin/dashboard')
+}

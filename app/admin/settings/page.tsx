@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { ChevronLeft, AlertTriangle, X, GripVertical } from 'lucide-react'
 import Link from 'next/link'
-import { getAboutAction, updateAboutAction } from './actions'
+import { getAboutAction, updateAboutAction, getContactSettingsAction, updateContactSettingsAction } from './actions'
 import { RichTextEditor } from '@/components/admin/rich-text-editor'
 import type { SocialLink } from '@/lib/data/tenant'
 
@@ -593,6 +593,33 @@ function PaymentsTab() {
 // ── Contact Info Tab ──
 function ContactInfoTab() {
   const [showWhatsApp, setShowWhatsApp] = useState(true)
+  const [loaded, setLoaded] = useState(false)
+  const [contactPhone, setContactPhone] = useState('')
+  const [contactEmail, setContactEmail] = useState('')
+  const [address, setAddress] = useState('')
+  const [city, setCity] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    getContactSettingsAction().then((data) => {
+      setContactPhone(data.contactPhone)
+      setContactEmail(data.contactEmail)
+      setAddress(data.address)
+      setCity(data.city)
+      setLoaded(true)
+    })
+  }, [])
+
+  async function handleSave() {
+    setSaving(true)
+    await updateContactSettingsAction({ contactPhone, contactEmail, address, city })
+    setSaving(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
+
+  if (!loaded) return <p className="py-12 text-center text-sm text-muted-warm">Loading…</p>
 
   return (
     <div className="flex flex-col gap-8">
@@ -605,11 +632,11 @@ function ContactInfoTab() {
       </div>
 
       <div>
-        <SectionLabel>Contact Details</SectionLabel>
+        <SectionLabel right={saved ? <span className="text-xs font-medium text-success">✓ Saved</span> : undefined}>Contact Details</SectionLabel>
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <Input label="Contact Phone" defaultValue="+91 98765 43210" />
-            <Input label="Contact Email" defaultValue="hello@meenasilks.com" />
+            <Input label="Contact Phone" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} />
+            <Input label="Contact Email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} />
           </div>
           <label className="flex flex-col gap-1">
             <span className="text-sm font-semibold text-fg">WhatsApp Number</span>
@@ -633,22 +660,22 @@ function ContactInfoTab() {
       </div>
 
       <div>
-        <SectionLabel>Store Location & Demographics</SectionLabel>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <Input label="City" defaultValue="Chennai" />
-          <label className="flex flex-col gap-1">
-            <span className="text-sm font-semibold text-fg">State</span>
-            <select defaultValue="Tamil Nadu" className="rounded-lg border border-border bg-surface px-3 py-[11px] text-md text-fg">
-              <option>Tamil Nadu</option>
-              <option>Karnataka</option>
-              <option>Kerala</option>
-            </select>
-          </label>
-          <Input label="Pincode" defaultValue="600001" />
-          <Input label="Country" defaultValue="India" />
+        <SectionLabel>Store Address</SectionLabel>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <Input label="Address" value={address} onChange={(e) => setAddress(e.target.value)} />
+          <Input label="City" value={city} onChange={(e) => setCity(e.target.value)} />
         </div>
-        <p className="mt-1.5 text-xs text-muted-warm">Used to show delivery estimates and localise your store experience for customers.</p>
+        <p className="mt-1.5 text-xs text-muted-warm">Shown on your About page and used for delivery estimates.</p>
       </div>
+
+      <button
+        type="button"
+        onClick={handleSave}
+        disabled={saving}
+        className="self-start rounded-lg bg-brand-primary px-5 py-[9px] text-sm font-semibold text-surface transition-transform active:scale-95 disabled:opacity-60"
+      >
+        {saving ? 'Saving…' : 'Save Contact Info'}
+      </button>
 
       <div>
         <SectionLabel>Store Photos</SectionLabel>

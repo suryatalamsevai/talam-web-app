@@ -26,7 +26,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             {missingConfig.map((item) => (
               <Link
                 key={item.key}
-                href={`/admin/settings?tab=${encodeURIComponent(item.settingsTab)}`}
+                href={item.href}
                 className="flex items-center gap-2 text-sm font-medium text-[#92400E] hover:underline"
               >
                 <AlertTriangle className="size-4 shrink-0" />

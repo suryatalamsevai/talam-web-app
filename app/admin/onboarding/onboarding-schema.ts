@@ -44,5 +44,4 @@ export const STEP_FIELDS: Record<number, (keyof OnboardingValues)[]> = {
   3: ['tagline', 'aboutDescription'],
   4: ['productName', 'productPrice', 'productStock', 'productPhoto'],
   5: [],
-  6: [],
 }

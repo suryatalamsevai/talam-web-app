@@ -32,19 +32,30 @@ export type TenantStorefront = {
   branch: { address: string | null; city: string | null; hours: string | null } | null
 }
 
-export type MissingConfigItem = { key: 'payments' | 'contact' | 'about'; label: string; settingsTab: string }
+const MIN_LIVE_PRODUCTS = 3
+
+export type MissingConfigItem = {
+  key: 'payments' | 'contact' | 'about' | 'address' | 'products'
+  label: string
+  description: string
+  href: string
+}
 
 export async function getMissingStoreConfig(tenantId: string): Promise<MissingConfigItem[]> {
-  const tenant = await withTenant(tenantId, (db) =>
-    db.tenant.findUnique({
-      where: { id: tenantId },
-      select: {
-        isOnboarded: true,
-        contactPhone: true,
-        contactEmail: true,
-        about: { select: { description: true } },
-      },
-    })
+  const [tenant, productCount] = await withTenant(tenantId, (db) =>
+    Promise.all([
+      db.tenant.findUnique({
+        where: { id: tenantId },
+        select: {
+          isOnboarded: true,
+          contactPhone: true,
+          contactEmail: true,
+          about: { select: { description: true } },
+          branches: { orderBy: { sortOrder: 'asc' }, take: 1, select: { address: true, city: true } },
+        },
+      }),
+      db.product.count({ where: { tenantId, status: 'published', deletedAt: null } }),
+    ])
   )
   if (!tenant) return []
 
@@ -53,10 +64,42 @@ export async function getMissingStoreConfig(tenantId: string): Promise<MissingCo
   // a default, and nothing writes paymentConfig) — the onboarding wizard forces a payment
   // choice, so isOnboarded is the best available signal. Revisit once Payments settings are
   // actually saveable after onboarding.
-  if (!tenant.isOnboarded) missing.push({ key: 'payments', label: 'Payments', settingsTab: 'Payments' })
+  if (!tenant.isOnboarded)
+    missing.push({
+      key: 'payments',
+      label: 'Payments',
+      description: 'Choose and enable a payment method',
+      href: '/admin/settings?tab=Payments',
+    })
   if (!tenant.contactPhone?.trim() || !tenant.contactEmail?.trim())
-    missing.push({ key: 'contact', label: 'Contact Info', settingsTab: 'Contact Info' })
-  if (!tenant.about?.description?.trim()) missing.push({ key: 'about', label: 'Store Details', settingsTab: 'About' })
+    missing.push({
+      key: 'contact',
+      label: 'Contact Info',
+      description: 'Add a contact phone and email',
+      href: '/admin/settings?tab=Contact Info',
+    })
+  if (!tenant.about?.description?.trim())
+    missing.push({
+      key: 'about',
+      label: 'Store Details',
+      description: "Add your store's About description",
+      href: '/admin/settings?tab=About',
+    })
+  const branch = tenant.branches[0]
+  if (!branch?.address?.trim() || !branch?.city?.trim())
+    missing.push({
+      key: 'address',
+      label: 'Store Address',
+      description: 'Add your store address',
+      href: '/admin/settings?tab=Contact Info',
+    })
+  if (productCount < MIN_LIVE_PRODUCTS)
+    missing.push({
+      key: 'products',
+      label: 'Products',
+      description: `Add at least ${MIN_LIVE_PRODUCTS} products (${productCount}/${MIN_LIVE_PRODUCTS})`,
+      href: '/admin/products',
+    })
   return missing
 }
 

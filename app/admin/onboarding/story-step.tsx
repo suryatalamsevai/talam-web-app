@@ -14,7 +14,7 @@ export function StoryStep({ control }: { readonly control: Control<OnboardingVal
           render={({ field, fieldState }) => (
             <Field label="Tagline" error={fieldState.error?.message}>
               <FieldHint>A short line shown near your store name</FieldHint>
-              <TextInput value={field.value} onChange={field.onChange} invalid={Boolean(fieldState.error)} />
+              <TextInput value={field.value} onChange={field.onChange} onBlur={field.onBlur} invalid={Boolean(fieldState.error)} />
             </Field>
           )}
         />
@@ -24,7 +24,7 @@ export function StoryStep({ control }: { readonly control: Control<OnboardingVal
           render={({ field, fieldState }) => (
             <Field label="About your store" error={fieldState.error?.message}>
               <FieldHint>Shown on your About page</FieldHint>
-              <TextArea value={field.value} onChange={field.onChange} invalid={Boolean(fieldState.error)} />
+              <TextArea value={field.value} onChange={field.onChange} onBlur={field.onBlur} invalid={Boolean(fieldState.error)} />
             </Field>
           )}
         />

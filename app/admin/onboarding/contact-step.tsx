@@ -14,7 +14,7 @@ export function ContactStep({ control }: { readonly control: Control<OnboardingV
           render={({ field, fieldState }) => (
             <Field label="Contact phone" error={fieldState.error?.message}>
               <FieldHint>Shown on your storefront and used for order updates</FieldHint>
-              <TextInput value={field.value} onChange={field.onChange} invalid={Boolean(fieldState.error)} inputMode="tel" />
+              <TextInput value={field.value} onChange={field.onChange} onBlur={field.onBlur} invalid={Boolean(fieldState.error)} inputMode="tel" />
             </Field>
           )}
         />
@@ -24,7 +24,7 @@ export function ContactStep({ control }: { readonly control: Control<OnboardingV
           render={({ field, fieldState }) => (
             <Field label="Contact email" error={fieldState.error?.message}>
               <FieldHint>Where customers and Talam can reach you</FieldHint>
-              <TextInput value={field.value} onChange={field.onChange} invalid={Boolean(fieldState.error)} inputMode="email" />
+              <TextInput value={field.value} onChange={field.onChange} onBlur={field.onBlur} invalid={Boolean(fieldState.error)} inputMode="email" />
             </Field>
           )}
         />
@@ -34,7 +34,7 @@ export function ContactStep({ control }: { readonly control: Control<OnboardingV
           render={({ field, fieldState }) => (
             <Field label="Store name" error={fieldState.error?.message}>
               <FieldHint>E.g., &quot;Main branch&quot; or your shop&apos;s name</FieldHint>
-              <TextInput value={field.value} onChange={field.onChange} invalid={Boolean(fieldState.error)} />
+              <TextInput value={field.value} onChange={field.onChange} onBlur={field.onBlur} invalid={Boolean(fieldState.error)} />
             </Field>
           )}
         />
@@ -43,7 +43,7 @@ export function ContactStep({ control }: { readonly control: Control<OnboardingV
           name="branchAddress"
           render={({ field, fieldState }) => (
             <Field label="Address" error={fieldState.error?.message}>
-              <TextInput value={field.value} onChange={field.onChange} invalid={Boolean(fieldState.error)} />
+              <TextInput value={field.value} onChange={field.onChange} onBlur={field.onBlur} invalid={Boolean(fieldState.error)} />
             </Field>
           )}
         />
@@ -52,7 +52,7 @@ export function ContactStep({ control }: { readonly control: Control<OnboardingV
           name="branchCity"
           render={({ field, fieldState }) => (
             <Field label="City" error={fieldState.error?.message}>
-              <TextInput value={field.value} onChange={field.onChange} invalid={Boolean(fieldState.error)} />
+              <TextInput value={field.value} onChange={field.onChange} onBlur={field.onBlur} invalid={Boolean(fieldState.error)} />
             </Field>
           )}
         />

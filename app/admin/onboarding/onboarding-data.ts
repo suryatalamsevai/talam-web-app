@@ -5,7 +5,6 @@ export const STEPS = [
   { mobile: 'Story', title: 'Your story', description: 'Tagline and about your store' },
   { mobile: 'Prod', title: 'Add first product', description: 'Name, photo, price, and stock' },
   { mobile: 'Pay', title: 'Connect payments', description: 'UPI, Razorpay, or Instamojo' },
-  { mobile: 'Live', title: 'Go live', description: 'Launch your store to the world' },
 ] as const
 
 export const STEP_ACCENTS = [
@@ -15,7 +14,6 @@ export const STEP_ACCENTS = [
   { wash: '#8b5cf6', solid: 'bg-violet-500', text: 'text-violet-500' },
   { wash: '#0ea5e9', solid: 'bg-sky-500', text: 'text-sky-500' },
   { wash: '#14b8a6', solid: 'bg-teal-500', text: 'text-teal-500' },
-  { wash: '#10b981', solid: 'bg-emerald-500', text: 'text-emerald-500' },
 ] as const
 
 export const STORE_TYPES = ['Ethnic wear', 'Bakery', 'Handicrafts', 'Salon', 'Other'] as const

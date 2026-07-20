@@ -89,11 +89,13 @@ export function SelectField({
   children,
   value,
   onChange,
+  onBlur,
   invalid,
 }: {
   readonly children: React.ReactNode
   readonly value?: string
   readonly onChange?: (event: React.ChangeEvent<HTMLSelectElement>) => void
+  readonly onBlur?: () => void
   readonly invalid?: boolean
 }) {
   return (
@@ -105,6 +107,7 @@ export function SelectField({
         ].join(' ')}
         value={value}
         onChange={onChange}
+        onBlur={onBlur}
       >
         {children}
       </select>

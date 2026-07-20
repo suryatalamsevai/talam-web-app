@@ -7,7 +7,7 @@ import type { User } from '@supabase/supabase-js'
 import { StoreLink, useStoreBase } from '@/components/store/store-context'
 import { ProfileMenu } from '@/components/marketing/profile-menu'
 import { PublishButton } from './publish-button'
-import { getLiveStoreUrl } from '@/app/admin/dashboard/actions'
+import { getLiveStoreUrl, getTenantLiveStateAction } from '@/app/admin/dashboard/actions'
 
 const NAV = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -37,10 +37,12 @@ export function AdminNavShell({ children, user }: { children: React.ReactNode; u
   const storeBase = useStoreBase()
   const rel = storeBase ? pathname.replace(storeBase, '') || '/' : pathname
   const [liveStoreUrl, setLiveStoreUrl] = useState<string | null>(null)
+  const [isLive, setIsLive] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     getLiveStoreUrl().then(setLiveStoreUrl)
+    getTenantLiveStateAction().then((state) => setIsLive(state.isLive))
   }, [])
 
   // The desktop content pane scrolls independently of the window (`overflow-auto`
@@ -92,7 +94,7 @@ export function AdminNavShell({ children, user }: { children: React.ReactNode; u
           <header className="flex h-[64px] items-center justify-between border-b border-border bg-surface px-8">
             <span className="font-marketing text-xl italic text-fg">talam.</span>
             <div className="flex items-center gap-4">
-              <PublishButton />
+              {isLive ? <PublishButton /> : null}
               <button className="relative">
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#374151" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
