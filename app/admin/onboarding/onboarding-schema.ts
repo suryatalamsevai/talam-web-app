@@ -1,0 +1,48 @@
+import { z } from 'zod'
+
+const ACCEPTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/svg+xml']
+
+function imageFile(requiredMessage: string) {
+  return z
+    .instanceof(File, { message: requiredMessage })
+    .refine((file) => ACCEPTED_IMAGE_TYPES.includes(file.type), 'Only PNG, JPEG, or SVG images are supported')
+}
+
+export const onboardingSchema = z
+  .object({
+    storeName: z.string().trim().min(1, 'Store name is required'),
+    category: z.string().min(1, 'Select a category'),
+    customCategory: z.string().trim().optional(),
+    brandColor: z.string().min(1),
+    brandLogo: imageFile('Upload a store logo'),
+    contactPhone: z.string().trim().min(1, 'Phone number is required'),
+    contactEmail: z.string().trim().min(1, 'Enter a valid email').email('Enter a valid email'),
+    branchName: z.string().trim().min(1, 'Store name is required'),
+    branchAddress: z.string().trim().min(1, 'Address is required'),
+    branchCity: z.string().trim().min(1, 'City is required'),
+    tagline: z.string().trim().min(1, 'Tagline is required'),
+    aboutDescription: z.string().trim().min(1, 'Tell customers your story'),
+    productName: z.string().trim().min(1, 'Product name is required'),
+    productPrice: z.string().refine((value) => value.trim() !== '' && Number(value) > 0, 'Enter a valid price'),
+    productStock: z.string().refine((value) => value.trim() !== '' && Number(value) >= 0, 'Enter a valid stock quantity'),
+    productPhoto: imageFile('Upload a product photo'),
+    categoryId: z.string().optional(),
+    paymentId: z.enum(['upi', 'razorpay', 'instamojo']),
+  })
+  .superRefine((values, ctx) => {
+    if (values.category === 'Other' && !values.customCategory?.trim()) {
+      ctx.addIssue({ code: 'custom', path: ['customCategory'], message: 'Enter your store category' })
+    }
+  })
+
+export type OnboardingValues = z.infer<typeof onboardingSchema>
+
+export const STEP_FIELDS: Record<number, (keyof OnboardingValues)[]> = {
+  0: ['storeName', 'category', 'customCategory'],
+  1: ['brandLogo'],
+  2: ['contactPhone', 'contactEmail', 'branchName', 'branchAddress', 'branchCity'],
+  3: ['tagline', 'aboutDescription'],
+  4: ['productName', 'productPrice', 'productStock', 'productPhoto'],
+  5: [],
+  6: [],
+}

@@ -1,11 +1,14 @@
 'use client'
 
-import { useMemo, useState, useTransition } from 'react'
+import { useEffect, useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 
 import {
   completeOnboarding,
+  getOnboardingCategories,
   saveBrandStep,
   saveContactStep,
   savePaymentStep,
@@ -18,6 +21,7 @@ import { ContactStep } from './contact-step'
 import { GoLiveStep } from './go-live-step'
 import { LaunchOverlay } from './launch-overlay'
 import { STEP_ACCENTS, STEPS, type BrandColor, type PaymentId } from './onboarding-data'
+import { onboardingSchema, STEP_FIELDS, type OnboardingValues } from './onboarding-schema'
 import { PaymentStep } from './payment-step'
 import { ProductStep } from './product-step'
 import { StoreStep } from './store-step'
@@ -64,24 +68,34 @@ export function OnboardingWizard({
   const [isPending, startTransition] = useTransition()
   const [isLaunching, setIsLaunching] = useState(false)
   const [step, setStep] = useState(initialTenant?.onboardingStep ?? 0)
-  const [storeName, setStoreName] = useState(initialTenant?.name ?? "Priya's Boutique")
-  const [category, setCategory] = useState(initialTenant?.storeType ?? 'Clothing')
-  const [brandColor, setBrandColor] = useState<BrandColor>((initialTenant?.brandColor as BrandColor) ?? '#4F3FF0')
-  const [brandLogo, setBrandLogo] = useState<File | null>(null)
-  const [contactPhone, setContactPhone] = useState(initialTenant?.contactPhone ?? '')
-  const [contactEmail, setContactEmail] = useState(initialTenant?.contactEmail ?? '')
-  const [branchName, setBranchName] = useState(initialBranch?.name ?? '')
-  const [branchAddress, setBranchAddress] = useState(initialBranch?.address ?? '')
-  const [branchCity, setBranchCity] = useState(initialBranch?.city ?? '')
-  const [tagline, setTagline] = useState(initialTenant?.tagline ?? '')
-  const [aboutDescription, setAboutDescription] = useState(initialTenant?.about?.description ?? '')
-  const [productName, setProductName] = useState(initialProduct?.name ?? '')
-  const [productPrice, setProductPrice] = useState(initialProduct ? String(initialProduct.price) : '')
-  const [productStock, setProductStock] = useState(firstStockValue(initialProduct?.stockBySize))
-  const [productPhoto, setProductPhoto] = useState<File | null>(null)
-  const [paymentId, setPaymentId] = useState<PaymentId>(PAYMENT_ID_BY_PROVIDER[initialTenant?.paymentProvider ?? 'upi_manual'] ?? 'upi')
-  const [errors, setErrors] = useState<Record<string, string>>({})
   const [serverError, setServerError] = useState<string | null>(null)
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([])
+
+  const { control, trigger, getValues, setError, watch } = useForm<OnboardingValues>({
+    resolver: zodResolver(onboardingSchema),
+    defaultValues: {
+      storeName: initialTenant?.name ?? "Priya's Boutique",
+      category: initialTenant?.storeType ?? 'Clothing',
+      customCategory: '',
+      brandColor: ((initialTenant?.brandColor as BrandColor) ?? '#4F3FF0') as string,
+      brandLogo: undefined as unknown as File,
+      contactPhone: initialTenant?.contactPhone ?? '',
+      contactEmail: initialTenant?.contactEmail ?? '',
+      branchName: initialBranch?.name ?? '',
+      branchAddress: initialBranch?.address ?? '',
+      branchCity: initialBranch?.city ?? '',
+      tagline: initialTenant?.tagline ?? '',
+      aboutDescription: initialTenant?.about?.description ?? '',
+      productName: initialProduct?.name ?? '',
+      productPrice: initialProduct ? String(initialProduct.price) : '',
+      productStock: firstStockValue(initialProduct?.stockBySize),
+      productPhoto: undefined as unknown as File,
+      categoryId: '',
+      paymentId: PAYMENT_ID_BY_PROVIDER[initialTenant?.paymentProvider ?? 'upi_manual'] ?? 'upi',
+    },
+  })
+
+  const storeName = watch('storeName')
 
   const slug = useMemo(
     () =>
@@ -93,82 +107,60 @@ export function OnboardingWizard({
     [storeName]
   )
 
-  function validateStep(current: number): Record<string, string> {
-    if (current === 0) {
-      const stepErrors: Record<string, string> = {}
-      if (!storeName.trim()) stepErrors.storeName = 'Store name is required'
-      if (!category) stepErrors.category = 'Select a category'
-      return stepErrors
+  useEffect(() => {
+    if (step === 4 && categories.length === 0) {
+      getOnboardingCategories().then(setCategories)
     }
-    if (current === 1) {
-      const stepErrors: Record<string, string> = {}
-      if (!brandLogo) stepErrors.brandLogo = 'Upload a store logo'
-      return stepErrors
-    }
-    if (current === 2) {
-      const stepErrors: Record<string, string> = {}
-      if (!contactPhone.trim()) stepErrors.contactPhone = 'Phone number is required'
-      if (!contactEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) stepErrors.contactEmail = 'Enter a valid email'
-      if (!branchName.trim()) stepErrors.branchName = 'Store name is required'
-      if (!branchAddress.trim()) stepErrors.branchAddress = 'Address is required'
-      if (!branchCity.trim()) stepErrors.branchCity = 'City is required'
-      return stepErrors
-    }
-    if (current === 3) {
-      const stepErrors: Record<string, string> = {}
-      if (!tagline.trim()) stepErrors.tagline = 'Tagline is required'
-      if (!aboutDescription.trim()) stepErrors.aboutDescription = 'Tell customers your story'
-      return stepErrors
-    }
-    if (current === 4) {
-      const stepErrors: Record<string, string> = {}
-      if (!productName.trim()) stepErrors.productName = 'Product name is required'
-      if (!productPrice.trim() || Number(productPrice) <= 0) stepErrors.productPrice = 'Enter a valid price'
-      if (!productStock.trim() || Number(productStock) < 0) stepErrors.productStock = 'Enter a valid stock quantity'
-      if (!productPhoto) stepErrors.productPhoto = 'Upload a product photo'
-      return stepErrors
-    }
-    return {}
-  }
+  }, [step, categories.length])
 
-  async function runStepAction(current: number): Promise<{ error?: string }> {
-    if (current === 0) return saveStoreStep({ storeName, slug, category })
-    if (current === 1) return saveBrandStep({ brandColor })
-    if (current === 2) return saveContactStep({ contactPhone, contactEmail, branchName, branchAddress, branchCity })
-    if (current === 3) return saveStoryStep({ tagline, aboutDescription })
-    if (current === 4) return saveProductStep({ productName, productPrice, productStock })
-    if (current === 5) return savePaymentStep({ paymentId })
+  async function runStepAction(current: number, values: OnboardingValues): Promise<{ error?: string }> {
+    if (current === 0) {
+      const category = values.category === 'Other' ? (values.customCategory ?? '').trim() : values.category
+      return saveStoreStep({ storeName: values.storeName, slug, category })
+    }
+    if (current === 1) return saveBrandStep({ brandColor: values.brandColor })
+    if (current === 2)
+      return saveContactStep({
+        contactPhone: values.contactPhone,
+        contactEmail: values.contactEmail,
+        branchName: values.branchName,
+        branchAddress: values.branchAddress,
+        branchCity: values.branchCity,
+      })
+    if (current === 3) return saveStoryStep({ tagline: values.tagline, aboutDescription: values.aboutDescription })
+    if (current === 4)
+      return saveProductStep({
+        productName: values.productName,
+        productPrice: values.productPrice,
+        productStock: values.productStock,
+        categoryId: values.categoryId || undefined,
+      })
+    if (current === 5) return savePaymentStep({ paymentId: values.paymentId })
     return {}
   }
 
   function goNext() {
-    const stepErrors = validateStep(step)
-    if (Object.keys(stepErrors).length > 0) {
-      setErrors(stepErrors)
-      return
-    }
-    setErrors({})
-    setServerError(null)
-    startTransition(async () => {
-      try {
-        const result = await runStepAction(step)
-        if (result.error) {
-          if (step === 0) {
-            setErrors({ storeName: result.error, slug: result.error })
-          } else {
+    trigger(STEP_FIELDS[step]).then((valid) => {
+      if (!valid) return
+      setServerError(null)
+      startTransition(async () => {
+        try {
+          const values = getValues()
+          const result = await runStepAction(step, values)
+          if (result.error) {
+            if (step === 0) setError('storeName', { type: 'server', message: result.error })
             setServerError(result.error)
+            return
           }
-          return
+          setStep((current) => Math.min(current + 1, STEPS.length - 1))
+        } catch {
+          setServerError('Something went wrong — try again.')
         }
-        setStep((current) => Math.min(current + 1, STEPS.length - 1))
-      } catch {
-        setServerError('Something went wrong — try again.')
-      }
+      })
     })
   }
 
   function goBack() {
-    setErrors({})
     setServerError(null)
     setStep((current) => Math.max(current - 1, 0))
   }
@@ -178,12 +170,12 @@ export function OnboardingWizard({
     startTransition(async () => {
       try {
         const [result] = await Promise.all([completeOnboarding(), new Promise((resolve) => setTimeout(resolve, 1200))])
-        if (result.error || !result.storeUrl) {
+        if (result.error || !result.adminUrl) {
           setServerError(result.error ?? 'Something went wrong — try again.')
           setIsLaunching(false)
           return
         }
-        router.push(result.storeUrl)
+        router.push(result.adminUrl)
       } catch {
         setServerError('Something went wrong — try again.')
         setIsLaunching(false)
@@ -197,54 +189,18 @@ export function OnboardingWizard({
       <BackgroundWash step={step} />
       <div className="relative mx-auto flex min-h-[100dvh] w-full max-w-[560px] flex-col px-6 pb-32 pt-9 md:pb-16 md:pt-14">
         <ProgressHeader step={step} />
-        <section className="relative mt-7 flex-1 rounded-3xl border border-white/70 bg-surface/90 p-7 shadow-[0_24px_70px_-20px_rgba(31,41,55,0.25)] backdrop-blur-sm md:p-11">
-          <BackNav step={step} goBack={goBack} />
-          {serverError ? <p className="mb-4 font-body text-sm font-medium text-danger">{serverError}</p> : null}
-          {step === 0 ? (
-            <StoreStep slug={slug} storeName={storeName} setStoreName={setStoreName} category={category} setCategory={setCategory} errors={errors} />
-          ) : null}
-          {step === 1 ? (
-            <BrandStep brandColor={brandColor} setBrandColor={setBrandColor} brandLogo={brandLogo} setBrandLogo={setBrandLogo} errors={errors} />
-          ) : null}
-          {step === 2 ? (
-            <ContactStep
-              contactPhone={contactPhone}
-              setContactPhone={setContactPhone}
-              contactEmail={contactEmail}
-              setContactEmail={setContactEmail}
-              branchName={branchName}
-              setBranchName={setBranchName}
-              branchAddress={branchAddress}
-              setBranchAddress={setBranchAddress}
-              branchCity={branchCity}
-              setBranchCity={setBranchCity}
-              errors={errors}
-            />
-          ) : null}
-          {step === 3 ? (
-            <StoryStep
-              tagline={tagline}
-              setTagline={setTagline}
-              aboutDescription={aboutDescription}
-              setAboutDescription={setAboutDescription}
-              errors={errors}
-            />
-          ) : null}
-          {step === 4 ? (
-            <ProductStep
-              productName={productName}
-              setProductName={setProductName}
-              productPrice={productPrice}
-              setProductPrice={setProductPrice}
-              productStock={productStock}
-              setProductStock={setProductStock}
-              productPhoto={productPhoto}
-              setProductPhoto={setProductPhoto}
-              errors={errors}
-            />
-          ) : null}
-          {step === 5 ? <PaymentStep paymentId={paymentId} setPaymentId={setPaymentId} /> : null}
-          {step === 6 ? <GoLiveStep onGoLive={goLive} isPending={isPending} /> : null}
+        <section className="relative mt-7 flex max-h-[calc(100dvh-140px)] flex-1 flex-col rounded-3xl border border-white/70 bg-surface/90 shadow-[0_24px_70px_-20px_rgba(31,41,55,0.25)] backdrop-blur-sm">
+          <div className="flex-1 overflow-y-auto p-7 md:p-11">
+            <BackNav step={step} goBack={goBack} />
+            {serverError ? <p className="mb-4 font-body text-sm font-medium text-danger">{serverError}</p> : null}
+            {step === 0 ? <StoreStep control={control} slug={slug} serverError={serverError} /> : null}
+            {step === 1 ? <BrandStep control={control} /> : null}
+            {step === 2 ? <ContactStep control={control} /> : null}
+            {step === 3 ? <StoryStep control={control} /> : null}
+            {step === 4 ? <ProductStep control={control} categories={categories} /> : null}
+            {step === 5 ? <PaymentStep control={control} /> : null}
+            {step === 6 ? <GoLiveStep onGoLive={goLive} isPending={isPending} /> : null}
+          </div>
           <DesktopFooter step={step} goNext={goNext} isPending={isPending} />
         </section>
       </div>
@@ -316,7 +272,7 @@ function DesktopFooter({ step, goNext, isPending }: { readonly step: number; rea
   if (step === STEPS.length - 1) return null
   const accent = STEP_ACCENTS[step]
   return (
-    <footer className="mt-10 hidden items-center justify-end border-t border-[#F3F4F6] pt-10 md:flex">
+    <footer className="hidden shrink-0 items-center justify-end border-t border-[#F3F4F6] bg-surface/95 px-7 py-6 md:flex md:px-11">
       <button
         type="button"
         disabled={isPending}

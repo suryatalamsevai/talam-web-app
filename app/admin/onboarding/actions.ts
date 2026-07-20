@@ -5,6 +5,7 @@ import { Prisma } from '@prisma/client'
 import { requireOwnerSession } from '@/lib/admin-guard'
 import { prisma } from '@/lib/prisma'
 import { DEFAULT_OCCASIONS } from '@/lib/default-occasions'
+import { getAdminUrl, isLocalDevHost } from '@/lib/tenant-url'
 import type { PaymentId } from './onboarding-data'
 
 type ActionResult = { error?: string }
@@ -33,19 +34,45 @@ function slugify(value: string): string {
   )
 }
 
+async function seedDefaultCategories(tenantId: string): Promise<void> {
+  const categoryCount = await prisma.productCategory.count({ where: { tenantId } })
+  if (categoryCount > 0) return
+
+  const defaultCats = [
+    { name: 'Sarees', slug: 'sarees', sortOrder: 0, department: 'women', isDefault: true },
+    { name: 'Kurtis', slug: 'kurtis', sortOrder: 1, department: 'women', isDefault: true },
+    { name: 'Dupattas', slug: 'dupattas', sortOrder: 2, department: 'women', isDefault: true },
+    { name: 'Sets & Suits', slug: 'sets-suits', sortOrder: 3, department: 'women', isDefault: true },
+    { name: 'Lehengas', slug: 'lehengas', sortOrder: 4, department: 'women', isDefault: true },
+    { name: 'Accessories', slug: 'accessories', sortOrder: 5, department: null, isDefault: true },
+  ]
+  await prisma.productCategory.createMany({
+    data: defaultCats.map((c) => ({ ...c, tenantId })),
+  })
+}
+
 export async function saveStoreStep(input: { storeName: string; slug: string; category: string }): Promise<ActionResult> {
   const { userId } = await requireOwnerSession()
   try {
-    await prisma.tenant.upsert({
+    const tenant = await prisma.tenant.upsert({
       where: { ownerId: userId },
       create: { ownerId: userId, name: input.storeName, slug: input.slug, storeType: input.category, onboardingStep: 1 },
       update: { name: input.storeName, slug: input.slug, storeType: input.category, onboardingStep: 1 },
+      select: { id: true },
     })
+    await seedDefaultCategories(tenant.id)
     return {}
   } catch (err) {
     if (isSlugCollision(err)) return { error: 'That store URL is taken — try another.' }
     throw err
   }
+}
+
+export async function getOnboardingCategories(): Promise<{ id: string; name: string }[]> {
+  const { userId } = await requireOwnerSession()
+  const tenant = await prisma.tenant.findUnique({ where: { ownerId: userId }, select: { id: true } })
+  if (!tenant) return []
+  return prisma.productCategory.findMany({ where: { tenantId: tenant.id }, orderBy: { sortOrder: 'asc' }, select: { id: true, name: true } })
 }
 
 export async function saveBrandStep(input: { brandColor: string }): Promise<ActionResult> {
@@ -100,7 +127,12 @@ export async function saveStoryStep(input: { tagline: string; aboutDescription: 
   return {}
 }
 
-export async function saveProductStep(input: { productName: string; productPrice: string; productStock: string }): Promise<ActionResult> {
+export async function saveProductStep(input: {
+  productName: string
+  productPrice: string
+  productStock: string
+  categoryId?: string
+}): Promise<ActionResult> {
   const { userId } = await requireOwnerSession()
   const tenant = await prisma.tenant.update({
     where: { ownerId: userId },
@@ -120,6 +152,7 @@ export async function saveProductStep(input: { productName: string; productPrice
     price: Number(input.productPrice),
     sizes: ['Free Size'],
     stockBySize: { 'Free Size': Number(input.productStock) },
+    categoryId: input.categoryId ?? null,
   }
 
   if (existingProduct) {
@@ -147,25 +180,12 @@ export async function savePaymentStep(input: { paymentId: PaymentId }): Promise<
 }
 
 async function seedStarterContent(tenantId: string): Promise<void> {
-  const [categoryCount, bannerCount, promotionCount] = await Promise.all([
-    prisma.productCategory.count({ where: { tenantId } }),
+  const [bannerCount, promotionCount] = await Promise.all([
     prisma.storeBanner.count({ where: { tenantId } }),
     prisma.storePromotion.count({ where: { tenantId } }),
   ])
 
-  if (categoryCount === 0) {
-    const defaultCats = [
-      { name: 'Sarees', slug: 'sarees', sortOrder: 0, department: 'women', isDefault: true },
-      { name: 'Kurtis', slug: 'kurtis', sortOrder: 1, department: 'women', isDefault: true },
-      { name: 'Dupattas', slug: 'dupattas', sortOrder: 2, department: 'women', isDefault: true },
-      { name: 'Sets & Suits', slug: 'sets-suits', sortOrder: 3, department: 'women', isDefault: true },
-      { name: 'Lehengas', slug: 'lehengas', sortOrder: 4, department: 'women', isDefault: true },
-      { name: 'Accessories', slug: 'accessories', sortOrder: 5, department: null, isDefault: true },
-    ]
-    await prisma.productCategory.createMany({
-      data: defaultCats.map((c) => ({ ...c, tenantId })),
-    })
-  }
+  await seedDefaultCategories(tenantId)
 
   // Upsert (not gated on empty) so re-running this backfills any default occasions a tenant is missing.
   for (const occasion of DEFAULT_OCCASIONS) {
@@ -192,7 +212,7 @@ async function seedStarterContent(tenantId: string): Promise<void> {
   }
 }
 
-export async function completeOnboarding(): Promise<ActionResult & { storeUrl?: string }> {
+export async function completeOnboarding(): Promise<ActionResult & { adminUrl?: string }> {
   const { userId } = await requireOwnerSession()
   const tenant = await prisma.tenant.update({
     where: { ownerId: userId },
@@ -203,9 +223,7 @@ export async function completeOnboarding(): Promise<ActionResult & { storeUrl?: 
   await seedStarterContent(tenant.id)
 
   const host = (await headers()).get('host')
-  const isLocalDev = host?.includes('localhost') ?? false
-  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'talam4shop.com'
-  const storeUrl = isLocalDev ? `/dev/store/${tenant.slug}` : `https://${tenant.slug}.${rootDomain}`
+  const adminUrl = getAdminUrl(tenant.slug, isLocalDevHost(host))
 
-  return { storeUrl }
+  return { adminUrl }
 }

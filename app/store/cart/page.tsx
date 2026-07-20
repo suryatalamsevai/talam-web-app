@@ -108,7 +108,7 @@ function CouponSection() {
   const [applied, setApplied] = useState<string | null>(null)
 
   return (
-    <div className="py-2">
+    <div className="rounded-xl border border-border bg-surface p-4">
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
           <Tag className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-warm" />
@@ -117,7 +117,7 @@ function CouponSection() {
             value={code}
             onChange={e => setCode(e.target.value.toUpperCase())}
             placeholder="Have a coupon? Enter code"
-            className="h-11 w-full rounded-lg bg-surface pl-9 pr-3 font-body text-sm text-fg placeholder:text-muted-warm/60 focus:outline-none"
+            className="h-11 w-full rounded-lg border border-border bg-surface pl-9 pr-3 font-body text-sm text-fg placeholder:text-muted-warm/60 focus:outline-none"
           />
         </div>
         <button

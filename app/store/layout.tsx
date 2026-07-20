@@ -1,6 +1,6 @@
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
-import { getTenantStorefront, getRequestTenantId } from '@/lib/data/tenant'
+import { getTenantStorefront, getRequestTenantId, getMissingStoreConfig } from '@/lib/data/tenant'
 import { getCategories } from '@/lib/data/products'
 import { StoreBaseProvider } from '@/components/store/store-context'
 import { StoreHeader } from '@/components/store/store-header'
@@ -18,26 +18,40 @@ export default async function StoreLayout({
 
   if (!tenantId) notFound()
 
-  const [tenant, categories, hdrs] = await Promise.all([
+  const [tenant, categories, hdrs, missingConfig] = await Promise.all([
     getTenantStorefront(tenantId),
     getCategories(tenantId),
     headers(),
+    getMissingStoreConfig(tenantId),
   ])
 
   if (!tenant) notFound()
+
+  if (missingConfig.length > 0) {
+    return (
+      <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-2 bg-bg px-6 text-center">
+        <h1 className="font-heading text-2xl font-bold text-fg">Coming soon</h1>
+        <p className="max-w-sm font-body text-sm text-muted-warm">
+          {tenant.name} is still setting up their store. Check back shortly.
+        </p>
+      </div>
+    )
+  }
 
   const storeBase = hdrs.get('x-store-base') ?? ''
 
   return (
     <StoreBaseProvider base={storeBase}>
-      <StoreHeader tenant={tenant} />
-      <div className="pb-20 sm:pb-0">
-        {children}
-        <StoreFooter tenant={tenant} categories={categories} />
+      <div style={tenant.brandColor ? ({ '--color-store-primary': tenant.brandColor } as React.CSSProperties) : undefined}>
+        <StoreHeader tenant={tenant} />
+        <div className="pb-20 sm:pb-0">
+          {children}
+          <StoreFooter tenant={tenant} categories={categories} />
+        </div>
+        <MobileTabBar />
+        <CartToast />
+        <TapFeedback />
       </div>
-      <MobileTabBar />
-      <CartToast />
-      <TapFeedback />
     </StoreBaseProvider>
   )
 }

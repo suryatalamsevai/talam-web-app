@@ -1,25 +1,14 @@
-import { Field, FieldHint, FileDropzone, StepTitle, TextInput } from './onboarding-fields'
+import { Controller, type Control } from 'react-hook-form'
+
+import { Field, FieldHint, FileDropzone, SelectField, StepTitle, TextInput } from './onboarding-fields'
+import type { OnboardingValues } from './onboarding-schema'
 
 export function ProductStep({
-  productName,
-  setProductName,
-  productPrice,
-  setProductPrice,
-  productStock,
-  setProductStock,
-  productPhoto,
-  setProductPhoto,
-  errors,
+  control,
+  categories,
 }: {
-  readonly productName: string
-  readonly setProductName: (value: string) => void
-  readonly productPrice: string
-  readonly setProductPrice: (value: string) => void
-  readonly productStock: string
-  readonly setProductStock: (value: string) => void
-  readonly productPhoto: File | null
-  readonly setProductPhoto: (file: File | null) => void
-  readonly errors: Record<string, string>
+  readonly control: Control<OnboardingValues>
+  readonly categories: { id: string; name: string }[]
 }) {
   return (
     <div className="animate-[fadeIn_0.2s_ease-out]">
@@ -29,49 +18,78 @@ export function ProductStep({
         description="Upload a product photo, set the price, and stock quantity."
       />
       <div className="flex flex-col gap-6">
-        <Field label="Product name" error={errors.productName}>
-          <FieldHint>E.g., &quot;Cotton Saree&quot; or &quot;Blue Kurta&quot;</FieldHint>
-          <TextInput
-            value={productName}
-            onChange={(event) => setProductName(event.target.value)}
-            invalid={Boolean(errors.productName)}
-          />
-        </Field>
-        <div>
-          <span className="font-body text-sm font-medium leading-[18px] text-[#374151]">Product photo</span>
-          <FileDropzone
-            hint="High-quality photo (min 500×500px)"
-            fileName={productPhoto?.name ?? null}
-            onFileChange={setProductPhoto}
-          />
-          {errors.productPhoto ? <span className="mt-1.5 block font-body text-xs font-medium text-danger">{errors.productPhoto}</span> : null}
-        </div>
-        <Field label="Price" error={errors.productPrice}>
-          <FieldHint>Selling price in INR</FieldHint>
-          <div
-            className={[
-              'flex h-14 items-center gap-1 rounded-xl border bg-surface px-5',
-              errors.productPrice ? 'border-danger' : 'border-[#E5E7EB]',
-            ].join(' ')}
-          >
-            <span className="font-body text-base text-[#9CA3AF]">₹</span>
-            <input
-              value={productPrice}
-              onChange={(event) => setProductPrice(event.target.value)}
-              inputMode="numeric"
-              className="h-full w-full bg-transparent font-body text-base text-[#1F2937] outline-none"
-            />
-          </div>
-        </Field>
-        <Field label="Stock quantity" error={errors.productStock}>
-          <FieldHint>How many units do you have?</FieldHint>
-          <TextInput
-            value={productStock}
-            onChange={(event) => setProductStock(event.target.value)}
-            inputMode="numeric"
-            invalid={Boolean(errors.productStock)}
-          />
-        </Field>
+        <Controller
+          control={control}
+          name="productName"
+          render={({ field, fieldState }) => (
+            <Field label="Product name" error={fieldState.error?.message}>
+              <FieldHint>E.g., &quot;Cotton Saree&quot; or &quot;Blue Kurta&quot;</FieldHint>
+              <TextInput value={field.value} onChange={field.onChange} invalid={Boolean(fieldState.error)} />
+            </Field>
+          )}
+        />
+        <Controller
+          control={control}
+          name="categoryId"
+          render={({ field }) => (
+            <Field label="Category">
+              <SelectField value={field.value ?? ''} onChange={field.onChange}>
+                <option value="">No category</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </SelectField>
+            </Field>
+          )}
+        />
+        <Controller
+          control={control}
+          name="productPhoto"
+          render={({ field, fieldState }) => (
+            <div>
+              <span className="font-body text-sm font-medium leading-[18px] text-[#374151]">Product photo</span>
+              <FileDropzone hint="High-quality photo (min 500×500px)" file={field.value} onFileChange={field.onChange} />
+              {fieldState.error ? (
+                <span className="mt-1.5 block font-body text-xs font-medium text-danger">{fieldState.error.message}</span>
+              ) : null}
+            </div>
+          )}
+        />
+        <Controller
+          control={control}
+          name="productPrice"
+          render={({ field, fieldState }) => (
+            <Field label="Price" error={fieldState.error?.message}>
+              <FieldHint>Selling price in INR</FieldHint>
+              <div
+                className={[
+                  'flex h-14 items-center gap-1 rounded-xl border bg-surface px-5',
+                  fieldState.error ? 'border-danger' : 'border-[#E5E7EB]',
+                ].join(' ')}
+              >
+                <span className="font-body text-base text-[#9CA3AF]">₹</span>
+                <input
+                  value={field.value}
+                  onChange={field.onChange}
+                  inputMode="numeric"
+                  className="h-full w-full bg-transparent font-body text-base text-[#1F2937] outline-none"
+                />
+              </div>
+            </Field>
+          )}
+        />
+        <Controller
+          control={control}
+          name="productStock"
+          render={({ field, fieldState }) => (
+            <Field label="Stock quantity" error={fieldState.error?.message}>
+              <FieldHint>How many units do you have?</FieldHint>
+              <TextInput value={field.value} onChange={field.onChange} inputMode="numeric" invalid={Boolean(fieldState.error)} />
+            </Field>
+          )}
+        />
       </div>
     </div>
   )

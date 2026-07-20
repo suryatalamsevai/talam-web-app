@@ -5,14 +5,14 @@ import { GoogleButton } from '@/components/auth/google-button'
 import { Logo } from '@/components/logo'
 import { createServerClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
+import { getAdminUrl, isLocalDevHost } from '@/lib/tenant-url'
 
 export function resolveSignedInDestination(
   tenant: { slug: string; isOnboarded: boolean } | null,
   isLocalDev: boolean
 ): string {
   if (!tenant || !tenant.isOnboarded) return '/admin/onboarding'
-  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'talam4shop.com'
-  return isLocalDev ? `/dev/store/${tenant.slug}/admin/dashboard` : `https://${tenant.slug}.${rootDomain}/admin/dashboard`
+  return getAdminUrl(tenant.slug, isLocalDev)
 }
 
 export default async function AuthPage({
@@ -28,7 +28,7 @@ export default async function AuthPage({
   if (user) {
     const tenant = await prisma.tenant.findUnique({ where: { ownerId: user.id }, select: { slug: true, isOnboarded: true } })
     const host = (await headers()).get('host')
-    redirect(resolveSignedInDestination(tenant, host?.includes('localhost') ?? false))
+    redirect(resolveSignedInDestination(tenant, isLocalDevHost(host)))
   }
 
   const { error } = await searchParams

@@ -1,34 +1,33 @@
-import { Field, FieldHint, StepTitle, TextArea, TextInput } from './onboarding-fields'
+import { Controller, type Control } from 'react-hook-form'
 
-export function StoryStep({
-  tagline,
-  setTagline,
-  aboutDescription,
-  setAboutDescription,
-  errors,
-}: {
-  readonly tagline: string
-  readonly setTagline: (value: string) => void
-  readonly aboutDescription: string
-  readonly setAboutDescription: (value: string) => void
-  readonly errors: Record<string, string>
-}) {
+import { Field, FieldHint, StepTitle, TextArea, TextInput } from './onboarding-fields'
+import type { OnboardingValues } from './onboarding-schema'
+
+export function StoryStep({ control }: { readonly control: Control<OnboardingValues> }) {
   return (
     <div className="animate-[fadeIn_0.2s_ease-out]">
       <StepTitle step={4} title="Your story" description="Tell customers who you are and why they should buy from you." />
       <div className="flex flex-col gap-6">
-        <Field label="Tagline" error={errors.tagline}>
-          <FieldHint>A short line shown near your store name</FieldHint>
-          <TextInput value={tagline} onChange={(event) => setTagline(event.target.value)} invalid={Boolean(errors.tagline)} />
-        </Field>
-        <Field label="About your store" error={errors.aboutDescription}>
-          <FieldHint>Shown on your About page</FieldHint>
-          <TextArea
-            value={aboutDescription}
-            onChange={(event) => setAboutDescription(event.target.value)}
-            invalid={Boolean(errors.aboutDescription)}
-          />
-        </Field>
+        <Controller
+          control={control}
+          name="tagline"
+          render={({ field, fieldState }) => (
+            <Field label="Tagline" error={fieldState.error?.message}>
+              <FieldHint>A short line shown near your store name</FieldHint>
+              <TextInput value={field.value} onChange={field.onChange} invalid={Boolean(fieldState.error)} />
+            </Field>
+          )}
+        />
+        <Controller
+          control={control}
+          name="aboutDescription"
+          render={({ field, fieldState }) => (
+            <Field label="About your store" error={fieldState.error?.message}>
+              <FieldHint>Shown on your About page</FieldHint>
+              <TextArea value={field.value} onChange={field.onChange} invalid={Boolean(fieldState.error)} />
+            </Field>
+          )}
+        />
       </div>
     </div>
   )

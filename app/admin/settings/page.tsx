@@ -716,6 +716,11 @@ function DeleteStoreTab() {
 export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('Store')
 
+  useEffect(() => {
+    const tab = new URLSearchParams(window.location.search).get('tab')
+    if (tab && ([...TABS, 'Delete Store'] as readonly string[]).includes(tab)) setActiveTab(tab as Tab)
+  }, [])
+
   return (
     <div className="mx-auto max-w-3xl">
       {/* Mobile header */}

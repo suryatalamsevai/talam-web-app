@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { resolveSignedInDestination } from '@/app/auth/page'
+import { isLocalDevHost } from '@/lib/tenant-url'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -38,8 +39,7 @@ export async function GET(request: NextRequest) {
   let next = explicitNext
   if (!next) {
     const tenant = await prisma.tenant.findUnique({ where: { ownerId: user.id }, select: { slug: true, isOnboarded: true } })
-    const isLocalDev = request.headers.get('host')?.includes('localhost') ?? false
-    next = resolveSignedInDestination(tenant, isLocalDev)
+    next = resolveSignedInDestination(tenant, isLocalDevHost(request.headers.get('host')))
   }
 
   return NextResponse.redirect(new URL(next, request.url))

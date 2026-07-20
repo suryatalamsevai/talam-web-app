@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X } from 'lucide-react'
+import { X, Check, ArrowDown, Package, XCircle } from 'lucide-react'
 
 import type { MockOrder } from '@/app/admin/orders/page'
 
@@ -46,8 +46,19 @@ function getTimeline(status: string) {
   }))
 }
 
+const ACTIONS = [
+  { key: 'confirmed', label: 'Confirm Order', sub: 'Mark as confirmed', icon: Check, color: 'bg-brand-primary' },
+  { key: 'shipped', label: 'Ship Order', sub: 'Add tracking number', icon: ArrowDown, color: 'bg-[#3B82F6]' },
+  { key: 'delivered', label: 'Mark Delivered', sub: 'Order received by customer', icon: Package, color: 'bg-[#22C55E]' },
+  { key: 'cancelled', label: 'Cancel Order', sub: 'Permanently cancel this order', icon: XCircle, color: 'bg-danger' },
+] as const
+
+type ActionKey = (typeof ACTIONS)[number]['key']
+
 export function OrderDetailsModal({ order, onClose }: Props) {
   const [visible, setVisible] = useState(false)
+  const [confirmKey, setConfirmKey] = useState<ActionKey | null>(null)
+  const [trackingId, setTrackingId] = useState('')
 
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true))
@@ -61,19 +72,20 @@ export function OrderDetailsModal({ order, onClose }: Props) {
   const sc = STATUS_COLOR[order.status] ?? STATUS_COLOR.Pending
   const timeline = getTimeline(order.status)
   const itemName = order.items.split('·')[0].trim()
+  const confirmAction = ACTIONS.find((a) => a.key === confirmKey)
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-end overflow-y-auto bg-black/40 transition-opacity duration-250 md:items-start md:justify-center md:py-10 ${visible ? 'opacity-100' : 'opacity-0'}`}
+      className={`fixed inset-0 z-50 flex items-end bg-black/40 transition-opacity duration-250 md:items-center md:justify-center md:py-10 ${visible ? 'opacity-100' : 'opacity-0'}`}
       onClick={(e) => { if (e.target === e.currentTarget) handleClose() }}
     >
       <div
-        className={`w-full rounded-t-2xl bg-surface shadow-lg transition-transform duration-250 ease-out md:max-w-[640px] md:rounded-2xl ${
+        className={`flex max-h-[92vh] w-full flex-col rounded-t-2xl bg-surface shadow-lg transition-transform duration-250 ease-out md:max-h-[85vh] md:max-w-[640px] md:rounded-2xl ${
           visible ? 'translate-y-0 md:scale-100' : 'translate-y-full md:translate-y-0 md:scale-95'
         }`}
       >
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface p-5 md:rounded-t-2xl">
+        <div className="flex shrink-0 items-center justify-between border-b border-border p-5 md:rounded-t-2xl">
           <div>
             <h2 className="text-lg font-bold text-fg">Order Details</h2>
             <p className="text-xs text-muted-warm">{order.code}</p>
@@ -83,7 +95,7 @@ export function OrderDetailsModal({ order, onClose }: Props) {
           </button>
         </div>
 
-        <div className="max-h-[80vh] overflow-y-auto p-5 md:max-h-[70vh]">
+        <div className="grow overflow-y-auto p-5">
           {/* Status + Date */}
           <div className="mb-6 flex items-center justify-between rounded-xl bg-bg p-4">
             <div>
@@ -210,10 +222,66 @@ export function OrderDetailsModal({ order, onClose }: Props) {
               ))}
             </div>
           </div>
+
+          {/* Order Actions */}
+          <div>
+            <p className="mb-3 text-xs font-bold uppercase tracking-wide text-fg">Order Actions</p>
+            {confirmAction ? (
+              <div className="rounded-xl border border-border p-4">
+                <p className="text-sm font-semibold text-fg">
+                  {confirmAction.key === 'cancelled'
+                    ? 'Permanently cancel this order? This cannot be undone.'
+                    : `Confirm: ${confirmAction.label}?`}
+                </p>
+                {confirmAction.key === 'shipped' && (
+                  <input
+                    autoFocus
+                    value={trackingId}
+                    onChange={(e) => setTrackingId(e.target.value)}
+                    placeholder="Tracking number"
+                    className="mt-3 w-full rounded-md border border-border px-3 py-2 text-sm"
+                  />
+                )}
+                <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={() => { setConfirmKey(null); setTrackingId('') }}
+                    className="grow cursor-pointer rounded-lg border border-border p-2.5 text-sm font-semibold text-fg transition-colors active:bg-bg"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    disabled={confirmAction.key === 'shipped' && !trackingId.trim()}
+                    onClick={() => { setConfirmKey(null); setTrackingId('') }}
+                    className="grow cursor-pointer rounded-lg bg-brand-primary p-2.5 text-sm font-semibold text-surface transition-transform active:scale-[0.98] disabled:opacity-40"
+                  >
+                    Yes, {confirmAction.label}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {ACTIONS.map((action) => (
+                  <button
+                    key={action.key}
+                    onClick={() => setConfirmKey(action.key)}
+                    className="flex cursor-pointer items-center gap-3 rounded-xl border border-border p-3 text-left transition-colors active:bg-bg"
+                  >
+                    <span className={`flex size-7 shrink-0 items-center justify-center rounded-lg ${action.color}`}>
+                      <action.icon className="size-[14px] text-surface" strokeWidth={2.5} />
+                    </span>
+                    <span>
+                      <span className="block text-sm font-semibold text-fg">{action.label}</span>
+                      <span className="block text-xs text-muted-warm">{action.sub}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 flex gap-3 border-t border-border bg-surface p-5 md:rounded-b-2xl">
+        <div className="flex shrink-0 gap-3 border-t border-border p-5 md:rounded-b-2xl">
           <button onClick={handleClose} className="grow cursor-pointer rounded-lg border border-border p-3 text-md font-semibold text-fg transition-colors active:bg-bg">Close</button>
           <button className="grow cursor-pointer rounded-lg bg-brand-primary p-3 text-md font-semibold text-surface transition-transform active:scale-[0.98]">Print Invoice</button>
         </div>

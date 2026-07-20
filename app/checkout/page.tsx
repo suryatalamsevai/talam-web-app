@@ -1,26 +1,32 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Check, ChevronDown } from 'lucide-react'
+import { Check, ChevronDown, Loader2 } from 'lucide-react'
+import { useForm, Controller, useWatch } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { useCartStore } from '@/lib/store/cart'
 import { CheckoutHeader } from '@/components/checkout/checkout-header'
 import { StepIndicator } from '@/components/checkout/step-indicator'
 import { OrderSummaryCard, TrustBar } from '@/components/checkout/order-summary-card'
-import { GoogleIcon } from '@/components/icons/google-icon'
+import { GoogleButton } from '@/components/auth/google-button'
+import { useStoreBase } from '@/components/store/store-context'
+import { createBrowserClient } from '@/lib/supabase/client'
 
 // ponytail: inline tenant config until SSR wrapper is added
 const tenant = { name: 'Talam Store', freeDeliveryAbove: 999, shippingFee: 99 }
 
-type Address = {
-  name: string
-  phone: string
-  line1: string
-  line2: string
-  pincode: string
-  city: string
-  state: string
-}
+const addressSchema = z.object({
+  name: z.string().trim().min(1, 'Name is required'),
+  phone: z.string().trim().min(1, 'Phone is required'),
+  line1: z.string().trim().min(1, 'Address line 1 is required'),
+  line2: z.string().optional(),
+  pincode: z.string().trim().min(1, 'Pincode is required'),
+  city: z.string().trim().min(1, 'City is required'),
+  state: z.string().trim().min(1, 'State is required'),
+})
+type Address = z.infer<typeof addressSchema>
 
 const EMPTY_ADDRESS: Address = { name: '', phone: '', line1: '', line2: '', pincode: '', city: '', state: '' }
 const INDIAN_STATES = ['Tamil Nadu', 'Karnataka', 'Kerala', 'Andhra Pradesh', 'Telangana', 'Maharashtra', 'Delhi']
@@ -62,6 +68,7 @@ export default function CheckoutPage() {
   const router = useRouter()
   const items = useCartStore(s => s.items)
   const clear = useCartStore(s => s.clear)
+  const storeBase = useStoreBase()
 
   const [step, setStep] = useState<1 | 2 | 3>(1)
 
@@ -71,14 +78,28 @@ export default function CheckoutPage() {
   const [otpSent, setOtpSent] = useState(false)
   const [verified, setVerified] = useState(false)
 
+  useEffect(() => {
+    const supabase = createBrowserClient()
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        setVerified(true)
+        setStep((current) => (current === 1 ? 2 : current))
+      }
+    })
+  }, [])
+
   // Step 2 — address
-  const [address, setAddress] = useState<Address>(EMPTY_ADDRESS)
-  const [addressErrors, setAddressErrors] = useState<Partial<Record<keyof Address, boolean>>>({})
+  const { control: addressControl, trigger: triggerAddress } = useForm<Address>({
+    resolver: zodResolver(addressSchema),
+    defaultValues: EMPTY_ADDRESS,
+  })
+  const address = useWatch({ control: addressControl })
 
   // Step 3 — payment
   const [paymentMethod, setPaymentMethod] = useState<'upi' | 'instamojo' | 'razorpay'>('upi')
   const [utr, setUtr] = useState('')
   const [placing, setPlacing] = useState(false)
+  const [orderPlaced, setOrderPlaced] = useState(false)
 
   const subtotal = items.reduce((s, i) => s + (i.comparePrice && i.comparePrice > i.price ? i.comparePrice : i.price) * i.quantity, 0)
   const saleTotal = items.reduce((s, i) => s + i.price * i.quantity, 0)
@@ -87,11 +108,20 @@ export default function CheckoutPage() {
   const shippingFee = freeDeliveryThreshold > 0 && saleTotal >= freeDeliveryThreshold ? 0 : Number(tenant.shippingFee)
   const total = saleTotal + shippingFee
 
-  if (items.length === 0) {
+  if (items.length === 0 && !orderPlaced) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center px-4 text-center">
         <p className="font-body text-sm text-muted-warm">Your cart is empty.</p>
         <button onClick={() => router.push('/cart')} className="mt-4 font-body text-sm font-semibold text-store-primary">← Back to Cart</button>
+      </main>
+    )
+  }
+
+  if (placing) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center gap-3 px-4 text-center">
+        <Loader2 className="h-8 w-8 animate-spin text-store-primary" />
+        <p className="font-body text-sm font-medium text-fg">Placing your order…</p>
       </main>
     )
   }
@@ -107,16 +137,8 @@ export default function CheckoutPage() {
     setStep(2)
   }
 
-  function validateAddress() {
-    const required: (keyof Address)[] = ['name', 'phone', 'line1', 'pincode', 'city', 'state']
-    const errors: Partial<Record<keyof Address, boolean>> = {}
-    for (const key of required) if (!address[key].trim()) errors[key] = true
-    setAddressErrors(errors)
-    return Object.keys(errors).length === 0
-  }
-
-  function handleContinueFromAddress() {
-    if (validateAddress()) setStep(3)
+  async function handleContinueFromAddress() {
+    if (await triggerAddress()) setStep(3)
   }
 
   function handlePlaceOrder() {
@@ -134,8 +156,11 @@ export default function CheckoutPage() {
       paymentMethod,
     }
     sessionStorage.setItem('talam-last-order', JSON.stringify(order))
-    clear()
-    router.push('/checkout/confirmed')
+    setTimeout(() => {
+      setOrderPlaced(true)
+      clear()
+      router.push('/checkout/confirmed')
+    }, 2000)
   }
 
   const payLabel = step === 1 ? `Pay ₹${total.toLocaleString('en-IN')}` : step === 2 ? 'Continue to Payment' : 'Place Order'
@@ -221,12 +246,7 @@ export default function CheckoutPage() {
                       <span className="h-px flex-1 bg-border-light" />
                     </div>
 
-                    <button
-                      onClick={() => setStep(2)}
-                      className="flex h-12 w-full items-center justify-center gap-2.5 rounded-[10px] border-[1.5px] border-border font-body text-sm font-medium text-fg hover:bg-bg"
-                    >
-                      <GoogleIcon /> Continue with Google
-                    </button>
+                    <GoogleButton redirectPath={`${storeBase}/auth/callback`} next="/checkout" />
                   </>
                 )}
               </div>
@@ -238,38 +258,96 @@ export default function CheckoutPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="col-span-2">
                     <label className="mb-1.5 block font-body text-[13px] font-bold text-fg">Name<span className="text-danger">*</span></label>
-                    <input value={address.name} onChange={e => setAddress(a => ({ ...a, name: e.target.value }))} className={fieldClass(!!addressErrors.name)} />
+                    <Controller
+                      control={addressControl}
+                      name="name"
+                      render={({ field, fieldState }) => (
+                        <>
+                          <input {...field} className={fieldClass(!!fieldState.error)} />
+                          {fieldState.error ? <p className="mt-1 font-body text-xs text-danger">{fieldState.error.message}</p> : null}
+                        </>
+                      )}
+                    />
                   </div>
                   <div className="col-span-2">
                     <label className="mb-1.5 block font-body text-[13px] font-bold text-fg">Phone<span className="text-danger">*</span></label>
-                    <input value={address.phone} onChange={e => setAddress(a => ({ ...a, phone: e.target.value }))} className={fieldClass(!!addressErrors.phone)} />
+                    <Controller
+                      control={addressControl}
+                      name="phone"
+                      render={({ field, fieldState }) => (
+                        <>
+                          <input {...field} className={fieldClass(!!fieldState.error)} />
+                          {fieldState.error ? <p className="mt-1 font-body text-xs text-danger">{fieldState.error.message}</p> : null}
+                        </>
+                      )}
+                    />
                   </div>
                   <div className="col-span-2">
                     <label className="mb-1.5 block font-body text-[13px] font-bold text-fg">Address line 1<span className="text-danger">*</span></label>
-                    <input value={address.line1} onChange={e => setAddress(a => ({ ...a, line1: e.target.value }))} className={fieldClass(!!addressErrors.line1)} />
+                    <Controller
+                      control={addressControl}
+                      name="line1"
+                      render={({ field, fieldState }) => (
+                        <>
+                          <input {...field} className={fieldClass(!!fieldState.error)} />
+                          {fieldState.error ? <p className="mt-1 font-body text-xs text-danger">{fieldState.error.message}</p> : null}
+                        </>
+                      )}
+                    />
                   </div>
                   <div className="col-span-2">
                     <label className="mb-1.5 block font-body text-[13px] font-bold text-fg">Address line 2 (optional)</label>
-                    <input value={address.line2} onChange={e => setAddress(a => ({ ...a, line2: e.target.value }))} className={fieldClass(false)} />
+                    <Controller
+                      control={addressControl}
+                      name="line2"
+                      render={({ field }) => <input {...field} className={fieldClass(false)} />}
+                    />
                   </div>
                   <div>
                     <label className="mb-1.5 block font-body text-[13px] font-bold text-fg">Pincode<span className="text-danger">*</span></label>
-                    <input value={address.pincode} onChange={e => setAddress(a => ({ ...a, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) }))} className={fieldClass(!!addressErrors.pincode)} />
+                    <Controller
+                      control={addressControl}
+                      name="pincode"
+                      render={({ field, fieldState }) => (
+                        <>
+                          <input
+                            {...field}
+                            onChange={(e) => field.onChange(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                            className={fieldClass(!!fieldState.error)}
+                          />
+                          {fieldState.error ? <p className="mt-1 font-body text-xs text-danger">{fieldState.error.message}</p> : null}
+                        </>
+                      )}
+                    />
                   </div>
                   <div>
                     <label className="mb-1.5 block font-body text-[13px] font-bold text-fg">City<span className="text-danger">*</span></label>
-                    <input value={address.city} onChange={e => setAddress(a => ({ ...a, city: e.target.value }))} className={fieldClass(!!addressErrors.city)} />
+                    <Controller
+                      control={addressControl}
+                      name="city"
+                      render={({ field, fieldState }) => (
+                        <>
+                          <input {...field} className={fieldClass(!!fieldState.error)} />
+                          {fieldState.error ? <p className="mt-1 font-body text-xs text-danger">{fieldState.error.message}</p> : null}
+                        </>
+                      )}
+                    />
                   </div>
                   <div className="col-span-2 relative">
                     <label className="mb-1.5 block font-body text-[13px] font-bold text-fg">State<span className="text-danger">*</span></label>
-                    <select
-                      value={address.state}
-                      onChange={e => setAddress(a => ({ ...a, state: e.target.value }))}
-                      className={`${fieldClass(!!addressErrors.state)} appearance-none bg-surface`}
-                    >
-                      <option value="">Select state</option>
-                      {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
+                    <Controller
+                      control={addressControl}
+                      name="state"
+                      render={({ field, fieldState }) => (
+                        <>
+                          <select {...field} className={`${fieldClass(!!fieldState.error)} appearance-none bg-surface`}>
+                            <option value="">Select state</option>
+                            {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                          </select>
+                          {fieldState.error ? <p className="mt-1 font-body text-xs text-danger">{fieldState.error.message}</p> : null}
+                        </>
+                      )}
+                    />
                     <ChevronDown className="pointer-events-none absolute right-3.5 top-[38px] h-4 w-4 text-muted-warm" />
                   </div>
                 </div>

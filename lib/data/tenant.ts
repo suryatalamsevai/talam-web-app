@@ -32,6 +32,34 @@ export type TenantStorefront = {
   branch: { address: string | null; city: string | null; hours: string | null } | null
 }
 
+export type MissingConfigItem = { key: 'payments' | 'contact' | 'about'; label: string; settingsTab: string }
+
+export async function getMissingStoreConfig(tenantId: string): Promise<MissingConfigItem[]> {
+  const tenant = await withTenant(tenantId, (db) =>
+    db.tenant.findUnique({
+      where: { id: tenantId },
+      select: {
+        isOnboarded: true,
+        contactPhone: true,
+        contactEmail: true,
+        about: { select: { description: true } },
+      },
+    })
+  )
+  if (!tenant) return []
+
+  const missing: MissingConfigItem[] = []
+  // ponytail: no persisted "payment configured" flag exists yet (paymentProvider always has
+  // a default, and nothing writes paymentConfig) — the onboarding wizard forces a payment
+  // choice, so isOnboarded is the best available signal. Revisit once Payments settings are
+  // actually saveable after onboarding.
+  if (!tenant.isOnboarded) missing.push({ key: 'payments', label: 'Payments', settingsTab: 'Payments' })
+  if (!tenant.contactPhone?.trim() || !tenant.contactEmail?.trim())
+    missing.push({ key: 'contact', label: 'Contact Info', settingsTab: 'Contact Info' })
+  if (!tenant.about?.description?.trim()) missing.push({ key: 'about', label: 'Store Details', settingsTab: 'About' })
+  return missing
+}
+
 export async function getBranches(tenantId: string) {
   return withTenant(tenantId, (db) =>
     db.storeBranch.findMany({
