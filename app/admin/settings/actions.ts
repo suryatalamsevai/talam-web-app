@@ -3,7 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { requireOwnerTenant } from '@/lib/admin-guard'
 import { withTenant } from '@/lib/prisma'
-import type { SocialLink } from '@/lib/data/tenant'
+import { createLinkedAccount, getLinkedAccount } from '@/lib/razorpay'
+import type { RazorpayPaymentConfig, SocialLink } from '@/lib/data/tenant'
 
 export async function getAboutAction(): Promise<{ description: string; socialLinks: SocialLink[] }> {
   const { tenantId } = await requireOwnerTenant()
@@ -68,4 +69,56 @@ export async function updateContactSettingsAction(input: ContactSettings): Promi
 
   revalidatePath('/admin/settings')
   revalidatePath('/admin/dashboard')
+}
+
+export async function getPaymentSettingsAction(): Promise<{ provider: string; razorpay: RazorpayPaymentConfig | null }> {
+  const { tenantId } = await requireOwnerTenant()
+  const tenant = await withTenant(tenantId, (db) =>
+    db.tenant.findUnique({ where: { id: tenantId }, select: { paymentProvider: true, paymentConfig: true } })
+  )
+  return { provider: tenant?.paymentProvider ?? 'upi_manual', razorpay: (tenant?.paymentConfig as RazorpayPaymentConfig | null) ?? null }
+}
+
+export async function startRazorpayOnboardingAction(): Promise<{ onboardingUrl: string } | { error: string }> {
+  const { tenantId } = await requireOwnerTenant()
+
+  const tenant = await withTenant(tenantId, (db) =>
+    db.tenant.findUnique({ where: { id: tenantId }, select: { name: true, contactEmail: true, contactPhone: true } })
+  )
+  if (!tenant?.contactEmail?.trim() || !tenant?.contactPhone?.trim()) {
+    return { error: 'Add a contact phone and email before connecting Razorpay.' }
+  }
+
+  const account = await createLinkedAccount({ email: tenant.contactEmail, phone: tenant.contactPhone, businessName: tenant.name })
+
+  const paymentConfig: RazorpayPaymentConfig = {
+    provider: 'razorpay',
+    accountId: account.id,
+    status: 'pending',
+    updatedAt: new Date().toISOString(),
+  }
+  await withTenant(tenantId, (db) => db.tenant.update({ where: { id: tenantId }, data: { paymentProvider: 'razorpay', paymentConfig } }))
+
+  revalidatePath('/admin/settings')
+  return { onboardingUrl: `https://dashboard.razorpay.com/onboarding/${account.id}` }
+}
+
+export async function refreshRazorpayStatusAction(): Promise<{ status: RazorpayPaymentConfig['status'] } | { error: string }> {
+  const { tenantId } = await requireOwnerTenant()
+
+  const tenant = await withTenant(tenantId, (db) => db.tenant.findUnique({ where: { id: tenantId }, select: { paymentConfig: true } }))
+  const existing = tenant?.paymentConfig as RazorpayPaymentConfig | null
+  if (!existing?.accountId) return { error: 'No Razorpay account connected yet.' }
+
+  const account = await getLinkedAccount(existing.accountId)
+  const paymentConfig: RazorpayPaymentConfig = {
+    provider: 'razorpay',
+    accountId: existing.accountId,
+    status: account.status as RazorpayPaymentConfig['status'],
+    updatedAt: new Date().toISOString(),
+  }
+  await withTenant(tenantId, (db) => db.tenant.update({ where: { id: tenantId }, data: { paymentConfig } }))
+
+  revalidatePath('/admin/settings')
+  return { status: paymentConfig.status }
 }
