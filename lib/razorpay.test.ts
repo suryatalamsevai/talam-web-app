@@ -17,13 +17,13 @@ describe('createQrCode', () => {
   it('posts to the qr_codes endpoint with Basic auth and returns the parsed QR', async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ id: 'qr_1', image_url: 'https://rzp.io/qr_1.png', short_url: 'https://rzp.io/i/abc', status: 'active' }),
+      json: async () => ({ id: 'qr_1', image_url: 'https://rzp.io/qr_1.png', status: 'active' }),
     })
     global.fetch = mockFetch as unknown as typeof fetch
 
     const result = await createQrCode({ amountPaise: 100, description: 'Talam credential check' })
 
-    expect(result).toEqual({ id: 'qr_1', image_url: 'https://rzp.io/qr_1.png', short_url: 'https://rzp.io/i/abc', status: 'active' })
+    expect(result).toEqual({ id: 'qr_1', image_url: 'https://rzp.io/qr_1.png', status: 'active' })
     const [url, init] = mockFetch.mock.calls[0]
     expect(url).toBe('https://api.razorpay.com/v1/payments/qr_codes')
     expect(init.method).toBe('POST')

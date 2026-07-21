@@ -29,7 +29,7 @@ async function razorpayRequest<T>(path: string, init: { method: 'GET' | 'POST'; 
   return json as T
 }
 
-export type RazorpayQrCode = { id: string; image_url: string; short_url: string; status: string }
+export type RazorpayQrCode = { id: string; image_url: string; status: string }
 
 export function createQrCode(input: { amountPaise: number; description: string }): Promise<RazorpayQrCode> {
   return razorpayRequest<RazorpayQrCode>('/payments/qr_codes', {
