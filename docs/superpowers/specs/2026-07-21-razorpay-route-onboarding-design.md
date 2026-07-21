@@ -99,3 +99,26 @@ type RazorpayPaymentConfig = {
 - Unit test webhook signature verification (valid/invalid/missing signature).
 - Full onboarding redirect can't be exercised end-to-end without live
   Razorpay Partner credentials — flag as manual QA once those exist.
+
+## Credential Verification (Success Criterion for the Plan)
+
+`TALAM_RAZORPAY_KEY_ID` / `TALAM_RAZORPAY_KEY_SECRET` already exist in
+`.env` — **these are live-mode keys** (`rzp_live_...`), not test-mode.
+
+Before building the full onboarding flow above, verify the credentials and
+Razorpay SDK wiring actually work with one focused check: call Razorpay's
+QR Code API (`POST /v1/payments/qr_codes`) using these env keys to generate
+a single small-amount (₹1) QR code.
+
+- **Generating** the QR code (API returns `id`, image, `status: active`)
+  proves credentials + network + SDK wiring work — no money moves at this
+  step, safe to automate.
+- **Paying** it is a real live transaction. The agent will not scan, pay,
+  or simulate payment of this QR — the user pays it manually with their own
+  banking app and confirms settlement.
+
+**This is the plan's overall success criterion:** the implementation plan
+is done when (a) the QR code generates successfully via the live keys, and
+(b) the user confirms the manual payment settled. This validates the
+Razorpay integration end-to-end before the Route onboarding pieces (which
+depend on the same credentials) are considered trustworthy.
