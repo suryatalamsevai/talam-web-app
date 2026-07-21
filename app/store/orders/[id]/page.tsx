@@ -3,6 +3,7 @@
 import { use } from 'react'
 import Image from 'next/image'
 import { StoreLink } from '@/components/store/store-context'
+import { formatDate } from '@/lib/utils'
 import { ArrowLeft, Package, Truck, CheckCircle, XCircle, RotateCcw, Copy } from 'lucide-react'
 
 // ponytail: inline mock until real order history API exists (same data as /orders)
@@ -90,10 +91,6 @@ const statusSteps: Record<string, { label: string; icon: typeof Package }[]> = {
 function activeStep(status: string) {
   const steps = statusSteps[status] ?? []
   return steps.findIndex(s => s.label === status || s.label.startsWith(status.split(' ')[0]))
-}
-
-function formatDate(d: Date) {
-  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {

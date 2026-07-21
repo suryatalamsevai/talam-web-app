@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { StoreLink } from '@/components/store/store-context'
+import { formatDate } from '@/lib/utils'
 import { ArrowLeft, Search, ChevronRight, X, FileText, RotateCcw } from 'lucide-react'
 
 // ponytail: inline mock until real order history API exists
@@ -102,10 +103,6 @@ function tabFilter(tab: Tab): MockOrder[] {
 }
 
 function tabCount(tab: Tab) { return tabFilter(tab).length }
-
-function formatDate(d: Date) {
-  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
-}
 
 function OrderActions({ order }: { order: MockOrder }) {
   if (order.status === 'Out for Delivery' || order.status === 'Shipped') {
