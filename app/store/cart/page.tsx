@@ -1,8 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { StoreLink } from '@/components/store/store-context'
+import { StoreLink, useStoreHref } from '@/components/store/store-context'
+import { ShinyButton } from '@/components/ui/shiny-button'
 import { useCartStore, type CartItem } from '@/lib/store/cart'
 import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft, Heart, Lock, RotateCcw, Truck, Tag, Star, Check, X, ChevronDown } from 'lucide-react'
 
@@ -166,6 +168,8 @@ function EmptyCart() {
 }
 
 export default function CartPage() {
+  const router = useRouter()
+  const checkoutHref = useStoreHref('/checkout')
   const items = useCartStore(s => s.items)
   const total = useCartStore(s => s.total)
   const count = useCartStore(s => s.count)
@@ -269,12 +273,12 @@ export default function CartPage() {
               </div>
             )}
 
-            <StoreLink
-              href="/checkout"
-              className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-store-primary font-body text-md font-semibold text-surface hover:opacity-90 transition-opacity"
+            <ShinyButton
+              onClick={() => router.push(checkoutHref)}
+              className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-store-primary font-body text-md font-semibold text-surface"
             >
               Proceed to Checkout <ArrowLeft className="h-4 w-4 rotate-180" />
-            </StoreLink>
+            </ShinyButton>
 
             <StoreLink
               href="/"
@@ -331,12 +335,12 @@ export default function CartPage() {
           <p className="font-body text-[11px] text-muted-warm">Total ({itemCount} items)</p>
           <p className="font-body text-lg font-bold text-store-primary">₹{grandTotal.toLocaleString('en-IN')}</p>
         </div>
-        <StoreLink
-          href="/checkout"
-          className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-store-primary px-6 font-body text-sm font-semibold text-surface hover:opacity-90 transition-opacity"
+        <ShinyButton
+          onClick={() => router.push(checkoutHref)}
+          className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-store-primary px-6 font-body text-sm font-semibold text-surface"
         >
           Checkout <ArrowLeft className="h-4 w-4 rotate-180" />
-        </StoreLink>
+        </ShinyButton>
       </div>
     </main>
   )

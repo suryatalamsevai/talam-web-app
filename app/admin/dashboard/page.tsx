@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ChevronRight, Clock, Package, AlertTriangle, TrendingUp, TrendingDown, Rocket, CheckCircle2 } from 'lucide-react'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { Dialog } from '@/components/ui/dialog'
+import { ShinyButton } from '@/components/ui/shiny-button'
 import { getTenantLiveStateAction, goLiveAction } from './actions'
 import type { MissingConfigItem } from '@/lib/data/tenant'
 
@@ -132,13 +133,13 @@ export default function AdminDashboardPage() {
               <Rocket className="size-5 shrink-0 text-brand-primary" strokeWidth={2} />
               <p className="text-sm font-semibold text-fg">Your store isn&apos;t live yet</p>
             </div>
-            <button
+            <ShinyButton
               type="button"
               onClick={() => setDialogOpen(true)}
-              className="shrink-0 cursor-pointer rounded-lg bg-brand-primary px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              className="shrink-0 cursor-pointer rounded-lg bg-brand-primary px-4 py-2 text-sm font-semibold text-white"
             >
               Go Live 🚀
-            </button>
+            </ShinyButton>
           </div>
           <GoLiveDialog
             open={dialogOpen}
@@ -416,14 +417,14 @@ function GoLiveDialog({
             Close
           </button>
           {ready && (
-            <button
+            <ShinyButton
               type="button"
               disabled={launching}
               onClick={onGoLive}
-              className="rounded-lg bg-brand-primary px-4 py-2 font-body text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+              className="rounded-lg bg-brand-primary px-4 py-2 font-body text-sm font-semibold text-white"
             >
               {launching ? 'Launching…' : 'Go Live 🚀'}
-            </button>
+            </ShinyButton>
           )}
         </div>
       </div>
