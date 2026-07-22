@@ -6,6 +6,7 @@ import { ChevronRight, Clock, Package, AlertTriangle, TrendingUp, TrendingDown, 
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { Dialog } from '@/components/ui/dialog'
 import { ShinyButton } from '@/components/ui/shiny-button'
+import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/utils'
 import { getTenantLiveStateAction, goLiveAction } from './actions'
 import type { MissingConfigItem } from '@/lib/data/tenant'
@@ -410,13 +411,14 @@ function GoLiveDialog({
         )}
 
         <div className="mt-5 flex justify-end gap-3">
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={onClose}
-            className="rounded-lg px-4 py-2 font-body text-sm font-semibold text-muted-warm hover:bg-bg"
+            className="h-auto rounded-lg px-4 py-2 font-body text-sm font-semibold text-muted-warm"
           >
             Close
-          </button>
+          </Button>
           {ready && (
             <ShinyButton
               type="button"
