@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation'
 import { ChevronRight, Clock, Package, AlertTriangle, TrendingUp, TrendingDown, Rocket, CheckCircle2 } from 'lucide-react'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { Dialog } from '@/components/ui/dialog'
+import { ShinyButton } from '@/components/ui/shiny-button'
+import { Button } from '@/components/ui/button'
+import { formatCurrency } from '@/lib/utils'
 import { getTenantLiveStateAction, goLiveAction } from './actions'
 import type { MissingConfigItem } from '@/lib/data/tenant'
 
@@ -47,7 +50,7 @@ const CHART_METRICS: ChartMetric[] = [
   {
     key: 'revenue',
     label: 'Revenue',
-    format: (v) => `₹${v.toLocaleString('en-IN')}`,
+    format: (v) => formatCurrency(v),
     data: [
       { day: 'Mon', value: 4000 },
       { day: 'Tue', value: 9000 },
@@ -132,13 +135,13 @@ export default function AdminDashboardPage() {
               <Rocket className="size-5 shrink-0 text-brand-primary" strokeWidth={2} />
               <p className="text-sm font-semibold text-fg">Your store isn&apos;t live yet</p>
             </div>
-            <button
+            <ShinyButton
               type="button"
               onClick={() => setDialogOpen(true)}
-              className="shrink-0 cursor-pointer rounded-lg bg-brand-primary px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              className="shrink-0 cursor-pointer rounded-lg bg-brand-primary px-4 py-2 text-sm font-semibold text-white"
             >
               Go Live 🚀
-            </button>
+            </ShinyButton>
           </div>
           <GoLiveDialog
             open={dialogOpen}
@@ -221,17 +224,17 @@ export default function AdminDashboardPage() {
                 <AreaChart data={metric.data} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#C1502E" stopOpacity="0.10" />
-                      <stop offset="100%" stopColor="#C1502E" stopOpacity="0" />
+                      <stop offset="0%" stopColor="var(--color-brand-primary)" stopOpacity="0.10" />
+                      <stop offset="100%" stopColor="var(--color-brand-primary)" stopOpacity="0" />
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#8B7D7A' }} />
+                  <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--color-muted-warm)' }} />
                   <YAxis hide />
                   <Tooltip
                     formatter={(value) => [metric.format(Number(value)), metric.label]}
-                    contentStyle={{ borderRadius: 8, borderColor: '#E8E8E8', fontSize: 12 }}
+                    contentStyle={{ borderRadius: 8, borderColor: 'var(--border)', fontSize: 12 }}
                   />
-                  <Area type="monotone" dataKey="value" stroke="#C1502E" strokeWidth={2} fill="url(#chartGrad)" dot={false} activeDot={{ r: 4, fill: '#C1502E', stroke: 'white', strokeWidth: 2 }} />
+                  <Area type="monotone" dataKey="value" stroke="var(--color-brand-primary)" strokeWidth={2} fill="url(#chartGrad)" dot={false} activeDot={{ r: 4, fill: 'var(--color-brand-primary)', stroke: 'white', strokeWidth: 2 }} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -408,22 +411,23 @@ function GoLiveDialog({
         )}
 
         <div className="mt-5 flex justify-end gap-3">
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={onClose}
-            className="rounded-lg px-4 py-2 font-body text-sm font-semibold text-muted-warm hover:bg-bg"
+            className="h-auto rounded-lg px-4 py-2 font-body text-sm font-semibold text-muted-warm"
           >
             Close
-          </button>
+          </Button>
           {ready && (
-            <button
+            <ShinyButton
               type="button"
               disabled={launching}
               onClick={onGoLive}
-              className="rounded-lg bg-brand-primary px-4 py-2 font-body text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+              className="rounded-lg bg-brand-primary px-4 py-2 font-body text-sm font-semibold text-white"
             >
               {launching ? 'Launching…' : 'Go Live 🚀'}
-            </button>
+            </ShinyButton>
           )}
         </div>
       </div>

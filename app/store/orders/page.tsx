@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { StoreLink } from '@/components/store/store-context'
+import { formatCurrency, formatDate } from '@/lib/utils'
 import { ArrowLeft, Search, ChevronRight, X, FileText, RotateCcw } from 'lucide-react'
 
 // ponytail: inline mock until real order history API exists
@@ -103,10 +104,6 @@ function tabFilter(tab: Tab): MockOrder[] {
 
 function tabCount(tab: Tab) { return tabFilter(tab).length }
 
-function formatDate(d: Date) {
-  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
-}
-
 function OrderActions({ order }: { order: MockOrder }) {
   if (order.status === 'Out for Delivery' || order.status === 'Shipped') {
     return (
@@ -172,10 +169,10 @@ function OrderCardMobile({ order }: { order: MockOrder }) {
             {order.status === 'Shipped' && order.carrier ? `Expected ${order.expectedDate?.replace('Expected ', '')} · ${order.carrier} #${order.trackingId}` : ''}
             {order.status === 'Out for Delivery' ? order.expectedDate : ''}
             {order.status === 'Delivered' ? order.expectedDate : ''}
-            {order.status === 'Cancelled' ? `Cancelled on ${formatDate(order.date)} · Refund: ₹${order.refundAmount?.toLocaleString('en-IN')}` : ''}
+            {order.status === 'Cancelled' ? `Cancelled on ${formatDate(order.date)} · Refund: ${order.refundAmount != null ? formatCurrency(order.refundAmount) : ''}` : ''}
             {order.status === 'Return Pickup' ? order.returnWindow : ''}
           </p>
-          <p className="font-body text-sm font-bold text-fg mt-0.5">₹{order.total.toLocaleString('en-IN')}</p>
+          <p className="font-body text-sm font-bold text-fg mt-0.5">{formatCurrency(order.total)}</p>
         </div>
         <ChevronRight className="h-4 w-4 shrink-0 text-muted-warm" />
       </StoreLink>
@@ -218,7 +215,7 @@ function OrderRowDesktop({ order }: { order: MockOrder }) {
           {order.status}
         </span>
       </td>
-      <td className="py-4 font-body text-sm font-bold text-fg">₹{order.total.toLocaleString('en-IN')}</td>
+      <td className="py-4 font-body text-sm font-bold text-fg">{formatCurrency(order.total)}</td>
       <td className="py-4 pr-5">
         <div className="flex gap-2">
           {(order.status === 'Out for Delivery' || order.status === 'Shipped') && (

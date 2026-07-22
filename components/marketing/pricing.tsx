@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Check } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, formatCurrency } from '@/lib/utils'
 
 const PLANS = [
   {
@@ -13,7 +13,7 @@ const PLANS = [
     name: 'Pro',
     price: 1499,
     popular: true,
-    features: ['Unlimited products', 'Custom domain', 'Advanced analytics', 'Priority support'],
+    features: ['Unlimited products', 'Custom domain', 'We set up your store for you', 'Priority support'],
   },
 ]
 
@@ -47,7 +47,7 @@ export function Pricing() {
               <h3 className="font-body font-semibold text-fg text-lg">{plan.name}</h3>
               <div className="mt-3 flex items-baseline gap-1">
                 <span data-price={plan.price} className="font-marketing font-semibold text-fg text-[44px] leading-none">
-                  ₹{plan.price.toLocaleString('en-IN')}
+                  {formatCurrency(plan.price)}
                 </span>
                 <span className="text-sm text-muted-warm font-body">/month</span>
               </div>

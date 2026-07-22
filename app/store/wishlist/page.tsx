@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { StoreLink } from '@/components/store/store-context'
 import { useCartStore } from '@/lib/store/cart'
 import { showCartToast } from '@/components/store/cart-toast'
+import { formatCurrency } from '@/lib/utils'
 import { ArrowLeft, Heart, ShoppingCart, Share2, Check } from 'lucide-react'
 
 // ponytail: inline mock until real wishlist API exists
@@ -89,9 +90,9 @@ function WishlistCard({ item, onRemove }: { item: WishlistItem; onRemove: () => 
           {item.name}
         </StoreLink>
         <div className="mt-1 flex items-center gap-1.5">
-          <span className="font-body text-base font-extrabold text-store-primary">₹{item.price.toLocaleString('en-IN')}</span>
+          <span className="font-body text-base font-extrabold text-store-primary">{formatCurrency(item.price)}</span>
           {item.comparePrice && item.comparePrice > item.price && (
-            <span className="font-body text-xs text-muted-warm line-through">₹{item.comparePrice.toLocaleString('en-IN')}</span>
+            <span className="font-body text-xs text-muted-warm line-through">{formatCurrency(item.comparePrice)}</span>
           )}
         </div>
         <div className="mt-auto pt-2.5">
@@ -163,7 +164,7 @@ export default function WishlistPage() {
           </StoreLink>
           <div className="min-w-0">
             <h1 className="font-heading text-lg sm:text-[22px] font-bold leading-7 text-fg">Saved Items</h1>
-            <p className="mt-0.5 font-body text-xs sm:text-sm text-muted-warm truncate">{items.length} items · ₹{totalValue.toLocaleString('en-IN')} total value</p>
+            <p className="mt-0.5 font-body text-xs sm:text-sm text-muted-warm truncate">{items.length} items · {formatCurrency(totalValue)} total value</p>
           </div>
         </div>
         <div className="flex items-center gap-2">

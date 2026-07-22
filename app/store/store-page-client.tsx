@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, ChevronDown, SlidersHorizontal, X } from 'lu
 import { StoreLink, useStoreBase } from '@/components/store/store-context'
 import Image from 'next/image'
 import { hapticError } from '@/lib/haptics'
+import { formatCurrency } from '@/lib/utils'
 
 type BannerData = {
   headline: string
@@ -74,12 +75,12 @@ const PRODUCTS_PER_PAGE = 6
 function CheckIcon() {
   return (
     <svg width="10" height="10" viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg">
-      <polyline points="2,6 5,9 10,3" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
+      <polyline points="2,6 5,9 10,3" fill="none" stroke="var(--color-surface)" strokeWidth="2" strokeLinecap="round" />
     </svg>
   )
 }
 
-function HeartIcon({ size = 12, color = '#8B7D7A' }: { size?: number; color?: string }) {
+function HeartIcon({ size = 12, color = 'var(--color-muted-warm)' }: { size?: number; color?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="none" stroke={color} strokeWidth="1.8" />
@@ -90,9 +91,9 @@ function HeartIcon({ size = 12, color = '#8B7D7A' }: { size?: number; color?: st
 function CartIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="9" cy="21" r="1" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
-      <circle cx="20" cy="21" r="1" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
-      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="9" cy="21" r="1" fill="none" stroke="var(--color-surface)" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="20" cy="21" r="1" fill="none" stroke="var(--color-surface)" strokeWidth="2" strokeLinecap="round" />
+      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" fill="none" stroke="var(--color-surface)" strokeWidth="2" strokeLinecap="round" />
     </svg>
   )
 }
@@ -275,7 +276,7 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
 
       {/* Category */}
       <div className="border-b border-[#F0E8D8] mb-5 pb-5">
-        <p className="text-[#8B7D7A] text-[11px] font-bold font-body uppercase tracking-[0.08em] leading-[14px] mb-3">Category</p>
+        <p className="text-muted-warm text-[11px] font-bold font-body uppercase tracking-[0.08em] leading-[14px] mb-3">Category</p>
         <div className="flex flex-col gap-2">
           {CATEGORY_OPTIONS.map(c => {
             const checked = selectedCategories.has(c)
@@ -294,12 +295,12 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
 
       {/* Size */}
       <div className="border-b border-[#F0E8D8] mb-5 pb-5">
-        <p className="text-[#8B7D7A] text-[11px] font-bold font-body uppercase tracking-[0.08em] leading-[14px] mb-3">Size</p>
+        <p className="text-muted-warm text-[11px] font-bold font-body uppercase tracking-[0.08em] leading-[14px] mb-3">Size</p>
         <div className="flex flex-wrap gap-1.5">
           {SIZE_OPTIONS.map(s => {
             const active = selectedSizes.has(s)
             return (
-              <button key={s} onClick={() => setSelectedSizes(set => toggle(set, s))} className={`px-3 py-1.5 rounded-md border-[1.5px] text-[12px] font-body leading-4 transition-colors ${active ? 'bg-store-primary/6 border-store-primary text-store-primary font-semibold' : 'border-border text-[#8B7D7A] hover:border-[#8B7D7A]'}`}>
+              <button key={s} onClick={() => setSelectedSizes(set => toggle(set, s))} className={`px-3 py-1.5 rounded-md border-[1.5px] text-[12px] font-body leading-4 transition-colors ${active ? 'bg-store-primary/6 border-store-primary text-store-primary font-semibold' : 'border-border text-muted-warm hover:border-muted-warm'}`}>
                 {s}
               </button>
             )
@@ -309,7 +310,7 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
 
       {/* Price Range */}
       <div className="mb-5">
-        <p className="text-[#8B7D7A] text-[11px] font-bold font-body uppercase tracking-[0.08em] leading-[14px] mb-3">Price Range</p>
+        <p className="text-muted-warm text-[11px] font-bold font-body uppercase tracking-[0.08em] leading-[14px] mb-3">Price Range</p>
         <div className="flex items-center gap-2">
           <div className="flex-1 border-[1.5px] border-border rounded-md px-2.5 py-[7px] focus-within:border-store-primary transition-colors">
             <input type="number" value={priceMin} onChange={e => setPriceMin(e.target.value)} className="text-fg text-[12px] font-body bg-transparent outline-none w-full" placeholder="Min" />
@@ -329,7 +330,7 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
         <button onClick={() => { setVisibleCount(PRODUCTS_PER_PAGE); setShowMobileFilters(false) }} className="flex-1 py-2.5 rounded-lg border-[1.5px] border-store-primary text-store-primary text-[13px] font-semibold font-body text-center hover:bg-store-primary/5 transition-colors">
           Apply ({filteredProducts.length})
         </button>
-        <button onClick={handleReset} className="px-3.5 py-2.5 rounded-lg border-[1.5px] border-border text-[#8B7D7A] text-[13px] font-body hover:bg-[#F9F9F9] transition-colors">Reset</button>
+        <button onClick={handleReset} className="px-3.5 py-2.5 rounded-lg border-[1.5px] border-border text-muted-warm text-[13px] font-body hover:bg-bg transition-colors">Reset</button>
       </div>
     </>
   )
@@ -376,11 +377,11 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
                 <span className="text-white/60 text-[13px] font-body">{hero.averageRating.toFixed(1)} · {hero.reviewCount} reviews</span>
               </div>
               <div className="flex items-baseline gap-2 md:gap-3 mb-4 md:mb-6 flex-wrap">
-                <span className="text-white text-[22px] md:text-[32px] font-extrabold font-body leading-8 md:leading-10">₹{hero.price.toLocaleString('en-IN')}</span>
+                <span className="text-white text-[22px] md:text-[32px] font-extrabold font-body leading-8 md:leading-10">{formatCurrency(hero.price)}</span>
                 {hero.comparePrice && (
                   <>
-                    <span className="text-white/40 text-[14px] md:text-[18px] font-body line-through">₹{hero.comparePrice.toLocaleString('en-IN')}</span>
-                    <span className="px-2 py-0.5 md:px-2.5 md:py-1 bg-white/10 border border-white/20 rounded text-white/70 text-[10px] md:text-[12px] font-body leading-4">Save ₹{hero.comparePrice - hero.price}</span>
+                    <span className="text-white/40 text-[14px] md:text-[18px] font-body line-through">{formatCurrency(hero.comparePrice)}</span>
+                    <span className="px-2 py-0.5 md:px-2.5 md:py-1 bg-white/10 border border-white/20 rounded text-white/70 text-[10px] md:text-[12px] font-body leading-4">Save {formatCurrency(hero.comparePrice - hero.price)}</span>
                   </>
                 )}
               </div>
@@ -485,7 +486,7 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
                   <span className="text-4xl leading-none">{tag.emoji}</span>
                   <span className="flex flex-col items-start">
                     <span className="text-fg text-[13px] font-semibold font-body">{tag.name}</span>
-                    <span className="text-[#8B7D7A] text-[11px] font-body">{tag.productCount} items</span>
+                    <span className="text-muted-warm text-[11px] font-body">{tag.productCount} items</span>
                   </span>
                 </StoreLink>
               ))}
@@ -512,8 +513,8 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
                     <div className="p-2.5">
                       <p className="text-fg text-[13px] font-semibold font-body line-clamp-1">{p.name}</p>
                       <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="text-fg text-[13px] font-bold font-body">₹{p.price.toLocaleString('en-IN')}</span>
-                        {p.comparePrice && <span className="text-[#8B7D7A] text-[11px] font-body line-through">₹{p.comparePrice.toLocaleString('en-IN')}</span>}
+                        <span className="text-fg text-[13px] font-bold font-body">{formatCurrency(p.price)}</span>
+                        {p.comparePrice && <span className="text-muted-warm text-[11px] font-body line-through">{formatCurrency(p.comparePrice)}</span>}
                       </div>
                     </div>
                   </StoreLink>
@@ -547,9 +548,9 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
                     </span>
                   </div>
                   <div className="p-2.5">
-                    <p className="text-[#8B7D7A] text-[10px] font-bold font-body uppercase tracking-[0.08em] leading-3 mb-1">{p.category}</p>
+                    <p className="text-muted-warm text-[10px] font-bold font-body uppercase tracking-[0.08em] leading-3 mb-1">{p.category}</p>
                     <h3 className="text-fg text-[13px] font-bold font-heading leading-[130%] mb-1">{p.name}</h3>
-                    <p className="text-fg text-[14px] font-extrabold font-body leading-[18px]">₹{p.price.toLocaleString('en-IN')}</p>
+                    <p className="text-fg text-[14px] font-extrabold font-body leading-[18px]">{formatCurrency(p.price)}</p>
                   </div>
                 </StoreLink>
               ))}
@@ -591,7 +592,7 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <h2 className="text-fg text-[16px] font-bold font-body leading-5">All Products</h2>
-                <span className="text-[#8B7D7A] text-[13px] font-body">{filteredProducts.length} items</span>
+                <span className="text-muted-warm text-[13px] font-body">{filteredProducts.length} items</span>
               </div>
               <div className="hidden lg:flex items-center gap-2">
                 {activeChips.map(c => (
@@ -606,7 +607,7 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
                   {showSortMenu && (
                     <div className="absolute top-8 right-0 bg-white rounded-lg border border-border shadow-lg py-1 z-20 w-48">
                       {SORT_OPTIONS.map(opt => (
-                        <button key={opt} onClick={() => { setSortBy(opt); setShowSortMenu(false) }} className={`w-full text-left px-4 py-2 text-[13px] font-body transition-colors ${opt === sortBy ? 'text-store-primary bg-store-primary/5 font-semibold' : 'text-fg hover:bg-[#F9F9F9]'}`}>
+                        <button key={opt} onClick={() => { setSortBy(opt); setShowSortMenu(false) }} className={`w-full text-left px-4 py-2 text-[13px] font-body transition-colors ${opt === sortBy ? 'text-store-primary bg-store-primary/5 font-semibold' : 'text-fg hover:bg-bg'}`}>
                           {opt}
                         </button>
                       ))}
@@ -637,7 +638,7 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
             {visibleProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
                 <p className="text-fg text-[16px] font-semibold font-body mb-2">No products found</p>
-                <p className="text-[#8B7D7A] text-[13px] font-body mb-4">Try adjusting your filters</p>
+                <p className="text-muted-warm text-[13px] font-body mb-4">Try adjusting your filters</p>
                 <button onClick={handleReset} className="px-6 py-2 rounded-lg border-[1.5px] border-store-primary text-store-primary text-[13px] font-semibold font-body">Clear all filters</button>
               </div>
             ) : (
@@ -658,8 +659,8 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
                     <div className="p-2">
                       <h3 className="text-fg text-[13px] font-bold font-heading leading-[130%] mb-1">{p.name}</h3>
                       <div className="flex items-center gap-2">
-                        <span className="text-store-primary text-[14px] font-extrabold font-body leading-[18px]">₹{p.price.toLocaleString('en-IN')}</span>
-                        {p.comparePrice && <span className="text-[#B0A090] text-[11px] font-body line-through">₹{p.comparePrice.toLocaleString('en-IN')}</span>}
+                        <span className="text-store-primary text-[14px] font-extrabold font-body leading-[18px]">{formatCurrency(p.price)}</span>
+                        {p.comparePrice && <span className="text-[#B0A090] text-[11px] font-body line-through">{formatCurrency(p.comparePrice)}</span>}
                         <span className="ml-auto w-7 h-7 bg-store-primary rounded-full flex items-center justify-center">
                           <CartIcon />
                         </span>
@@ -683,7 +684,7 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
                     Show less
                   </button>
                 )}
-                <span className="text-[#8B7D7A] text-[11px] font-body">Showing {Math.min(visibleCount, filteredProducts.length)} of {filteredProducts.length} products</span>
+                <span className="text-muted-warm text-[11px] font-body">Showing {Math.min(visibleCount, filteredProducts.length)} of {filteredProducts.length} products</span>
               </div>
             )}
           </div>
@@ -698,16 +699,16 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
             <div className="w-10 h-1.5 bg-[#E5E0D5] rounded-full mx-auto mb-4" />
             <div className="flex items-center justify-between mb-4">
               <span className="text-fg text-[16px] font-bold font-body">Filters</span>
-              <button onClick={() => setShowMobileFilters(false)} className="w-8 h-8 rounded-full bg-[#F9F9F9] flex items-center justify-center">
+              <button onClick={() => setShowMobileFilters(false)} className="w-8 h-8 rounded-full bg-bg flex items-center justify-center">
                 <X className="w-4 h-4 text-fg" />
               </button>
             </div>
             {/* Sort (mobile only) */}
             <div className="border-b border-[#F0E8D8] mb-5 pb-5">
-              <p className="text-[#8B7D7A] text-[11px] font-bold font-body uppercase tracking-[0.08em] leading-[14px] mb-3">Sort By</p>
+              <p className="text-muted-warm text-[11px] font-bold font-body uppercase tracking-[0.08em] leading-[14px] mb-3">Sort By</p>
               <div className="flex flex-wrap gap-1.5">
                 {SORT_OPTIONS.map(opt => (
-                  <button key={opt} onClick={() => setSortBy(opt)} className={`px-3 py-1.5 rounded-md border-[1.5px] text-[12px] font-body leading-4 transition-colors ${opt === sortBy ? 'bg-store-primary/6 border-store-primary text-store-primary font-semibold' : 'border-border text-[#8B7D7A]'}`}>
+                  <button key={opt} onClick={() => setSortBy(opt)} className={`px-3 py-1.5 rounded-md border-[1.5px] text-[12px] font-body leading-4 transition-colors ${opt === sortBy ? 'bg-store-primary/6 border-store-primary text-store-primary font-semibold' : 'border-border text-muted-warm'}`}>
                     {opt}
                   </button>
                 ))}

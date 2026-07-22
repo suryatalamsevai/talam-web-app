@@ -6,6 +6,7 @@ import { Check, Clock, MessageCircle, ShieldCheck } from 'lucide-react'
 import { CheckoutHeader } from '@/components/checkout/checkout-header'
 import { StepIndicator } from '@/components/checkout/step-indicator'
 import { OrderSummaryCard } from '@/components/checkout/order-summary-card'
+import { formatCurrency } from '@/lib/utils'
 import type { CartItem } from '@/lib/store/cart'
 
 // ponytail: inline tenant config until SSR wrapper is added
@@ -96,7 +97,7 @@ export default function OrderConfirmedPage() {
         <div className="mt-4 flex items-center justify-between rounded-xl border border-border bg-surface p-4 sm:p-5">
           <div>
             <p className="mb-1 font-body text-[13px] font-bold text-fg">Payment</p>
-            <p className="font-body text-sm text-muted-warm">{PAYMENT_LABEL[order.paymentMethod]} · ₹{order.total.toLocaleString('en-IN')}</p>
+            <p className="font-body text-sm text-muted-warm">{PAYMENT_LABEL[order.paymentMethod]} · {formatCurrency(order.total)}</p>
           </div>
           <div className="flex items-center gap-1 rounded-full bg-success/10 px-2.5 py-1">
             <Check className="h-3 w-3 text-success" />

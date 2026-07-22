@@ -13,6 +13,8 @@ import { OrderSummaryCard, TrustBar } from '@/components/checkout/order-summary-
 import { GoogleButton } from '@/components/auth/google-button'
 import { useStoreBase } from '@/components/store/store-context'
 import { createBrowserClient } from '@/lib/supabase/client'
+import { ShinyButton } from '@/components/ui/shiny-button'
+import { formatCurrency } from '@/lib/utils'
 
 // ponytail: inline tenant config until SSR wrapper is added
 const tenant = { name: 'Talam Store', freeDeliveryAbove: 999, shippingFee: 99 }
@@ -163,7 +165,7 @@ export default function CheckoutPage() {
     }, 2000)
   }
 
-  const payLabel = step === 1 ? `Pay ₹${total.toLocaleString('en-IN')}` : step === 2 ? 'Continue to Payment' : 'Place Order'
+  const payLabel = step === 1 ? `Pay ${formatCurrency(total)}` : step === 2 ? 'Continue to Payment' : 'Place Order'
 
   function handleStickyBarClick() {
     if (step === 1) {
@@ -214,12 +216,12 @@ export default function CheckoutPage() {
                     <p className="mt-1.5 font-body text-xs text-muted-warm">We&apos;ll send a 4-digit OTP to verify your number</p>
 
                     {!otpSent ? (
-                      <button
+                      <ShinyButton
                         onClick={handleSendOtp}
-                        className="mt-4 h-12 w-full rounded-[10px] bg-store-primary font-body text-[16px] font-bold text-surface hover:opacity-90 active:scale-[0.99]"
+                        className="mt-4 h-12 w-full rounded-[10px] bg-store-primary font-body text-[16px] font-bold text-surface"
                       >
                         Send OTP
-                      </button>
+                      </ShinyButton>
                     ) : (
                       <>
                         <label className="mb-1.5 mt-4 block font-body text-[13px] font-bold text-fg">Enter OTP</label>
@@ -231,12 +233,12 @@ export default function CheckoutPage() {
                           maxLength={4}
                           className="h-auto w-full rounded-lg border-[1.5px] border-border px-3.5 py-[13px] font-body text-sm text-fg outline-none focus:border-store-primary"
                         />
-                        <button
+                        <ShinyButton
                           onClick={handleVerifyOtp}
-                          className="mt-4 h-12 w-full rounded-[10px] bg-store-primary font-body text-[16px] font-bold text-surface hover:opacity-90 active:scale-[0.99]"
+                          className="mt-4 h-12 w-full rounded-[10px] bg-store-primary font-body text-[16px] font-bold text-surface"
                         >
                           Verify OTP
-                        </button>
+                        </ShinyButton>
                       </>
                     )}
 
@@ -352,12 +354,12 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                <button
+                <ShinyButton
                   onClick={handleContinueFromAddress}
-                  className="mt-5 h-12 w-full rounded-[10px] bg-store-primary font-body text-[16px] font-bold text-surface hover:opacity-90 active:scale-[0.99]"
+                  className="mt-5 h-12 w-full rounded-[10px] bg-store-primary font-body text-[16px] font-bold text-surface"
                 >
                   Continue to Payment
-                </button>
+                </ShinyButton>
               </div>
             )}
 
@@ -389,12 +391,12 @@ export default function CheckoutPage() {
                     </div>
                     {paymentMethod === 'upi' && (
                       <div className="mt-4 border-t border-border pt-4">
-                        <div className="mx-auto h-[120px] w-[120px] rounded-lg bg-[repeating-conic-gradient(#e8e8e8_0%_25%,#f9f9f9_0%_50%)] bg-[length:12px_12px]" />
+                        <div className="mx-auto h-[120px] w-[120px] rounded-lg bg-[repeating-conic-gradient(var(--border)_0%_25%,var(--color-bg)_0%_50%)] bg-[length:12px_12px]" />
                         <p className="mt-3 text-center font-body text-[12px] uppercase tracking-[0.04em] text-muted-warm">UPI ID</p>
                         <p className="break-all text-center font-body text-[15px] font-bold text-fg">{tenant.name.toLowerCase().replace(/\s+/g, '')}@upi</p>
                         <p className="mt-3 font-body text-[13px] leading-[1.6] text-muted-warm">
                           1. Open any UPI app and scan the QR code<br />
-                          2. Pay ₹{total.toLocaleString('en-IN')} to complete the order<br />
+                          2. Pay {formatCurrency(total)} to complete the order<br />
                           3. Enter the 12-digit UTR number below to confirm
                         </p>
                         <label className="mb-1.5 mt-3 block font-body text-[13px] font-bold text-fg">UTR Number</label>
@@ -405,13 +407,13 @@ export default function CheckoutPage() {
                           className="h-auto w-full rounded-lg border-[1.5px] border-border px-[13px] py-[11px] font-body text-[15px] text-fg outline-none focus:border-store-primary"
                         />
                         <p className="mt-1 font-body text-xs text-muted-warm">12-digit reference number from your payment app</p>
-                        <button
+                        <ShinyButton
                           onClick={handlePlaceOrder}
                           disabled={utr.length !== 12 || placing}
-                          className="mt-4 h-12 w-full rounded-[10px] bg-store-primary font-body text-[16px] font-bold text-surface hover:opacity-90 active:scale-[0.99] disabled:opacity-50"
+                          className="mt-4 h-12 w-full rounded-[10px] bg-store-primary font-body text-[16px] font-bold text-surface"
                         >
                           Confirm Payment
-                        </button>
+                        </ShinyButton>
                       </div>
                     )}
                   </div>
@@ -458,13 +460,13 @@ export default function CheckoutPage() {
                 </div>
 
                 {paymentMethod !== 'upi' && (
-                  <button
+                  <ShinyButton
                     onClick={handlePlaceOrder}
                     disabled={placing}
-                    className="mt-4 h-12 w-full rounded-[10px] bg-store-primary font-body text-[16px] font-bold text-surface hover:opacity-90 active:scale-[0.99] disabled:opacity-50"
+                    className="mt-4 h-12 w-full rounded-[10px] bg-store-primary font-body text-[16px] font-bold text-surface"
                   >
                     Place Order
-                  </button>
+                  </ShinyButton>
                 )}
               </>
             )}
@@ -490,15 +492,15 @@ export default function CheckoutPage() {
       <div className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between gap-3 border-t border-border bg-surface px-4 py-3 sm:hidden">
         <div>
           <p className="font-body text-[13px] text-muted-warm">Order Total</p>
-          <p className="font-body text-[20px] font-bold text-fg">₹{total.toLocaleString('en-IN')}</p>
+          <p className="font-body text-[20px] font-bold text-fg">{formatCurrency(total)}</p>
         </div>
         {!(step === 3 && paymentMethod === 'upi') && (
-          <button
+          <ShinyButton
             onClick={handleStickyBarClick}
-            className="h-12 shrink-0 rounded-[10px] bg-store-primary px-6 font-body text-[15px] font-bold text-surface hover:opacity-90 active:scale-[0.99]"
+            className="h-12 shrink-0 rounded-[10px] bg-store-primary px-6 font-body text-[15px] font-bold text-surface"
           >
             {step === 1 ? (otpSent ? 'Verify OTP' : payLabel) : payLabel}
-          </button>
+          </ShinyButton>
         )}
       </div>
     </div>

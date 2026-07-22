@@ -10,6 +10,14 @@ vi.mock('@/lib/prisma', () => ({
     storeBranch: { findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
     storeAbout: { upsert: vi.fn() },
     product: { findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
+    productCategory: {
+      count: vi.fn().mockResolvedValue(0),
+      createMany: vi.fn().mockResolvedValue({ count: 0 }),
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+    storeBanner: { count: vi.fn().mockResolvedValue(0), create: vi.fn().mockResolvedValue({}) },
+    storePromotion: { count: vi.fn().mockResolvedValue(0), create: vi.fn().mockResolvedValue({}) },
+    productTag: { upsert: vi.fn().mockResolvedValue({}) },
   },
 }))
 
@@ -131,9 +139,9 @@ describe('savePaymentStep', () => {
 })
 
 describe('completeOnboarding', () => {
-  it('marks the tenant onboarded and returns the dev storefront URL', async () => {
+  it('marks the tenant onboarded and returns the dev admin dashboard URL', async () => {
     vi.mocked(prisma.tenant.update).mockResolvedValue({ slug: 'priya-boutique' } as never)
     const result = await completeOnboarding()
-    expect(result).toEqual({ storeUrl: '/dev/store/priya-boutique' })
+    expect(result).toEqual({ adminUrl: '/dev/store/priya-boutique/admin/dashboard' })
   })
 })
