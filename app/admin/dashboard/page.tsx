@@ -223,17 +223,17 @@ export default function AdminDashboardPage() {
                 <AreaChart data={metric.data} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#C1502E" stopOpacity="0.10" />
-                      <stop offset="100%" stopColor="#C1502E" stopOpacity="0" />
+                      <stop offset="0%" stopColor="var(--color-brand-primary)" stopOpacity="0.10" />
+                      <stop offset="100%" stopColor="var(--color-brand-primary)" stopOpacity="0" />
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#8B7D7A' }} />
+                  <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--color-muted-warm)' }} />
                   <YAxis hide />
                   <Tooltip
                     formatter={(value) => [metric.format(Number(value)), metric.label]}
-                    contentStyle={{ borderRadius: 8, borderColor: '#E8E8E8', fontSize: 12 }}
+                    contentStyle={{ borderRadius: 8, borderColor: 'var(--border)', fontSize: 12 }}
                   />
-                  <Area type="monotone" dataKey="value" stroke="#C1502E" strokeWidth={2} fill="url(#chartGrad)" dot={false} activeDot={{ r: 4, fill: '#C1502E', stroke: 'white', strokeWidth: 2 }} />
+                  <Area type="monotone" dataKey="value" stroke="var(--color-brand-primary)" strokeWidth={2} fill="url(#chartGrad)" dot={false} activeDot={{ r: 4, fill: 'var(--color-brand-primary)', stroke: 'white', strokeWidth: 2 }} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
