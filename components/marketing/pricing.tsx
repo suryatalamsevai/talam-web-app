@@ -13,7 +13,7 @@ const PLANS = [
     name: 'Pro',
     price: 1499,
     popular: true,
-    features: ['Unlimited products', 'Custom domain', 'Advanced analytics', 'Priority support'],
+    features: ['Unlimited products', 'Custom domain', 'We set up your store for you', 'Priority support'],
   },
 ]
 
