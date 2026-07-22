@@ -6,6 +6,7 @@ import { ChevronRight, Clock, Package, AlertTriangle, TrendingUp, TrendingDown, 
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { Dialog } from '@/components/ui/dialog'
 import { ShinyButton } from '@/components/ui/shiny-button'
+import { formatCurrency } from '@/lib/utils'
 import { getTenantLiveStateAction, goLiveAction } from './actions'
 import type { MissingConfigItem } from '@/lib/data/tenant'
 
@@ -48,7 +49,7 @@ const CHART_METRICS: ChartMetric[] = [
   {
     key: 'revenue',
     label: 'Revenue',
-    format: (v) => `₹${v.toLocaleString('en-IN')}`,
+    format: (v) => formatCurrency(v),
     data: [
       { day: 'Mon', value: 4000 },
       { day: 'Tue', value: 9000 },

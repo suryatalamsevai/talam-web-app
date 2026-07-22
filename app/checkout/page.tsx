@@ -13,6 +13,7 @@ import { OrderSummaryCard, TrustBar } from '@/components/checkout/order-summary-
 import { GoogleButton } from '@/components/auth/google-button'
 import { useStoreBase } from '@/components/store/store-context'
 import { createBrowserClient } from '@/lib/supabase/client'
+import { formatCurrency } from '@/lib/utils'
 
 // ponytail: inline tenant config until SSR wrapper is added
 const tenant = { name: 'Talam Store', freeDeliveryAbove: 999, shippingFee: 99 }
@@ -163,7 +164,7 @@ export default function CheckoutPage() {
     }, 2000)
   }
 
-  const payLabel = step === 1 ? `Pay ₹${total.toLocaleString('en-IN')}` : step === 2 ? 'Continue to Payment' : 'Place Order'
+  const payLabel = step === 1 ? `Pay ${formatCurrency(total)}` : step === 2 ? 'Continue to Payment' : 'Place Order'
 
   function handleStickyBarClick() {
     if (step === 1) {
@@ -394,7 +395,7 @@ export default function CheckoutPage() {
                         <p className="break-all text-center font-body text-[15px] font-bold text-fg">{tenant.name.toLowerCase().replace(/\s+/g, '')}@upi</p>
                         <p className="mt-3 font-body text-[13px] leading-[1.6] text-muted-warm">
                           1. Open any UPI app and scan the QR code<br />
-                          2. Pay ₹{total.toLocaleString('en-IN')} to complete the order<br />
+                          2. Pay {formatCurrency(total)} to complete the order<br />
                           3. Enter the 12-digit UTR number below to confirm
                         </p>
                         <label className="mb-1.5 mt-3 block font-body text-[13px] font-bold text-fg">UTR Number</label>
@@ -490,7 +491,7 @@ export default function CheckoutPage() {
       <div className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between gap-3 border-t border-border bg-surface px-4 py-3 sm:hidden">
         <div>
           <p className="font-body text-[13px] text-muted-warm">Order Total</p>
-          <p className="font-body text-[20px] font-bold text-fg">₹{total.toLocaleString('en-IN')}</p>
+          <p className="font-body text-[20px] font-bold text-fg">{formatCurrency(total)}</p>
         </div>
         {!(step === 3 && paymentMethod === 'upi') && (
           <button

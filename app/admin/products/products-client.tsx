@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, SlidersHorizontal, MoreHorizontal, Plus, X, Image as ImageIcon, CheckSquare, Square, Pencil, Trash2, Power, ChevronDown } from 'lucide-react'
 import { Dialog } from '@/components/ui/dialog'
+import { formatCurrency } from '@/lib/utils'
 import type { AdminProduct, CategoryMeta, ProductInput } from '@/lib/data/products'
 import {
   createProductAction,
@@ -674,7 +675,7 @@ export function AdminProductsClient({ products, categories, occasions }: { produ
                     </div>
                     <span className="truncate text-sm font-semibold text-fg">{p.name}</span>
                   </div>
-                  <span className="text-sm text-fg">₹{p.price.toLocaleString('en-IN')}</span>
+                  <span className="text-sm text-fg">{formatCurrency(p.price)}</span>
                   <span className={`text-sm font-semibold ${stock.color}`}>{stock.label}</span>
                   <span className={`inline-flex w-fit rounded-full px-2.5 py-0.5 text-2xs font-semibold ${p.isActive ? 'bg-success/10 text-success' : 'bg-muted-warm/10 text-muted-warm'}`}>{p.isActive ? 'Active' : 'Inactive'}</span>
                   <div onClick={(e) => e.stopPropagation()}>
@@ -706,7 +707,7 @@ export function AdminProductsClient({ products, categories, occasions }: { produ
                   </div>
                   <div className="min-w-0 grow">
                     <p className="truncate text-sm font-semibold text-fg">{p.name}</p>
-                    <p className="text-sm text-fg">₹{p.price.toLocaleString('en-IN')}</p>
+                    <p className="text-sm text-fg">{formatCurrency(p.price)}</p>
                     <p className={`text-xs font-semibold ${stock.color}`}>{stock.label}</p>
                   </div>
                   <div onClick={(e) => e.stopPropagation()}>

@@ -3,7 +3,7 @@
 import { use } from 'react'
 import Image from 'next/image'
 import { StoreLink } from '@/components/store/store-context'
-import { formatDate } from '@/lib/utils'
+import { formatCurrency, formatDate } from '@/lib/utils'
 import { ArrowLeft, Package, Truck, CheckCircle, XCircle, RotateCcw, Copy } from 'lucide-react'
 
 // ponytail: inline mock until real order history API exists (same data as /orders)
@@ -171,7 +171,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 </StoreLink>
                 <p className="font-body text-xs text-muted-warm">Size: {item.size} · Qty: {item.quantity}</p>
               </div>
-              <p className="shrink-0 font-body text-sm font-bold text-fg">₹{item.price.toLocaleString('en-IN')}</p>
+              <p className="shrink-0 font-body text-sm font-bold text-fg">{formatCurrency(item.price)}</p>
             </div>
           ))}
         </div>
@@ -183,7 +183,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         <div className="space-y-2">
           <div className="flex justify-between font-body text-sm text-fg">
             <span>Subtotal</span>
-            <span>₹{order.total.toLocaleString('en-IN')}</span>
+            <span>{formatCurrency(order.total)}</span>
           </div>
           <div className="flex justify-between font-body text-sm text-success">
             <span>Delivery</span>
@@ -191,13 +191,13 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           </div>
           <div className="border-t border-border pt-2 flex justify-between font-body text-sm font-bold text-fg">
             <span>Total</span>
-            <span>₹{order.total.toLocaleString('en-IN')}</span>
+            <span>{formatCurrency(order.total)}</span>
           </div>
         </div>
         {order.refundAmount && (
           <div className="mt-3 flex justify-between rounded-lg bg-success/5 px-3 py-2 font-body text-sm text-success">
             <span>Refund</span>
-            <span className="font-bold">₹{order.refundAmount.toLocaleString('en-IN')}</span>
+            <span className="font-bold">{formatCurrency(order.refundAmount)}</span>
           </div>
         )}
       </div>

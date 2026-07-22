@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Search, ArrowUpDown } from 'lucide-react'
 import { OrderActionSheet } from '@/components/admin/order-action-sheet'
 import { OrderDetailsModal } from '@/components/admin/order-details-modal'
+import { formatCurrency } from '@/lib/utils'
 
 type OrderStatus = 'Pending' | 'Confirmed' | 'Shipped' | 'Delivered'
 
@@ -112,7 +113,7 @@ export default function AdminOrdersPage() {
         <div className="flex-1 border-r border-border-light pr-5">
           <p className="text-xs font-medium text-muted-warm">Total Value</p>
           <p className="font-marketing mt-0.5 text-[22px] font-semibold leading-tight text-fg">
-            ₹{totalValue.toLocaleString('en-IN')}
+            {formatCurrency(totalValue)}
           </p>
         </div>
         <div className="flex-1 pl-5">
