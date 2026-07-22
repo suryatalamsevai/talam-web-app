@@ -1,6 +1,7 @@
 import { ChevronDown, ImagePlus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
+import { Textarea } from '@/components/ui/textarea'
 import { STEP_ACCENTS, STEPS } from './onboarding-data'
 
 export function StepTitle({
@@ -73,7 +74,7 @@ export function TextArea({
   ...props
 }: React.TextareaHTMLAttributes<HTMLTextAreaElement> & { readonly invalid?: boolean }) {
   return (
-    <textarea
+    <Textarea
       {...props}
       rows={5}
       className={[
