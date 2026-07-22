@@ -163,8 +163,8 @@ export function OrderDetailsModal({ order, onClose }: Props) {
                 <tbody>
                   <tr>
                     <td className="px-4 py-3">
-                      <div className="flex size-12 items-center justify-center rounded-lg bg-[#E8577E]/20">
-                        <div className="size-8 rounded bg-[#E8577E]/40" />
+                      <div className="flex size-12 items-center justify-center rounded-lg bg-store-primary/20">
+                        <div className="size-8 rounded bg-store-primary/40" />
                       </div>
                     </td>
                     <td className="px-4 py-3">

@@ -390,7 +390,7 @@ export default function CheckoutPage() {
                     </div>
                     {paymentMethod === 'upi' && (
                       <div className="mt-4 border-t border-border pt-4">
-                        <div className="mx-auto h-[120px] w-[120px] rounded-lg bg-[repeating-conic-gradient(#e8e8e8_0%_25%,#f9f9f9_0%_50%)] bg-[length:12px_12px]" />
+                        <div className="mx-auto h-[120px] w-[120px] rounded-lg bg-[repeating-conic-gradient(var(--border)_0%_25%,var(--color-bg)_0%_50%)] bg-[length:12px_12px]" />
                         <p className="mt-3 text-center font-body text-[12px] uppercase tracking-[0.04em] text-muted-warm">UPI ID</p>
                         <p className="break-all text-center font-body text-[15px] font-bold text-fg">{tenant.name.toLowerCase().replace(/\s+/g, '')}@upi</p>
                         <p className="mt-3 font-body text-[13px] leading-[1.6] text-muted-warm">
