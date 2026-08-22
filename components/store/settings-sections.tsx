@@ -8,11 +8,12 @@ import { Dialog } from '@/components/ui/dialog'
 // non-PCI identifier to store as-is. Card capture needs real tokenization before it's added.
 type PaymentMethod = { id: string; upiId: string; isDefault: boolean }
 
-export function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+export function Toggle({ checked, onChange, ariaLabel }: { checked: boolean; onChange: (v: boolean) => void; ariaLabel: string }) {
   return (
     <button
       role="switch"
       aria-checked={checked}
+      aria-label={ariaLabel}
       onClick={() => onChange(!checked)}
       className={`relative h-[26px] w-[46px] shrink-0 rounded-full transition-colors ${checked ? 'bg-success' : 'bg-border'}`}
     >
@@ -42,7 +43,7 @@ function AddPaymentDialog({ open, onClose, onAdd }: { open: boolean; onClose: ()
       <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-5">
         <div className="flex items-center justify-between">
           <h3 className="font-body text-base font-bold text-fg">Add Payment Method</h3>
-          <button type="button" onClick={onClose} className="text-muted-warm hover:text-fg"><X className="h-5 w-5" /></button>
+          <button type="button" onClick={onClose} aria-label="Close" className="text-muted-warm hover:text-fg"><X className="h-5 w-5" /></button>
         </div>
         <label className="flex flex-col gap-1.5">
           <span className="font-body text-sm font-semibold text-fg">UPI ID</span>
@@ -138,21 +139,21 @@ export function NotificationsContent() {
           <div className="font-body text-sm font-semibold text-fg">Deals</div>
           <div className="font-body text-xs text-muted-warm">Offers, discounts, and new drops</div>
         </div>
-        <Toggle checked={deals} onChange={setDeals} />
+        <Toggle checked={deals} onChange={setDeals} ariaLabel="Deals notifications" />
       </div>
       <div className="flex items-center justify-between py-3">
         <div>
           <div className="font-body text-sm font-semibold text-fg">Order Updates</div>
           <div className="font-body text-xs text-muted-warm">Shipping and delivery updates</div>
         </div>
-        <Toggle checked={orderUpdates} onChange={setOrderUpdates} />
+        <Toggle checked={orderUpdates} onChange={setOrderUpdates} ariaLabel="Order update notifications" />
       </div>
       <div className="flex items-center justify-between py-3 last:pb-0">
         <div>
           <div className="font-body text-sm font-semibold text-fg">Promotions</div>
           <div className="font-body text-xs text-muted-warm">Flash sales and limited-time deals</div>
         </div>
-        <Toggle checked={promos} onChange={setPromos} />
+        <Toggle checked={promos} onChange={setPromos} ariaLabel="Promotions notifications" />
       </div>
     </div>
   )

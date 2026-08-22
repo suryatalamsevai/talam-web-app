@@ -1,5 +1,6 @@
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { LazyMotion, domAnimation } from 'motion/react'
 import { createServerClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { resolveSignedInDestination } from '@/app/auth/page'
@@ -29,19 +30,21 @@ export default async function MarketingHome() {
   }
 
   return (
-    <main className="w-full overflow-x-clip">
-      <MarketingNav />
-      <Hero />
-      <TextileStrip />
-      <ProblemStrip />
-      <Features />
-      <HowItWorks />
-      <Integrations />
-      <Pricing />
-      <Faq />
-      <CtaBand />
-      <MarketingFooter />
-      <Analytics />
-    </main>
+    <LazyMotion features={domAnimation}>
+      <main className="w-full overflow-x-clip">
+        <MarketingNav />
+        <Hero />
+        <TextileStrip />
+        <ProblemStrip />
+        <Features />
+        <HowItWorks />
+        <Integrations />
+        <Pricing />
+        <Faq />
+        <CtaBand />
+        <MarketingFooter />
+        <Analytics />
+      </main>
+    </LazyMotion>
   )
 }

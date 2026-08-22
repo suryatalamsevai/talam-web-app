@@ -247,6 +247,7 @@ function ProductRowMenu({ product, onEdit, onToggleActive, onDelete }: {
     <div className="relative" ref={ref}>
       <button
         type="button"
+        aria-label="More actions"
         onClick={(e) => { e.stopPropagation(); setOpen((v) => !v) }}
         className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border transition-colors hover:bg-bg"
       >
@@ -419,7 +420,7 @@ function ProductEditorForm({
       <div className="flex max-h-[80vh] flex-col md:max-h-[85vh]">
         <div className="flex shrink-0 items-center justify-between border-b border-border p-4">
           <span className="text-base font-bold text-fg">{title}</span>
-          <button onClick={onClose} className="cursor-pointer transition-transform active:scale-90"><X className="size-6 text-muted-warm" /></button>
+          <button onClick={onClose} aria-label="Close" className="cursor-pointer transition-transform active:scale-90"><X className="size-6 text-muted-warm" /></button>
         </div>
 
         <div className="flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -523,7 +524,7 @@ function ProductEditorForm({
                       render={<label />}
                       aria-disabled={uploading}
                     >
-                      <input type="file" accept="image/*" multiple disabled={uploading} className="sr-only" onChange={(e) => handleFiles(e.target.files)} />
+                      <input type="file" accept="image/*" multiple disabled={uploading} aria-label="Upload product images" className="sr-only" onChange={(e) => handleFiles(e.target.files)} />
                     </AttachmentTrigger>
                     <AttachmentMedia>
                       <ImageIcon />
@@ -652,7 +653,7 @@ function ProductEditorForm({
                       placeholder="Value, e.g. Pure Silk"
                       className="flex-1 rounded-lg border border-border bg-bg px-3 py-2 text-sm outline-none transition-colors focus:border-brand-primary focus:bg-surface"
                     />
-                    <button type="button" onClick={() => setSpecs((prev) => prev.filter((_, j) => j !== i))} className="cursor-pointer text-muted-warm hover:text-danger">
+                    <button type="button" onClick={() => setSpecs((prev) => prev.filter((_, j) => j !== i))} aria-label="Remove specification" className="cursor-pointer text-muted-warm hover:text-danger">
                       <X className="size-4" />
                     </button>
                   </div>
@@ -806,6 +807,7 @@ export function AdminProductsClient({ products, categories, occasions }: { produ
           <input className="grow bg-transparent text-md outline-none placeholder:text-muted-warm" placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <select
+          aria-label="Select by category"
           onChange={(e) => { if (e.target.value) selectByCategory(e.target.value); e.target.value = '' }}
           defaultValue=""
           className="hidden h-10 cursor-pointer rounded-lg border border-border bg-surface px-2 text-sm text-muted-warm outline-none md:block"
@@ -815,7 +817,7 @@ export function AdminProductsClient({ products, categories, occasions }: { produ
             <option key={c.id} value={c.id}>{c.name}</option>
           ))}
         </select>
-        <button onClick={() => setMobileFilterOpen(true)} className="flex size-10 cursor-pointer items-center justify-center rounded-lg border border-border bg-surface shadow-sm transition-colors hover:bg-bg md:hidden">
+        <button onClick={() => setMobileFilterOpen(true)} aria-label="Filters" className="flex size-10 cursor-pointer items-center justify-center rounded-lg border border-border bg-surface shadow-sm transition-colors hover:bg-bg md:hidden">
           <SlidersHorizontal className="size-[18px] text-muted-warm" />
         </button>
       </div>
@@ -841,7 +843,7 @@ export function AdminProductsClient({ products, categories, occasions }: { produ
           {/* Desktop table */}
           <div className="hidden md:block">
             <div className="grid grid-cols-[auto_2fr_1fr_1fr_1fr_auto] gap-x-4 border-b border-border pb-2 text-2xs font-bold uppercase tracking-[0.06em] text-muted-warm">
-              <button onClick={selected.size === filtered.length && filtered.length > 0 ? clearSelection : selectAllVisible} className="flex size-5 cursor-pointer items-center justify-center">
+              <button onClick={selected.size === filtered.length && filtered.length > 0 ? clearSelection : selectAllVisible} aria-label={selected.size === filtered.length && filtered.length > 0 ? 'Clear selection' : 'Select all'} className="flex size-5 cursor-pointer items-center justify-center">
                 {selected.size === filtered.length && filtered.length > 0 ? <CheckSquare className="size-4 text-brand-primary" /> : <Square className="size-4 text-border" />}
               </button>
               <span>Product Name</span>
@@ -855,7 +857,7 @@ export function AdminProductsClient({ products, categories, occasions }: { produ
               const swatch = SWATCHES[i % SWATCHES.length]
               return (
                 <div key={p.id} className="grid cursor-pointer grid-cols-[auto_2fr_1fr_1fr_1fr_auto] items-center gap-x-4 border-b border-border-light py-3 transition-colors hover:bg-bg" onClick={() => openEdit(p)}>
-                  <button onClick={(e) => { e.stopPropagation(); toggleSelected(p.id) }} className="flex size-5 cursor-pointer items-center justify-center">
+                  <button onClick={(e) => { e.stopPropagation(); toggleSelected(p.id) }} aria-label={selected.has(p.id) ? `Deselect ${p.name}` : `Select ${p.name}`} className="flex size-5 cursor-pointer items-center justify-center">
                     {selected.has(p.id) ? <CheckSquare className="size-4 text-brand-primary" /> : <Square className="size-4 text-border" />}
                   </button>
                   <div className="flex items-center gap-3">
@@ -888,7 +890,7 @@ export function AdminProductsClient({ products, categories, occasions }: { produ
               const swatch = SWATCHES[i % SWATCHES.length]
               return (
                 <div key={p.id} className="flex cursor-pointer items-center gap-3 border-b border-border-light py-3.5 transition-colors active:bg-bg" onClick={() => openEdit(p)}>
-                  <button onClick={(e) => { e.stopPropagation(); toggleSelected(p.id) }} className="flex size-5 shrink-0 cursor-pointer items-center justify-center">
+                  <button onClick={(e) => { e.stopPropagation(); toggleSelected(p.id) }} aria-label={selected.has(p.id) ? `Deselect ${p.name}` : `Select ${p.name}`} className="flex size-5 shrink-0 cursor-pointer items-center justify-center">
                     {selected.has(p.id) ? <CheckSquare className="size-4 text-brand-primary" /> : <Square className="size-4 text-border" />}
                   </button>
                   <div className={`flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl ${swatch.bg}`}>
@@ -916,7 +918,7 @@ export function AdminProductsClient({ products, categories, occasions }: { produ
       </div>
 
       {/* FAB */}
-      <button data-tour="add-product" onClick={openAdd} className="fixed bottom-24 right-4 z-30 flex size-14 cursor-pointer items-center justify-center rounded-full bg-brand-primary shadow-lg transition-transform active:scale-90 md:bottom-8 md:right-8">
+      <button data-tour="add-product" onClick={openAdd} aria-label="Add new product" className="fixed bottom-24 right-4 z-30 flex size-14 cursor-pointer items-center justify-center rounded-full bg-brand-primary shadow-lg transition-transform active:scale-90 md:bottom-8 md:right-8">
         <Plus className="size-7 text-surface" />
       </button>
 

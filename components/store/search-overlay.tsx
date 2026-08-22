@@ -99,7 +99,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
               className="flex-1 bg-transparent font-body text-lg text-fg outline-none placeholder:text-muted-warm"
             />
             {query && (
-              <button onClick={() => { setQuery(''); setResults([]); setSearched(false); inputRef.current?.focus() }} className="cursor-pointer text-muted-warm hover:text-fg">
+              <button onClick={() => { setQuery(''); setResults([]); setSearched(false); inputRef.current?.focus() }} aria-label="Clear search" className="cursor-pointer text-muted-warm hover:text-fg">
                 <X className="size-5" />
               </button>
             )}

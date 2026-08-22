@@ -12,16 +12,20 @@ export function GoogleButton({ redirectPath = '/auth/callback', next }: { redire
 
   async function handleGoogleSignIn() {
     setLoading(true)
-    const redirectTo = new URL(redirectPath, window.location.origin)
-    if (next) redirectTo.searchParams.set('next', next)
+    try {
+      const redirectTo = new URL(redirectPath, window.location.origin)
+      if (next) redirectTo.searchParams.set('next', next)
 
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: redirectTo.toString(),
-      },
-    })
-    if (error) setLoading(false)
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectTo.toString(),
+        },
+      })
+      if (error) setLoading(false)
+    } catch {
+      setLoading(false)
+    }
   }
 
   return (

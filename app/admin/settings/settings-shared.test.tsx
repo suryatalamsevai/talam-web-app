@@ -28,16 +28,16 @@ describe('Toggle', () => {
   it('calls onChange with the flipped value', async () => {
     const onChange = vi.fn()
     const user = userEvent.setup()
-    render(<Toggle checked={false} onChange={onChange} />)
-    await user.click(screen.getByRole('button'))
+    render(<Toggle checked={false} onChange={onChange} ariaLabel="Test toggle" />)
+    await user.click(screen.getByRole('switch'))
     expect(onChange).toHaveBeenCalledWith(true)
   })
 
   it('does not respond when disabled', async () => {
     const onChange = vi.fn()
     const user = userEvent.setup()
-    render(<Toggle checked={false} onChange={onChange} disabled />)
-    await user.click(screen.getByRole('button'))
+    render(<Toggle checked={false} onChange={onChange} disabled ariaLabel="Test toggle" />)
+    await user.click(screen.getByRole('switch'))
     expect(onChange).not.toHaveBeenCalled()
   })
 })

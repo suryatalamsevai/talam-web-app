@@ -6,11 +6,11 @@ export function CheckoutHeader({ storeName, backHref, onBack }: { storeName: str
     <header className="sticky top-0 z-40 flex h-[60px] items-center justify-between border-b border-border bg-surface px-4 sm:h-[72px] sm:px-12">
       <div className="flex items-center gap-2 sm:gap-3">
         {backHref ? (
-          <Link href={backHref} className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-bg">
+          <Link href={backHref} aria-label="Back" className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-bg">
             <ArrowLeft className="h-4 w-4 text-fg" />
           </Link>
         ) : onBack ? (
-          <button onClick={onBack} className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-bg">
+          <button onClick={onBack} aria-label="Back" className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-bg">
             <ArrowLeft className="h-4 w-4 text-fg" />
           </button>
         ) : null}

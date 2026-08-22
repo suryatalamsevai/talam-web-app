@@ -113,7 +113,7 @@ export default function AdminOrdersPage() {
           </button>
         </div>
         {/* Mobile search */}
-        <button className="flex size-8 items-center justify-center md:hidden">
+        <button aria-label="Search orders" className="flex size-8 items-center justify-center md:hidden">
           <Search className="size-5 text-fg" strokeWidth={2} />
         </button>
       </div>

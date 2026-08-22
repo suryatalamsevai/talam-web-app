@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'motion/react'
+import * as m from 'motion/react-m'
 import { BlurFade } from '@/components/ui/blur-fade'
 import { TextAnimate } from '@/components/ui/text-animate'
 import { LineShadowText } from '@/components/ui/line-shadow-text'
@@ -26,14 +26,14 @@ export function ProblemStrip() {
 
         <BlurFade delay={0.4} inView>
           <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-6">
-            <motion.div
+            <m.div
               className="px-6 py-4 rounded-2xl bg-danger/5 border border-danger/10"
               whileHover={{ scale: 1.02 }}
             >
               <p className="text-sm font-body text-danger/80 line-through decoration-danger/40">Screenshots in gallery</p>
-            </motion.div>
+            </m.div>
             <div className="text-2xl text-muted-warm">→</div>
-            <motion.div
+            <m.div
               className="px-6 py-4 rounded-2xl bg-success/5 border border-success/20"
               whileHover={{ scale: 1.02 }}
             >
@@ -42,7 +42,7 @@ export function ProblemStrip() {
                   yoursilks.talam4shop.com
                 </LineShadowText>
               </p>
-            </motion.div>
+            </m.div>
           </div>
         </BlurFade>
       </div>

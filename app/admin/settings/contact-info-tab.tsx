@@ -63,6 +63,7 @@ function GalleryDropzone({ gallery, onAdd, onRemove, error }: { gallery: string[
               <input
                 type="file"
                 accept={ACCEPTED_IMAGE_TYPES.join(',')}
+                aria-label="Upload gallery photo"
                 className="sr-only"
                 onChange={(e) => {
                   const file = e.target.files?.[0]
@@ -311,6 +312,7 @@ export function ContactInfoTab() {
                     <Toggle
                       checked={field.value}
                       disabled={!field.value && !hasNumber}
+                      ariaLabel="Show WhatsApp button on store"
                       onChange={(checked) => {
                         if (checked && !hasNumber) return
                         field.onChange(checked)

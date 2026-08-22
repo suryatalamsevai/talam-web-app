@@ -86,7 +86,7 @@ function ImageUploadPreview({ initialLabel, imageUrl, onFile }: { initialLabel: 
   return (
     <Attachment title="Click to change" orientation="vertical" className="group/logo size-12 rounded-xl border-none bg-brand-primary/10 p-0" state={src ? 'done' : 'idle'}>
       <AttachmentTrigger render={<label />}>
-        <input type="file" accept="image/*" className="sr-only" onChange={handleFile} />
+        <input type="file" accept="image/*" aria-label="Upload store logo" className="sr-only" onChange={handleFile} />
       </AttachmentTrigger>
       <AttachmentMedia variant={src ? 'image' : 'icon'} className="size-full rounded-xl bg-transparent">
         {src ? (
@@ -241,7 +241,7 @@ function AboutTab() {
                 placeholder={meta?.placeholder ?? 'https://instagram.com/yourstore'}
                 className="min-w-0 flex-1 bg-transparent text-md text-fg outline-none"
               />
-              <button type="button" onClick={() => setSocialLinks((prev) => prev.filter((_, j) => j !== i))} className="text-muted-warm hover:text-danger">
+              <button type="button" onClick={() => setSocialLinks((prev) => prev.filter((_, j) => j !== i))} aria-label="Remove link" className="text-muted-warm hover:text-danger">
                 <X className="size-4" />
               </button>
             </div>
@@ -459,7 +459,7 @@ function CategoriesEditor() {
           {departmentLabel(cat.department) && (
             <span className="rounded-full bg-bg px-2 py-0.5 text-2xs font-semibold text-muted-warm">{departmentLabel(cat.department)}</span>
           )}
-          <button type="button" onClick={() => setPendingDelete(cat)} className="text-muted-warm hover:text-danger">
+          <button type="button" onClick={() => setPendingDelete(cat)} aria-label={`Delete ${cat.name}`} className="text-muted-warm hover:text-danger">
             <X className="size-4" />
           </button>
         </div>
@@ -612,12 +612,14 @@ function StoreTab() {
             <div className="flex items-center gap-2">
               <input
                 defaultValue={settings.returnWindowDays ?? 7}
+                aria-label="Return window in days"
                 onBlur={(e) => settings.returnWindowDays !== null && save({ returnWindowDays: Number(e.target.value) || 0 })}
                 className="w-12 rounded-lg border border-border bg-bg px-2 py-1 text-center text-sm text-fg"
               />
               <span className="text-xs text-muted-warm">days</span>
               <Toggle
                 checked={settings.returnWindowDays !== null}
+                ariaLabel="Accept returns"
                 onChange={(checked) => save({ returnWindowDays: checked ? 7 : null })}
               />
             </div>
@@ -669,6 +671,7 @@ function StoreTab() {
             <Toggle
               checked={settings.showWhatsappButton}
               disabled={!settings.showWhatsappButton && !settings.whatsappNumber}
+              ariaLabel="Show WhatsApp button on store"
               onChange={(checked) => {
                 if (checked && !settings.whatsappNumber) return
                 save({ showWhatsappButton: checked })
@@ -816,7 +819,7 @@ function AlertRow({ name, sub, checked, onChange }: { name: string; sub: string;
         <p className="text-md font-semibold text-fg">{name}</p>
         <p className="text-xs text-muted-warm">{sub}</p>
       </div>
-      <Toggle checked={checked} onChange={onChange} />
+      <Toggle checked={checked} onChange={onChange} ariaLabel={name} />
     </div>
   )
 }
@@ -967,7 +970,7 @@ function PromotionsTab() {
                 <div key={o.id} className="rounded-lg border border-border p-3">
                   <div className="mb-2 flex items-center justify-between">
                     <span className="font-mono text-sm font-bold text-brand-primary">{o.code}</span>
-                    <Toggle checked={o.isActive} onChange={(v) => handleToggle(o.id, v)} />
+                    <Toggle checked={o.isActive} onChange={(v) => handleToggle(o.id, v)} ariaLabel={`Toggle offer ${o.code} active`} />
                   </div>
                   <p className="text-sm font-semibold text-fg">{formatDiscount(o)} · Min {formatMinOrder(o)}</p>
                   <p className="text-xs text-muted-warm">{formatUses(o)} uses · {formatExpiry(o)}</p>
@@ -996,9 +999,9 @@ function PromotionsTab() {
                       <td className="py-3 pr-4 text-muted-warm">{formatMinOrder(o)}</td>
                       <td className="py-3 pr-4 text-muted-warm">{formatUses(o)}</td>
                       <td className="py-3 pr-4 text-muted-warm">{formatExpiry(o)}</td>
-                      <td className="py-3 pr-4"><Toggle checked={o.isActive} onChange={(v) => handleToggle(o.id, v)} /></td>
+                      <td className="py-3 pr-4"><Toggle checked={o.isActive} onChange={(v) => handleToggle(o.id, v)} ariaLabel={`Toggle offer ${o.code} active`} /></td>
                       <td className="py-3">
-                        <button type="button" onClick={() => handleDelete(o.id)} className="text-muted-warm hover:text-danger">
+                        <button type="button" onClick={() => handleDelete(o.id)} aria-label={`Delete offer ${o.code}`} className="text-muted-warm hover:text-danger">
                           <X className="size-4" />
                         </button>
                       </td>
@@ -1139,10 +1142,10 @@ function CarouselTab() {
             {banners.map((b, i) => (
               <div key={b.id} className="flex items-center gap-3 rounded-lg border border-border p-3">
                 <div className="flex flex-col gap-0.5">
-                  <button type="button" disabled={i === 0} onClick={() => handleMove(b.id, 'up')} className="text-muted-warm hover:text-fg disabled:opacity-30">
+                  <button type="button" disabled={i === 0} onClick={() => handleMove(b.id, 'up')} aria-label="Move up" className="text-muted-warm hover:text-fg disabled:opacity-30">
                     <ChevronLeft className="size-3.5 rotate-90" />
                   </button>
-                  <button type="button" disabled={i === banners.length - 1} onClick={() => handleMove(b.id, 'down')} className="text-muted-warm hover:text-fg disabled:opacity-30">
+                  <button type="button" disabled={i === banners.length - 1} onClick={() => handleMove(b.id, 'down')} aria-label="Move down" className="text-muted-warm hover:text-fg disabled:opacity-30">
                     <ChevronLeft className="size-3.5 -rotate-90" />
                   </button>
                 </div>
@@ -1150,8 +1153,8 @@ function CarouselTab() {
                   <p className="truncate text-sm font-semibold text-fg">{b.headline || b.productName}</p>
                   <p className="truncate text-xs text-muted-warm">{b.productName}{b.subtitle ? ` · ${b.subtitle}` : ''}</p>
                 </div>
-                <Toggle checked={b.isActive} onChange={(v) => handleToggle(b.id, v)} />
-                <button type="button" onClick={() => handleDelete(b.id)} className="text-muted-warm hover:text-danger">
+                <Toggle checked={b.isActive} onChange={(v) => handleToggle(b.id, v)} ariaLabel={`Toggle ${b.headline || b.productName} active`} />
+                <button type="button" onClick={() => handleDelete(b.id)} aria-label={`Delete ${b.headline || b.productName}`} className="text-muted-warm hover:text-danger">
                   <X className="size-4" />
                 </button>
               </div>
@@ -1341,6 +1344,7 @@ function PaymentsTab() {
               <Toggle
                 checked={config.upi.enabled}
                 disabled={locked || (!config.upi.enabled && !isValidUpiId(config.upi.upiId))}
+                ariaLabel="Enable UPI / QR Code payments"
                 onChange={(v) => {
                   if (locked) return
                   if (v && !isValidUpiId(config.upi.upiId)) return
@@ -1379,7 +1383,7 @@ function PaymentsTab() {
                 <p className="text-xs text-muted-warm">2% + ₹3 per transaction · PAN + savings account</p>
               </div>
             </div>
-            <Toggle checked={config.instamojo.enabled} onChange={(v) => !locked && save({ ...config, instamojo: { enabled: v } })} />
+            <Toggle checked={config.instamojo.enabled} ariaLabel="Enable Instamojo payments" onChange={(v) => !locked && save({ ...config, instamojo: { enabled: v } })} />
           </div>
         </div>
 
@@ -1392,7 +1396,7 @@ function PaymentsTab() {
                 <p className="text-xs text-muted-warm">0% fee · Customer pays the courier on arrival</p>
               </div>
             </div>
-            <Toggle checked={config.cod.enabled} onChange={(v) => !locked && save({ ...config, cod: { enabled: v } })} />
+            <Toggle checked={config.cod.enabled} ariaLabel="Enable Pay on Delivery" onChange={(v) => !locked && save({ ...config, cod: { enabled: v } })} />
           </div>
         </div>
 
@@ -1406,7 +1410,7 @@ function PaymentsTab() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Toggle checked={config.razorpay.enabled} onChange={(v) => !locked && save({ ...config, razorpay: { enabled: v } })} />
+              <Toggle checked={config.razorpay.enabled} ariaLabel="Enable Razorpay payments" onChange={(v) => !locked && save({ ...config, razorpay: { enabled: v } })} />
               <span
                 className={`rounded-full px-2 py-0.5 text-2xs font-semibold ${razorpayStatus === 'activated' ? 'bg-success-bg text-success' : 'bg-[#FEF3C7] text-[#92400E]'}`}
               >

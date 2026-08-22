@@ -79,7 +79,7 @@ export function NotificationsBell() {
 
   return (
     <div className="relative" ref={ref}>
-      <button type="button" onClick={handleOpen} className="relative">
+      <button type="button" onClick={handleOpen} aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'} className="relative">
         <Bell className="size-[22px] text-[#374151]" strokeWidth={2} />
         {unreadCount > 0 && <div className="absolute -right-1 -top-1 size-2 rounded-full bg-danger" />}
       </button>

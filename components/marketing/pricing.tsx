@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { motion } from 'motion/react'
+import * as m from 'motion/react-m'
 import { Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { BlurFade } from '@/components/ui/blur-fade'
@@ -55,7 +55,7 @@ export function Pricing() {
         <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-6">
           {PLANS.map((plan, i) => (
             <BlurFade key={plan.name} delay={0.2 + i * 0.12} inView>
-              <motion.div
+              <m.div
                 whileHover={{ y: -4 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                 className={cn(
@@ -108,7 +108,7 @@ export function Pricing() {
                     </Link>
                   )}
                 </div>
-              </motion.div>
+              </m.div>
             </BlurFade>
           ))}
         </div>

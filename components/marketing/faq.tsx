@@ -1,6 +1,7 @@
 'use client'
 
-import { motion, AnimatePresence } from 'motion/react'
+import { AnimatePresence } from 'motion/react'
+import * as m from 'motion/react-m'
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { BlurFade } from '@/components/ui/blur-fade'
@@ -39,7 +40,7 @@ function FaqItem({ q, a, index }: { q: string; a: string; index: number }) {
         </button>
         <AnimatePresence initial={false}>
           {open && (
-            <motion.div
+            <m.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
@@ -49,7 +50,7 @@ function FaqItem({ q, a, index }: { q: string; a: string; index: number }) {
               <p className="pb-6 text-sm md:text-base text-muted-warm font-body leading-relaxed pr-10">
                 {a}
               </p>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </div>

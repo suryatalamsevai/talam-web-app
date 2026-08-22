@@ -65,4 +65,24 @@ describe('GET /auth/callback', () => {
 
     expect(res.headers.get('location')).toBe('http://localhost/admin/onboarding')
   })
+
+  it('rejects an absolute-URL next param and falls back to tenant resolution', async () => {
+    const user = { id: 'user-1', email: 'owner@example.com', user_metadata: {} }
+    exchangeCodeForSessionMock.mockResolvedValue({ data: { user }, error: null })
+
+    const res = await GET(makeRequest('http://localhost/auth/callback?code=abc&next=https://evil.example'))
+
+    expect(res.headers.get('location')).not.toContain('evil.example')
+    expect(res.headers.get('location')).toBe('http://localhost/admin/onboarding')
+  })
+
+  it('rejects a protocol-relative next param and falls back to tenant resolution', async () => {
+    const user = { id: 'user-1', email: 'owner@example.com', user_metadata: {} }
+    exchangeCodeForSessionMock.mockResolvedValue({ data: { user }, error: null })
+
+    const res = await GET(makeRequest('http://localhost/auth/callback?code=abc&next=//evil.example'))
+
+    expect(res.headers.get('location')).not.toContain('evil.example')
+    expect(res.headers.get('location')).toBe('http://localhost/admin/onboarding')
+  })
 })

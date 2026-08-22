@@ -52,7 +52,7 @@ export default function AdminCustomersPage() {
             />
           </div>
         </div>
-        <button className="flex size-8 items-center justify-center md:hidden">
+        <button aria-label="Search customers" className="flex size-8 items-center justify-center md:hidden">
           <Search className="size-5 text-fg" strokeWidth={2} />
         </button>
       </div>
