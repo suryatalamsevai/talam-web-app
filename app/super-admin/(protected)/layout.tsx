@@ -1,5 +1,5 @@
 import { requireSuperAdmin, getSuperAdminRole } from '@/lib/auth-guard'
-import { sectionsForRole } from '@/lib/data/admin-staff'
+import { sectionsForRole } from '@/lib/data/admin-permissions'
 import { SuperAdminNavShell } from '@/components/super-admin/super-admin-nav-shell'
 
 export default async function SuperAdminLayout({

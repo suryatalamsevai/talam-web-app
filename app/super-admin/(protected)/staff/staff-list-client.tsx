@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import type { AdminStaffRow } from '@/lib/data/admin-staff'
-import { ROLE_LABEL, SECTION_LABEL, sectionsForRole } from '@/lib/data/admin-staff'
+import { ROLE_LABEL, SECTION_LABEL, sectionsForRole } from '@/lib/data/admin-permissions'
 import { formatDate } from '@/lib/utils'
 import { inviteStaffAction, removeStaffAction } from '@/app/super-admin/actions'
 

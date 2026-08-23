@@ -3,13 +3,8 @@ import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createServerClient } from '@/lib/supabase/server'
 import { withTenant } from '@/lib/prisma'
-import {
-  isAdminStaffEmail,
-  getAdminStaffRole,
-  canAccessSection,
-  touchAdminStaffLastActive,
-  type AdminSection,
-} from '@/lib/data/admin-staff'
+import { isAdminStaffEmail, getAdminStaffRole, touchAdminStaffLastActive } from '@/lib/data/admin-staff'
+import { canAccessSection, type AdminSection } from '@/lib/data/admin-permissions'
 import type { AdminStaffRole } from '@prisma/client'
 
 // cache(): dedupe repeated calls within one request — layouts, pages, and server

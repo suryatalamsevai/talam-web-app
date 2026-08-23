@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { LayoutDashboard, ClipboardList, Store, CreditCard, TrendingUp, Users, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 import { ProfileMenu } from '@/components/marketing/profile-menu'
-import type { AdminSection } from '@/lib/data/admin-staff'
+import type { AdminSection } from '@/lib/data/admin-permissions'
 
 type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; section: AdminSection }
 

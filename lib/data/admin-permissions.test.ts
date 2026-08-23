@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { sectionsForRole, canAccessSection, type AdminSection } from './admin-staff'
+import { sectionsForRole, canAccessSection, type AdminSection } from './admin-permissions'
 
 const ALL_SECTIONS: AdminSection[] = ['overview', 'orders', 'tenants', 'billing', 'growth', 'staff']
 

@@ -5,7 +5,8 @@ import type { OnboardingStage, OnboardingStageStatus, Tier, AdminStaffRole } fro
 import { requireSuperAdmin, getSuperAdminRole } from '@/lib/auth-guard'
 import { withSuperAdmin } from '@/lib/prisma'
 import { connectShiprocketAccount, getShippingConfig } from '@/lib/shipping/shiprocket-account'
-import { addAdminStaff, removeAdminStaff, getAdminStaff, canAccessSection, SECTION_LABEL, type AdminSection } from '@/lib/data/admin-staff'
+import { addAdminStaff, removeAdminStaff, getAdminStaff } from '@/lib/data/admin-staff'
+import { canAccessSection, SECTION_LABEL, type AdminSection } from '@/lib/data/admin-permissions'
 
 type ActionResult = { success: true } | { error: string }
 
