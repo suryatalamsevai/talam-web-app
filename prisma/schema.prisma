@@ -160,6 +160,25 @@ model ShippingCredential {
   @@map("shipping_credentials")
 }
 
+/// Platform staff who can access /super-admin. Replaces the old SUPER_ADMIN_EMAILS
+/// env-var allow-list as the source of truth for access, so ops staff can be
+/// added/removed from the Staff screen instead of an env var + redeploy.
+model AdminStaff {
+  id           String    @id @default(uuid()) @db.Uuid
+  email        String    @unique
+  name         String
+  role         AdminStaffRole @default(support)
+  addedAt      DateTime  @default(now()) @map("added_at") @db.Timestamptz
+  lastActiveAt DateTime? @map("last_active_at") @db.Timestamptz
+
+  @@map("admin_staff")
+}
+
+enum AdminStaffRole {
+  owner
+  support
+}
+
 model Product {
   id           String        @id @default(uuid()) @db.Uuid
   tenantId     String        @map("tenant_id") @db.Uuid

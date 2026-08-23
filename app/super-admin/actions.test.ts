@@ -1,11 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const { mockRequireSuperAdmin, mockWithSuperAdmin, mockUpdate, mockConnectShiprocket, mockGetShippingConfig } = vi.hoisted(() => ({
+const {
+  mockRequireSuperAdmin,
+  mockWithSuperAdmin,
+  mockUpdate,
+  mockConnectShiprocket,
+  mockGetShippingConfig,
+  mockAddAdminStaff,
+  mockRemoveAdminStaff,
+} = vi.hoisted(() => ({
   mockRequireSuperAdmin: vi.fn(async () => ({ email: 'ops@talam.com' })),
   mockWithSuperAdmin: vi.fn(),
   mockUpdate: vi.fn(),
   mockConnectShiprocket: vi.fn(),
   mockGetShippingConfig: vi.fn(),
+  mockAddAdminStaff: vi.fn(),
+  mockRemoveAdminStaff: vi.fn(),
 }))
 
 vi.mock('@/lib/auth-guard', () => ({ requireSuperAdmin: mockRequireSuperAdmin }))
@@ -15,6 +25,10 @@ vi.mock('@/lib/shipping/shiprocket-account', () => ({
   connectShiprocketAccount: mockConnectShiprocket,
   getShippingConfig: mockGetShippingConfig,
 }))
+vi.mock('@/lib/data/admin-staff', () => ({
+  addAdminStaff: mockAddAdminStaff,
+  removeAdminStaff: mockRemoveAdminStaff,
+}))
 
 import {
   updateOnboardingStageAction,
@@ -22,6 +36,8 @@ import {
   unsuspendTenantAction,
   staffConnectShippingAction,
   markShippingAssistInProgressAction,
+  inviteStaffAction,
+  removeStaffAction,
 } from './actions'
 
 beforeEach(() => {
@@ -121,5 +137,57 @@ describe('markShippingAssistInProgressAction', () => {
 
     expect(result).toEqual({ error: expect.any(String) })
     expect(mockUpdate).not.toHaveBeenCalled()
+  })
+})
+
+describe('inviteStaffAction', () => {
+  it('requires super-admin auth', async () => {
+    await inviteStaffAction('new@talam.com', 'New Person', 'support')
+    expect(mockRequireSuperAdmin).toHaveBeenCalled()
+  })
+
+  it('rejects an invalid email without adding staff', async () => {
+    const result = await inviteStaffAction('not-an-email', 'New Person', 'support')
+
+    expect(result).toEqual({ error: expect.any(String) })
+    expect(mockAddAdminStaff).not.toHaveBeenCalled()
+  })
+
+  it('rejects a blank name without adding staff', async () => {
+    const result = await inviteStaffAction('new@talam.com', '   ', 'support')
+
+    expect(result).toEqual({ error: expect.any(String) })
+    expect(mockAddAdminStaff).not.toHaveBeenCalled()
+  })
+
+  it('adds a valid invite', async () => {
+    mockAddAdminStaff.mockResolvedValue({})
+
+    const result = await inviteStaffAction('new@talam.com', 'New Person', 'support')
+
+    expect(result).toEqual({ success: true })
+    expect(mockAddAdminStaff).toHaveBeenCalledWith('new@talam.com', 'New Person', 'support')
+  })
+
+  it('surfaces a duplicate-email failure without claiming success', async () => {
+    mockAddAdminStaff.mockRejectedValue(new Error('unique constraint'))
+
+    const result = await inviteStaffAction('new@talam.com', 'New Person', 'support')
+
+    expect(result).toEqual({ error: expect.any(String) })
+  })
+})
+
+describe('removeStaffAction', () => {
+  it('requires super-admin auth', async () => {
+    await removeStaffAction('staff-1')
+    expect(mockRequireSuperAdmin).toHaveBeenCalled()
+  })
+
+  it('removes the staff row', async () => {
+    const result = await removeStaffAction('staff-1')
+
+    expect(result).toEqual({ success: true })
+    expect(mockRemoveAdminStaff).toHaveBeenCalledWith('staff-1')
   })
 })
