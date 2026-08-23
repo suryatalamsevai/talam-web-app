@@ -1,10 +1,12 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { requireSuperAdminSection } from '@/lib/auth-guard'
 import { getTenantDetail, getTenantStats, getTenantOwnerEmail } from '@/lib/data/super-admin'
 import { daysUntil } from '@/lib/utils'
 import { TenantDetailClient } from './tenant-detail-client'
 
 export default async function SuperAdminTenantDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  await requireSuperAdminSection('tenants')
   const { id } = await params
   const tenant = await getTenantDetail(id)
   if (!tenant) notFound()

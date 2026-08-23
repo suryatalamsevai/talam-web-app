@@ -2,12 +2,14 @@ import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 import { formatCurrency } from '@/lib/utils'
+import { requireSuperAdminSection } from '@/lib/auth-guard'
 import { getFlaggedOrders, getOrderInsights } from '@/lib/data/super-admin'
 import { TIER_LABEL } from '@/lib/billing/tier-pricing'
 import { StatTile } from '@/components/super-admin/stat-tile'
 import { MonthlyBarChart } from '@/components/super-admin/monthly-bar-chart'
 
 export default async function OrdersPage() {
+  await requireSuperAdminSection('orders')
   const [orders, insights] = await Promise.all([getFlaggedOrders(), getOrderInsights()])
   const zeroOrderStores = insights.totalStores - insights.storesWithOrders
 

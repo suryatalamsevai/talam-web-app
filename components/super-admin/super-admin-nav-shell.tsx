@@ -6,19 +6,20 @@ import Link from 'next/link'
 import { LayoutDashboard, ClipboardList, Store, CreditCard, TrendingUp, Users, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 import { ProfileMenu } from '@/components/marketing/profile-menu'
+import type { AdminSection } from '@/lib/data/admin-staff'
 
-type NavItem = { href: string; label: string; icon: typeof LayoutDashboard }
+type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; section: AdminSection }
 
 const OPERATIONS_NAV: NavItem[] = [
-  { href: '/super-admin', label: 'Overview', icon: LayoutDashboard },
-  { href: '/super-admin/orders', label: 'Orders', icon: ClipboardList },
-  { href: '/super-admin/tenants', label: 'Tenants', icon: Store },
+  { href: '/super-admin', label: 'Overview', icon: LayoutDashboard, section: 'overview' },
+  { href: '/super-admin/orders', label: 'Orders', icon: ClipboardList, section: 'orders' },
+  { href: '/super-admin/tenants', label: 'Tenants', icon: Store, section: 'tenants' },
 ]
 
 const PLATFORM_NAV: NavItem[] = [
-  { href: '/super-admin/billing', label: 'Billing', icon: CreditCard },
-  { href: '/super-admin/growth', label: 'Growth', icon: TrendingUp },
-  { href: '/super-admin/staff', label: 'Staff', icon: Users },
+  { href: '/super-admin/billing', label: 'Billing', icon: CreditCard, section: 'billing' },
+  { href: '/super-admin/growth', label: 'Growth', icon: TrendingUp, section: 'growth' },
+  { href: '/super-admin/staff', label: 'Staff', icon: Users, section: 'staff' },
 ]
 
 const SIDEBAR_COLLAPSED_KEY = 'talam-super-admin-sidebar-collapsed'
@@ -56,10 +57,21 @@ function NavGroup({ title, items, pathname, collapsed }: { title: string; items:
   )
 }
 
-export function SuperAdminNavShell({ children, user }: { children: React.ReactNode; user: User }) {
+export function SuperAdminNavShell({
+  children,
+  user,
+  sections,
+}: {
+  children: React.ReactNode
+  user: User
+  /** Sections this staffer's role can reach — nav items outside it simply don't render. */
+  sections: AdminSection[]
+}) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
+  const operationsNav = OPERATIONS_NAV.filter((item) => sections.includes(item.section))
+  const platformNav = PLATFORM_NAV.filter((item) => sections.includes(item.section))
 
   // Server has no access to localStorage, so the sidebar always renders expanded on
   // first paint and flips to the persisted state right after mount — same approach as
@@ -100,8 +112,12 @@ export function SuperAdminNavShell({ children, user }: { children: React.ReactNo
             </button>
           </div>
           <nav className="flex flex-col gap-5">
-            <NavGroup title="Operations" items={OPERATIONS_NAV} pathname={pathname} collapsed={collapsed} />
-            <NavGroup title="Platform" items={PLATFORM_NAV} pathname={pathname} collapsed={collapsed} />
+            {operationsNav.length > 0 && (
+              <NavGroup title="Operations" items={operationsNav} pathname={pathname} collapsed={collapsed} />
+            )}
+            {platformNav.length > 0 && (
+              <NavGroup title="Platform" items={platformNav} pathname={pathname} collapsed={collapsed} />
+            )}
           </nav>
         </aside>
         <div ref={contentRef} className="flex-1 overflow-auto">
@@ -127,7 +143,7 @@ export function SuperAdminNavShell({ children, user }: { children: React.ReactNo
           />
         </header>
         <nav className="flex gap-1 overflow-x-auto border-b border-border bg-surface px-4 py-2">
-          {[...OPERATIONS_NAV, ...PLATFORM_NAV].map(({ href, label }) => (
+          {[...operationsNav, ...platformNav].map(({ href, label }) => (
             <Link
               key={href}
               href={href}

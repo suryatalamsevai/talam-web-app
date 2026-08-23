@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Loader2 } from 'lucide-react'
@@ -14,21 +14,25 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import type { AdminStaffRow } from '@/lib/data/admin-staff'
+import { ROLE_LABEL, SECTION_LABEL, sectionsForRole } from '@/lib/data/admin-staff'
 import { formatDate } from '@/lib/utils'
 import { inviteStaffAction, removeStaffAction } from '@/app/super-admin/actions'
 
 const inviteStaffSchema = z.object({
   name: z.string().trim().min(1, 'Enter a name.'),
   email: z.string().trim().min(1, 'Enter an email address.').email('Enter a valid email address.'),
-  role: z.enum(['owner', 'support']),
+  role: z.enum(['owner', 'support_agent', 'billing_manager', 'growth_analyst']),
 })
 type InviteStaffValues = z.infer<typeof inviteStaffSchema>
 
-const ROLE_LABEL: Record<AdminStaffRow['role'], string> = {
-  owner: 'Owner',
-  support: 'Support',
+function sectionsText(role: AdminStaffRow['role']) {
+  return sectionsForRole(role)
+    .map((s) => SECTION_LABEL[s])
+    .join(', ')
 }
 
+// Reaching this page at all already means full staff-management access — see
+// requireSuperAdminSection('staff') in the server page — so no isOwner check here.
 export function StaffListClient({ staff: initialStaff }: { staff: AdminStaffRow[] }) {
   const [staff, setStaff] = useState(initialStaff)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -38,8 +42,9 @@ export function StaffListClient({ staff: initialStaff }: { staff: AdminStaffRow[
 
   const form = useForm<InviteStaffValues>({
     resolver: zodResolver(inviteStaffSchema),
-    defaultValues: { name: '', email: '', role: 'support' },
+    defaultValues: { name: '', email: '', role: 'support_agent' },
   })
+  const selectedRole = useWatch({ control: form.control, name: 'role' })
 
   async function onSubmit(values: InviteStaffValues) {
     setError(null)
@@ -87,6 +92,7 @@ export function StaffListClient({ staff: initialStaff }: { staff: AdminStaffRow[
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Role</TableHead>
+              <TableHead>Access</TableHead>
               <TableHead>Added</TableHead>
               <TableHead>Last Active</TableHead>
               <TableHead />
@@ -102,6 +108,7 @@ export function StaffListClient({ staff: initialStaff }: { staff: AdminStaffRow[
                 <TableCell>
                   <Badge variant={row.role === 'owner' ? 'secondary' : 'outline'}>{ROLE_LABEL[row.role]}</Badge>
                 </TableCell>
+                <TableCell className="text-xs text-muted-foreground">{sectionsText(row.role)}</TableCell>
                 <TableCell>{formatDate(row.addedAt)}</TableCell>
                 <TableCell>{row.lastActiveAt ? formatDate(row.lastActiveAt) : '—'}</TableCell>
                 <TableCell>
@@ -118,7 +125,7 @@ export function StaffListClient({ staff: initialStaff }: { staff: AdminStaffRow[
             ))}
             {staff.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">
+                <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
                   No staff yet.
                 </TableCell>
               </TableRow>
@@ -171,10 +178,13 @@ export function StaffListClient({ staff: initialStaff }: { staff: AdminStaffRow[
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="support">Support</SelectItem>
-                        <SelectItem value="owner">Owner</SelectItem>
+                        <SelectItem value="support_agent">{ROLE_LABEL.support_agent}</SelectItem>
+                        <SelectItem value="billing_manager">{ROLE_LABEL.billing_manager}</SelectItem>
+                        <SelectItem value="growth_analyst">{ROLE_LABEL.growth_analyst}</SelectItem>
+                        <SelectItem value="owner">{ROLE_LABEL.owner}</SelectItem>
                       </SelectContent>
                     </Select>
+                    <p className="text-xs text-muted-foreground">Grants: {sectionsText(selectedRole)}</p>
                     <FormMessage />
                   </FormItem>
                 )}

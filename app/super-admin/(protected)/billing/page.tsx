@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
+import { requireSuperAdminSection } from '@/lib/auth-guard'
 import { getBillingSnapshot } from '@/lib/data/super-admin'
 import { TIER_LABEL, TIER_PRICE_INR } from '@/lib/billing/tier-pricing'
 import { formatCurrency } from '@/lib/utils'
@@ -9,6 +10,7 @@ import { StatTile } from '@/components/super-admin/stat-tile'
 const ALL_TIERS = ['trial', 'starter', 'growth', 'pro'] as const
 
 export default async function BillingPage() {
+  await requireSuperAdminSection('billing')
   const snapshot = await getBillingSnapshot()
   const maxPlanRevenue = Math.max(0, ...snapshot.revenueByPlan.map((row) => row.revenue))
   const payingPct = snapshot.totalStores === 0 ? 0 : Math.round((snapshot.payingStores / snapshot.totalStores) * 100)

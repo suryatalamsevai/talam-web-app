@@ -1,4 +1,5 @@
-import { requireSuperAdmin } from '@/lib/auth-guard'
+import { requireSuperAdmin, getSuperAdminRole } from '@/lib/auth-guard'
+import { sectionsForRole } from '@/lib/data/admin-staff'
 import { SuperAdminNavShell } from '@/components/super-admin/super-admin-nav-shell'
 
 export default async function SuperAdminLayout({
@@ -7,5 +8,10 @@ export default async function SuperAdminLayout({
   children: React.ReactNode
 }) {
   const user = await requireSuperAdmin()
-  return <SuperAdminNavShell user={user}>{children}</SuperAdminNavShell>
+  const role = await getSuperAdminRole(user.email!)
+  return (
+    <SuperAdminNavShell user={user} sections={sectionsForRole(role)}>
+      {children}
+    </SuperAdminNavShell>
+  )
 }

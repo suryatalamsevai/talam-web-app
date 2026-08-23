@@ -1,12 +1,12 @@
 -- CreateEnum
-CREATE TYPE "AdminStaffRole" AS ENUM ('owner', 'support');
+CREATE TYPE "AdminStaffRole" AS ENUM ('owner', 'support_agent', 'billing_manager', 'growth_analyst');
 
 -- CreateTable
 CREATE TABLE "admin_staff" (
     "id" UUID NOT NULL,
     "email" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "role" "AdminStaffRole" NOT NULL DEFAULT 'support',
+    "role" "AdminStaffRole" NOT NULL DEFAULT 'support_agent',
     "added_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
     "last_active_at" TIMESTAMPTZ,
 

@@ -167,16 +167,21 @@ model AdminStaff {
   id           String    @id @default(uuid()) @db.Uuid
   email        String    @unique
   name         String
-  role         AdminStaffRole @default(support)
+  role         AdminStaffRole @default(support_agent)
   addedAt      DateTime  @default(now()) @map("added_at") @db.Timestamptz
   lastActiveAt DateTime? @map("last_active_at") @db.Timestamptz
 
   @@map("admin_staff")
 }
 
+/// Owner gets every console section plus staff management. The other three are
+/// section-scoped: see ROLE_SECTIONS in lib/data/admin-staff.ts for exactly what
+/// each grants — kept in code, not the DB, so adjusting scope needs no migration.
 enum AdminStaffRole {
   owner
-  support
+  support_agent
+  billing_manager
+  growth_analyst
 }
 
 model Product {

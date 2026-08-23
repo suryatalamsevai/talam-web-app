@@ -1,9 +1,11 @@
 import { Badge } from '@/components/ui/badge'
+import { requireSuperAdminSection } from '@/lib/auth-guard'
 import { getGrowthMetrics } from '@/lib/data/super-admin'
 import { StatTile } from '@/components/super-admin/stat-tile'
 import { MonthlyBarChart } from '@/components/super-admin/monthly-bar-chart'
 
 export default async function SuperAdminGrowthPage() {
+  await requireSuperAdminSection('growth')
   const metrics = await getGrowthMetrics()
 
   return (

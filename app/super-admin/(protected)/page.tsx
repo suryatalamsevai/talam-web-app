@@ -1,10 +1,12 @@
 import Link from 'next/link'
+import { requireSuperAdminSection } from '@/lib/auth-guard'
 import { getOverviewMetrics } from '@/lib/data/super-admin'
 import { TIER_LABEL } from '@/lib/billing/tier-pricing'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { StatTile } from '@/components/super-admin/stat-tile'
 
 export default async function SuperAdminOverviewPage() {
+  await requireSuperAdminSection('overview')
   const metrics = await getOverviewMetrics()
 
   return (

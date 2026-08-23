@@ -1,11 +1,13 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 
-const { mockGetOverviewMetrics } = vi.hoisted(() => ({
+const { mockGetOverviewMetrics, mockRequireSuperAdminSection } = vi.hoisted(() => ({
   mockGetOverviewMetrics: vi.fn(),
+  mockRequireSuperAdminSection: vi.fn(async () => ({ user: { email: 'ops@talam.com' }, role: 'owner' as const })),
 }))
 
 vi.mock('@/lib/data/super-admin', () => ({ getOverviewMetrics: mockGetOverviewMetrics }))
+vi.mock('@/lib/auth-guard', () => ({ requireSuperAdminSection: mockRequireSuperAdminSection }))
 
 import SuperAdminOverviewPage from './page'
 

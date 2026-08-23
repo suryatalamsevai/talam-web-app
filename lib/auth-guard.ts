@@ -3,7 +3,14 @@ import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createServerClient } from '@/lib/supabase/server'
 import { withTenant } from '@/lib/prisma'
-import { isAdminStaffEmail, touchAdminStaffLastActive } from '@/lib/data/admin-staff'
+import {
+  isAdminStaffEmail,
+  getAdminStaffRole,
+  canAccessSection,
+  touchAdminStaffLastActive,
+  type AdminSection,
+} from '@/lib/data/admin-staff'
+import type { AdminStaffRole } from '@prisma/client'
 
 // cache(): dedupe repeated calls within one request — layouts, pages, and server
 // actions on the same route each call this, and without memoization every call
@@ -90,3 +97,24 @@ export const requireSuperAdmin = cache(async function requireSuperAdmin() {
 
   return user
 })
+
+/**
+ * This is also the bootstrap story: there's no separate "create the first admin" flow —
+ * an env-listed email always resolves to 'owner', so the first sign-in from
+ * SUPER_ADMIN_EMAILS lands with full access (including Staff management) and can invite
+ * the real AdminStaff rows — themselves included — from there.
+ */
+export async function getSuperAdminRole(email: string): Promise<AdminStaffRole> {
+  if (getSuperAdminEmails().includes(email.toLowerCase())) return 'owner'
+  // requireSuperAdmin() already confirmed this email is either env-listed or has a row —
+  // falling through here means it has one, so 'owner' is just a type-safe, never-hit default.
+  return (await getAdminStaffRole(email)) ?? 'owner'
+}
+
+/** Page-level section guard — redirects if the signed-in staffer's role can't reach `section`. */
+export async function requireSuperAdminSection(section: AdminSection) {
+  const user = await requireSuperAdmin()
+  const role = await getSuperAdminRole(user.email!)
+  if (!canAccessSection(role, section)) redirect('/not-found')
+  return { user, role }
+}
