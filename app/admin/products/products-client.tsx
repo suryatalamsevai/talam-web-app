@@ -381,8 +381,8 @@ function ProductEditorForm({
       setError('Product name and at least one photo are required.')
       return
     }
-    if (input.comparePrice !== null && input.comparePrice >= input.price) {
-      setError('Discount price must be less than the price.')
+    if (input.comparePrice !== null && input.comparePrice <= input.price) {
+      setError('Original price must be greater than the selling price.')
       return
     }
     if (hasSizes ? selectedSizes.some((s) => Number(sizeQuantities[s] ?? 0) <= 0) : freeSizeQuantity <= 0) {
@@ -460,17 +460,17 @@ function ProductEditorForm({
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-3">
               <label className="flex flex-col gap-1.5">
-                <span className="text-sm font-bold text-fg">Price *</span>
+                <span className="text-sm font-bold text-fg">Selling Price *</span>
                 <div className="flex">
                   <span className="flex items-center rounded-l-lg border border-r-0 border-border bg-bg px-3 text-sm text-muted-warm">₹</span>
-                  <input name="price" required type="number" min="0" step="0.01" defaultValue={editProduct?.price ?? ''} className="grow rounded-r-lg border border-border bg-bg px-3 py-[11px] text-md outline-none transition-colors focus:border-brand-primary focus:bg-surface" placeholder="1,299" />
+                  <input name="price" required type="number" min="0" step="0.01" defaultValue={editProduct?.price ?? ''} className="grow rounded-r-lg border border-border bg-bg px-3 py-[11px] text-md outline-none transition-colors focus:border-brand-primary focus:bg-surface" placeholder="999" />
                 </div>
               </label>
               <label className="flex flex-col gap-1.5">
-                <span className="text-sm font-bold text-fg">Price After Discount</span>
+                <span className="text-sm font-bold text-fg">Original Price (MRP)</span>
                 <div className="flex">
                   <span className="flex items-center rounded-l-lg border border-r-0 border-border bg-bg px-3 text-sm text-muted-warm">₹</span>
-                  <input name="comparePrice" type="number" min="0" step="0.01" defaultValue={editProduct?.comparePrice ?? ''} className="grow rounded-r-lg border border-border bg-bg px-3 py-[11px] text-md outline-none transition-colors focus:border-brand-primary focus:bg-surface" placeholder="999" />
+                  <input name="comparePrice" type="number" min="0" step="0.01" defaultValue={editProduct?.comparePrice ?? ''} className="grow rounded-r-lg border border-border bg-bg px-3 py-[11px] text-md outline-none transition-colors focus:border-brand-primary focus:bg-surface" placeholder="1,299" />
                 </div>
               </label>
             </div>
@@ -505,7 +505,7 @@ function ProductEditorForm({
               <span className="text-sm font-bold text-fg">Product Pictures * (Min 1, Max 5)</span>
               <AttachmentGroup>
                 {images.map((src, i) => (
-                  <Attachment key={i} orientation="vertical" size="sm" className="w-28">
+                  <Attachment key={i} orientation="vertical" size="default" className="w-40">
                     <AttachmentMedia variant="image" onClick={() => setPreviewSrc(src)} className="cursor-pointer">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={src} alt="" />
@@ -518,7 +518,7 @@ function ProductEditorForm({
                   </Attachment>
                 ))}
                 {images.length < 5 && (
-                  <Attachment orientation="vertical" size="sm" className="w-28" state={uploading ? 'uploading' : 'idle'}>
+                  <Attachment orientation="vertical" size="default" className="w-40" state={uploading ? 'uploading' : 'idle'}>
                     <AttachmentTrigger
                       render={<label />}
                       aria-disabled={uploading}

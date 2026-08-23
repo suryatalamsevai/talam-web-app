@@ -20,7 +20,10 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => mockSearchParams,
 }))
 
-const fetchMock = vi.fn().mockResolvedValue({ ok: true })
+const toastSuccess = vi.fn()
+vi.mock('sonner', () => ({ toast: { success: (...args: unknown[]) => toastSuccess(...args) } }))
+
+const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ok: true }) })
 vi.stubGlobal('fetch', fetchMock)
 
 async function goToOtpStep(user: ReturnType<typeof userEvent.setup>) {
@@ -28,7 +31,7 @@ async function goToOtpStep(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText(/mobile number/i), '9876543210')
   await user.click(screen.getByRole('button', { name: /continue/i }))
   await waitFor(() => {
-    expect(screen.getByPlaceholderText(/6-digit otp/i)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/enter otp/i)).toBeInTheDocument()
   })
 }
 
@@ -38,7 +41,7 @@ async function goToEmailOtpStep(user: ReturnType<typeof userEvent.setup>, props?
   await user.type(screen.getByLabelText(/email address/i), 'shopper@outlook.com')
   await user.click(screen.getByRole('button', { name: /continue/i }))
   await waitFor(() => {
-    expect(screen.getByPlaceholderText(/6-digit otp/i)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/enter otp/i)).toBeInTheDocument()
   })
 }
 
@@ -57,7 +60,7 @@ describe('OtpForm', () => {
     await user.click(screen.getByRole('button', { name: /continue/i }))
 
     await waitFor(() => {
-      expect(screen.getByPlaceholderText(/6-digit otp/i)).toBeInTheDocument()
+      expect(screen.getByPlaceholderText(/enter otp/i)).toBeInTheDocument()
     })
   })
 
@@ -81,6 +84,7 @@ describe('OtpForm redirect after verify', () => {
     mockSearchParams = new URLSearchParams()
     verifyOtpMock.mockResolvedValue({ data: {}, error: null })
     fetchMock.mockClear()
+    toastSuccess.mockClear()
     Object.defineProperty(window, 'location', { value: { href: '' }, writable: true })
   })
 
@@ -95,7 +99,7 @@ describe('OtpForm redirect after verify', () => {
     const user = userEvent.setup()
     await goToOtpStep(user)
 
-    await user.type(screen.getByPlaceholderText(/6-digit otp/i), '123456')
+    await user.type(screen.getByPlaceholderText(/enter otp/i), '123456')
     await user.click(screen.getByRole('button', { name: /verify otp/i }))
 
     await waitFor(() => {
@@ -108,27 +112,29 @@ describe('OtpForm redirect after verify', () => {
     const user = userEvent.setup()
     await goToOtpStep(user)
 
-    await user.type(screen.getByPlaceholderText(/6-digit otp/i), '123456')
+    await user.type(screen.getByPlaceholderText(/enter otp/i), '123456')
     await user.click(screen.getByRole('button', { name: /verify otp/i }))
 
     await waitFor(() => {
       expect(window.location.href).toBe('/auth')
     })
+    expect(toastSuccess).toHaveBeenCalledWith('Signed in successfully')
   })
 
-  it('does not navigate when the flag is disabled', async () => {
+  it('does not navigate or toast when the flag is disabled', async () => {
     vi.stubEnv('NEXT_PUBLIC_OTP_SIGNIN_ENABLED', 'false')
     mockSearchParams = new URLSearchParams({ next: '/admin/onboarding' })
     const user = userEvent.setup()
     await goToOtpStep(user)
 
-    await user.type(screen.getByPlaceholderText(/6-digit otp/i), '123456')
+    await user.type(screen.getByPlaceholderText(/enter otp/i), '123456')
     await user.click(screen.getByRole('button', { name: /verify otp/i }))
 
     await waitFor(() => {
       expect(verifyOtpMock).toHaveBeenCalled()
     })
     expect(window.location.href).toBe('')
+    expect(toastSuccess).not.toHaveBeenCalled()
   })
 
   it('does not navigate when verifyOtp returns an error, regardless of the flag', async () => {
@@ -137,13 +143,26 @@ describe('OtpForm redirect after verify', () => {
     const user = userEvent.setup()
     await goToOtpStep(user)
 
-    await user.type(screen.getByPlaceholderText(/6-digit otp/i), '999999')
+    await user.type(screen.getByPlaceholderText(/enter otp/i), '999999')
     await user.click(screen.getByRole('button', { name: /verify otp/i }))
 
     await waitFor(() => {
       expect(screen.getByText(/invalid otp/i)).toBeInTheDocument()
     })
     expect(window.location.href).toBe('')
+  })
+})
+
+describe('OtpForm OTP field accepts pasted codes', () => {
+  it('does not truncate a pasted email OTP longer than 6 characters', async () => {
+    const user = userEvent.setup()
+    await goToEmailOtpStep(user)
+
+    const otpInput = screen.getByPlaceholderText(/otp/i) as HTMLInputElement
+    await user.click(otpInput)
+    await user.paste('42850114')
+
+    expect(otpInput.value).toBe('42850114')
   })
 })
 
@@ -189,6 +208,8 @@ describe('OtpForm email verify + sync', () => {
     signInWithOtpMock.mockResolvedValue({ data: {}, error: null })
     verifyOtpMock.mockResolvedValue({ data: {}, error: null })
     fetchMock.mockClear()
+    fetchMock.mockResolvedValue({ ok: true, json: async () => ({ ok: true, onboardingComplete: true }) })
+    toastSuccess.mockClear()
     Object.defineProperty(window, 'location', { value: { href: '' }, writable: true })
   })
 
@@ -197,12 +218,12 @@ describe('OtpForm email verify + sync', () => {
     vi.unstubAllEnvs()
   })
 
-  it('verifies with type "email" and calls the sync endpoint before redirecting when enabled', async () => {
+  it('verifies with type "email", syncs, toasts, and redirects to the store account when onboarding is complete', async () => {
     vi.stubEnv('NEXT_PUBLIC_EMAIL_OTP_ENABLED', 'true')
     const user = userEvent.setup()
     await goToEmailOtpStep(user, { syncEndpoint: '/store/api/auth/sync' })
 
-    await user.type(screen.getByPlaceholderText(/6-digit otp/i), '123456')
+    await user.type(screen.getByPlaceholderText(/enter otp/i), '123456')
     await user.click(screen.getByRole('button', { name: /verify otp/i }))
 
     await waitFor(() => {
@@ -213,15 +234,32 @@ describe('OtpForm email verify + sync', () => {
       })
     })
     expect(fetchMock).toHaveBeenCalledWith('/store/api/auth/sync', { method: 'POST' })
-    expect(window.location.href).toBe('/auth')
+    await waitFor(() => {
+      expect(window.location.href).toBe('/store/account/profile')
+    })
+    expect(toastSuccess).toHaveBeenCalledWith('Signed in successfully')
   })
 
-  it('does not sync or navigate when the email-OTP flag is disabled', async () => {
+  it('redirects to the store onboarding wizard when the customer has not set preferences yet', async () => {
+    vi.stubEnv('NEXT_PUBLIC_EMAIL_OTP_ENABLED', 'true')
+    fetchMock.mockResolvedValue({ ok: true, json: async () => ({ ok: true, onboardingComplete: false }) })
+    const user = userEvent.setup()
+    await goToEmailOtpStep(user, { syncEndpoint: '/store/api/auth/sync' })
+
+    await user.type(screen.getByPlaceholderText(/enter otp/i), '123456')
+    await user.click(screen.getByRole('button', { name: /verify otp/i }))
+
+    await waitFor(() => {
+      expect(window.location.href).toBe('/store/onboarding')
+    })
+  })
+
+  it('does not sync, toast, or navigate when the email-OTP flag is disabled', async () => {
     vi.stubEnv('NEXT_PUBLIC_EMAIL_OTP_ENABLED', 'false')
     const user = userEvent.setup()
     await goToEmailOtpStep(user)
 
-    await user.type(screen.getByPlaceholderText(/6-digit otp/i), '123456')
+    await user.type(screen.getByPlaceholderText(/enter otp/i), '123456')
     await user.click(screen.getByRole('button', { name: /verify otp/i }))
 
     await waitFor(() => {
@@ -229,6 +267,7 @@ describe('OtpForm email verify + sync', () => {
     })
     expect(fetchMock).not.toHaveBeenCalled()
     expect(window.location.href).toBe('')
+    expect(toastSuccess).not.toHaveBeenCalled()
   })
 
   it('calls onVerified instead of navigating when provided (checkout inline flow)', async () => {
@@ -239,14 +278,15 @@ describe('OtpForm email verify + sync', () => {
     await user.click(screen.getByRole('button', { name: /^email$/i }))
     await user.type(screen.getByLabelText(/email address/i), 'shopper@outlook.com')
     await user.click(screen.getByRole('button', { name: /continue/i }))
-    await waitFor(() => screen.getByPlaceholderText(/6-digit otp/i))
+    await waitFor(() => screen.getByPlaceholderText(/enter otp/i))
 
-    await user.type(screen.getByPlaceholderText(/6-digit otp/i), '123456')
+    await user.type(screen.getByPlaceholderText(/enter otp/i), '123456')
     await user.click(screen.getByRole('button', { name: /verify otp/i }))
 
     await waitFor(() => {
       expect(onVerified).toHaveBeenCalled()
     })
     expect(window.location.href).toBe('')
+    expect(toastSuccess).toHaveBeenCalledWith('Signed in successfully')
   })
 })

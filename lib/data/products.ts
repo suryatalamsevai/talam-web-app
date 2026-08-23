@@ -59,8 +59,8 @@ function slugify(name: string) {
 // through this, so a raw call (bypassing the client form) can't slip an invalid product through.
 function validateProductInput(input: ProductInput) {
   if (input.price <= 0) throw new Error('Price must be greater than ₹0.')
-  if (input.comparePrice !== null && input.comparePrice >= input.price) {
-    throw new Error('Discount price must be less than the price.')
+  if (input.comparePrice !== null && input.comparePrice <= input.price) {
+    throw new Error('Original price must be greater than the selling price.')
   }
   if (Object.values(input.stockBySize).some((qty) => qty <= 0)) {
     throw new Error('Quantity must be at least 1.')
@@ -323,6 +323,31 @@ export async function getCategories(tenantId: string, department?: string): Prom
       select: { id: true, name: true, slug: true, department: true },
     })
   )
+}
+
+/** Categories with a representative product image, for homepage tile backgrounds — categories with no qualifying product are omitted. */
+export async function getCategoriesWithImage(tenantId: string): Promise<(CategoryMeta & { image: string })[]> {
+  const rows = await withTenant(tenantId, (db) =>
+    db.productCategory.findMany({
+      where: { tenantId },
+      orderBy: { sortOrder: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        department: true,
+        products: {
+          where: { status: 'published', deletedAt: null, isActive: true, images: { isEmpty: false } },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: { images: true },
+        },
+      },
+    })
+  )
+  return rows
+    .filter((c) => c.products[0]?.images[0])
+    .map(({ products, ...c }) => ({ ...c, image: products[0].images[0] }))
 }
 
 /** Departments that have at least one published product — drives which nav links the storefront header shows. */
