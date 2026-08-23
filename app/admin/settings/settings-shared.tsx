@@ -12,10 +12,13 @@ export function isValidUpiId(v: string): boolean {
   return /^[\w.-]+@[\w.-]+$/.test(v.trim())
 }
 
-export function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
+export function Toggle({ checked, onChange, disabled, ariaLabel }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean; ariaLabel: string }) {
   return (
     <button
       type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={ariaLabel}
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={`flex h-[26px] w-12 shrink-0 items-center rounded-full px-[2px] transition-colors ${checked ? 'bg-brand-primary' : 'bg-[#D1D5DB]'} ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}

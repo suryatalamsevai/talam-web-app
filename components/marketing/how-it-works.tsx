@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'motion/react'
+import * as m from 'motion/react-m'
 import { BlurFade } from '@/components/ui/blur-fade'
 import { LineShadowText } from '@/components/ui/line-shadow-text'
 
@@ -46,7 +46,7 @@ export function HowItWorks() {
         <div className="mt-20 grid grid-cols-1 lg:grid-cols-3 gap-6">
           {STEPS.map((step, i) => (
             <BlurFade key={step.n} delay={0.15 + i * 0.12} inView>
-              <motion.div
+              <m.div
                 whileHover={{ y: -6 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                 className={`relative rounded-2xl bg-white/[0.03] border border-white/[0.08] overflow-hidden h-full ${step.accentGlow}`}
@@ -65,7 +65,7 @@ export function HowItWorks() {
                     {step.desc}
                   </p>
                 </div>
-              </motion.div>
+              </m.div>
             </BlurFade>
           ))}
         </div>

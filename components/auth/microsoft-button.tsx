@@ -12,17 +12,21 @@ export function MicrosoftButton({ redirectPath = '/auth/callback', next }: { red
 
   async function handleMicrosoftSignIn() {
     setLoading(true)
-    const redirectTo = new URL(redirectPath, window.location.origin)
-    if (next) redirectTo.searchParams.set('next', next)
+    try {
+      const redirectTo = new URL(redirectPath, window.location.origin)
+      if (next) redirectTo.searchParams.set('next', next)
 
-    // Supabase's provider key for Microsoft/Entra ID (Azure AD) is 'azure'.
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'azure',
-      options: {
-        redirectTo: redirectTo.toString(),
-      },
-    })
-    if (error) setLoading(false)
+      // Supabase's provider key for Microsoft/Entra ID (Azure AD) is 'azure'.
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'azure',
+        options: {
+          redirectTo: redirectTo.toString(),
+        },
+      })
+      if (error) setLoading(false)
+    } catch {
+      setLoading(false)
+    }
   }
 
   return (

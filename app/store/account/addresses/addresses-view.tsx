@@ -126,6 +126,7 @@ export function AddressesView({ initialAddresses }: { initialAddresses: AddressI
                 type="button"
                 role="switch"
                 aria-checked={form.isDefault}
+                aria-label="Set as default address"
                 onClick={() => setForm((f) => ({ ...f, isDefault: !f.isDefault }))}
                 className={`relative h-[26px] w-[46px] shrink-0 rounded-full transition-colors ${form.isDefault ? 'bg-success' : 'bg-border'}`}
               >

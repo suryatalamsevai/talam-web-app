@@ -1,6 +1,7 @@
 'use client'
 
-import { motion, useScroll, useTransform } from 'motion/react'
+import { useScroll, useTransform } from 'motion/react'
+import * as m from 'motion/react-m'
 import { useRef } from 'react'
 import { BlurFade } from '@/components/ui/blur-fade'
 import { MagicCard } from '@/components/ui/magic-card'
@@ -176,11 +177,11 @@ function FeatureShowcase({ section, index }: { section: typeof SHOWCASE_SECTIONS
 
       <div className={`flex justify-center ${reversed ? 'lg:[direction:ltr]' : ''}`}>
         <BlurFade delay={0.25} inView direction={reversed ? 'left' : 'right'}>
-          <motion.div style={{ y }}>
+          <m.div style={{ y }}>
             <FeaturePhone>
               {section.phone ?? <StoreFrontMock />}
             </FeaturePhone>
-          </motion.div>
+          </m.div>
         </BlurFade>
       </div>
     </div>

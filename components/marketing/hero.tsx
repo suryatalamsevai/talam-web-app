@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { motion, AnimatePresence } from 'motion/react'
+import { AnimatePresence } from 'motion/react'
+import * as m from 'motion/react-m'
 import { useState, useEffect } from 'react'
 import { ShimmerButton } from '@/components/ui/shimmer-button'
 import { BlurFade } from '@/components/ui/blur-fade'
@@ -189,7 +190,7 @@ function CyclingPhone() {
       </div>
       <div className="relative min-h-[420px] overflow-hidden">
         <AnimatePresence mode="wait">
-          <motion.div
+          <m.div
             key={SCREENS[idx].key}
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
@@ -197,7 +198,7 @@ function CyclingPhone() {
             transition={{ duration: 0.4, ease: 'easeInOut' }}
           >
             <Screen />
-          </motion.div>
+          </m.div>
         </AnimatePresence>
       </div>
       {/* Bottom nav */}
@@ -304,12 +305,12 @@ export function Hero() {
 
           {/* Right: Phone with cycling screens */}
           <BlurFade delay={0.3} inView direction="right">
-            <motion.div
+            <m.div
               animate={{ y: [0, -12, 0] }}
               transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
             >
               <CyclingPhone />
-            </motion.div>
+            </m.div>
           </BlurFade>
         </div>
       </div>

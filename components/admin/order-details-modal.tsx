@@ -179,7 +179,7 @@ export function OrderDetailsModal({ order, onClose, onUpdated }: Props) {
             <h2 className="text-lg font-bold text-fg">Order Details</h2>
             <p className="text-xs text-muted-warm">{order.code}</p>
           </div>
-          <button onClick={handleClose} className="cursor-pointer transition-transform active:scale-90">
+          <button onClick={handleClose} aria-label="Close" className="cursor-pointer transition-transform active:scale-90">
             <X className="size-6 text-muted-warm" />
           </button>
         </div>
@@ -399,6 +399,7 @@ export function OrderDetailsModal({ order, onClose, onUpdated }: Props) {
                   <div className="mt-3 flex flex-col gap-2">
                     <select
                       value={cancelReason}
+                      aria-label="Cancellation reason"
                       onChange={(e) => setCancelReason(e.target.value)}
                       className="w-full rounded-md border border-border px-3 py-2 text-sm"
                     >

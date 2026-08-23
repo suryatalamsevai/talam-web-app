@@ -26,10 +26,13 @@ type OccasionRow = {
 
 /* ── Small controls ── */
 
-function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+function Toggle({ checked, onChange, ariaLabel }: { checked: boolean; onChange: (v: boolean) => void; ariaLabel: string }) {
   return (
     <button
       type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={ariaLabel}
       onClick={() => onChange(!checked)}
       className={`flex h-[26px] w-12 shrink-0 cursor-pointer items-center rounded-full px-[2px] transition-colors ${checked ? 'bg-brand-primary' : 'bg-[#D1D5DB]'}`}
     >
@@ -134,7 +137,7 @@ function OccasionEditorForm({
     <div className="flex max-h-[95vh] flex-col md:max-h-[90vh]">
       <div className="flex shrink-0 items-center justify-between border-b border-border p-4">
         <span className="text-base font-bold text-fg">{isEdit ? occasion.name : 'Add New Occasion'}</span>
-        <button onClick={onClose} className="cursor-pointer transition-transform active:scale-90"><X className="size-6 text-muted-warm" /></button>
+        <button onClick={onClose} aria-label="Close" className="cursor-pointer transition-transform active:scale-90"><X className="size-6 text-muted-warm" /></button>
       </div>
 
       <div className="flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -232,7 +235,7 @@ export function OccasionsClient({ initialOccasions }: { initialOccasions: Occasi
               <div className="flex flex-col gap-1.5 p-2">
                 <div className="flex items-center justify-between gap-1.5">
                   <p className="truncate text-sm font-semibold text-fg">{o.name}</p>
-                  <Toggle checked={live} onChange={() => toggleStatus(o)} />
+                  <Toggle checked={live} onChange={() => toggleStatus(o)} ariaLabel={`Toggle ${o.name} live status`} />
                 </div>
                 <p className="truncate text-2xs text-muted-warm capitalize">
                   {o._count.products} product{o._count.products === 1 ? '' : 's'} · {live ? 'Live' : 'Off'}
@@ -241,7 +244,7 @@ export function OccasionsClient({ initialOccasions }: { initialOccasions: Occasi
                 <div className="flex gap-1.5">
                   <button type="button" onClick={() => openEdit(o)} className="flex-1 cursor-pointer rounded-lg border border-border py-1.5 text-2xs font-semibold text-fg hover:bg-bg">Configure</button>
                   {!o.isDefault && (
-                    <button type="button" onClick={() => handleDelete(o)} className="cursor-pointer rounded-lg border border-border px-2 text-muted-warm hover:border-danger hover:text-danger">
+                    <button type="button" onClick={() => handleDelete(o)} aria-label={`Delete ${o.name}`} className="cursor-pointer rounded-lg border border-border px-2 text-muted-warm hover:border-danger hover:text-danger">
                       <X className="size-3.5" />
                     </button>
                   )}
@@ -253,7 +256,7 @@ export function OccasionsClient({ initialOccasions }: { initialOccasions: Occasi
         {occasions.length === 0 && <p className="col-span-full py-12 text-center text-sm text-muted-warm">No occasions found.</p>}
       </div>
 
-      <button onClick={openAdd} className="fixed bottom-24 right-4 z-30 flex size-14 cursor-pointer items-center justify-center rounded-full bg-brand-primary shadow-lg transition-transform active:scale-90 md:bottom-8 md:right-8">
+      <button onClick={openAdd} aria-label="Add new occasion" className="fixed bottom-24 right-4 z-30 flex size-14 cursor-pointer items-center justify-center rounded-full bg-brand-primary shadow-lg transition-transform active:scale-90 md:bottom-8 md:right-8">
         <Plus className="size-7 text-surface" />
       </button>
 

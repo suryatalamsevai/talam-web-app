@@ -24,16 +24,16 @@ export function RichTextEditor({ defaultValue, onChange }: { defaultValue: strin
   return (
     <div className="rounded-lg border border-border bg-surface">
       <div className="flex items-center gap-1 border-b border-border p-1.5">
-        <button type="button" onClick={() => exec('bold')} className="flex size-7 cursor-pointer items-center justify-center rounded text-muted-warm hover:bg-bg hover:text-fg">
+        <button type="button" onClick={() => exec('bold')} aria-label="Bold" className="flex size-7 cursor-pointer items-center justify-center rounded text-muted-warm hover:bg-bg hover:text-fg">
           <Bold className="size-4" />
         </button>
-        <button type="button" onClick={() => exec('italic')} className="flex size-7 cursor-pointer items-center justify-center rounded text-muted-warm hover:bg-bg hover:text-fg">
+        <button type="button" onClick={() => exec('italic')} aria-label="Italic" className="flex size-7 cursor-pointer items-center justify-center rounded text-muted-warm hover:bg-bg hover:text-fg">
           <Italic className="size-4" />
         </button>
-        <button type="button" onClick={() => exec('underline')} className="flex size-7 cursor-pointer items-center justify-center rounded text-muted-warm hover:bg-bg hover:text-fg">
+        <button type="button" onClick={() => exec('underline')} aria-label="Underline" className="flex size-7 cursor-pointer items-center justify-center rounded text-muted-warm hover:bg-bg hover:text-fg">
           <Underline className="size-4" />
         </button>
-        <button type="button" onClick={() => exec('insertUnorderedList')} className="flex size-7 cursor-pointer items-center justify-center rounded text-muted-warm hover:bg-bg hover:text-fg">
+        <button type="button" onClick={() => exec('insertUnorderedList')} aria-label="Bulleted list" className="flex size-7 cursor-pointer items-center justify-center rounded text-muted-warm hover:bg-bg hover:text-fg">
           <List className="size-4" />
         </button>
       </div>

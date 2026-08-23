@@ -144,7 +144,7 @@ export function OrderActionSheet({ order, onClose, onViewDetails, onUpdated }: P
                     void applyStatus('cancelled', undefined, reason === 'Other' ? other : reason)
                   }}
                 >
-                  <select name="reason" defaultValue={CANCEL_REASONS[0]} className="w-full rounded-md border border-border bg-surface px-2 py-1.5 text-sm">
+                  <select name="reason" aria-label="Cancellation reason" defaultValue={CANCEL_REASONS[0]} className="w-full rounded-md border border-border bg-surface px-2 py-1.5 text-sm">
                     {CANCEL_REASONS.map((r) => (
                       <option key={r} value={r}>{r}</option>
                     ))}

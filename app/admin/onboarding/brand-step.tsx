@@ -94,6 +94,7 @@ function LogoAttachment({
           <input
             type="file"
             accept="image/png,image/jpeg,image/svg+xml"
+            aria-label="Upload brand logo"
             className="sr-only"
             onChange={(event) => onFileChange(event.target.files?.[0] ?? null)}
           />

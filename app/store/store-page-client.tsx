@@ -472,17 +472,17 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
                 <>
                   <div className="absolute bottom-4 left-5 flex items-center gap-1.5 lg:hidden">
                     {banners.map((_, i) => (
-                      <button key={i} onClick={() => goTo(i)} className={`h-1 rounded-full transition-all ${i === heroIndex ? 'w-7 bg-white' : 'w-2.5 bg-white/45'}`} />
+                      <button key={i} onClick={() => goTo(i)} aria-label={`Go to banner ${i + 1}`} aria-current={i === heroIndex ? 'true' : undefined} className={`h-1 rounded-full transition-all ${i === heroIndex ? 'w-7 bg-white' : 'w-2.5 bg-white/45'}`} />
                     ))}
                   </div>
                   <div className="absolute bottom-5 right-5 hidden items-center gap-2.5 lg:flex">
                     {banners.map((_, i) => (
-                      <button key={i} onClick={() => goTo(i)} className={`h-1 rounded-full transition-all ${i === heroIndex ? 'w-7 bg-white' : 'w-2.5 bg-white/45'}`} />
+                      <button key={i} onClick={() => goTo(i)} aria-label={`Go to banner ${i + 1}`} aria-current={i === heroIndex ? 'true' : undefined} className={`h-1 rounded-full transition-all ${i === heroIndex ? 'w-7 bg-white' : 'w-2.5 bg-white/45'}`} />
                     ))}
-                    <button onClick={prevHero} className="ml-2 flex size-9 items-center justify-center rounded-full border border-white/55 bg-white/20 backdrop-blur-md transition-colors hover:bg-white/30">
+                    <button onClick={prevHero} aria-label="Previous banner" className="ml-2 flex size-9 items-center justify-center rounded-full border border-white/55 bg-white/20 backdrop-blur-md transition-colors hover:bg-white/30">
                       <ChevronLeft className="size-3.5 text-white" strokeWidth={2.5} />
                     </button>
-                    <button onClick={nextHero} className="flex size-9 items-center justify-center rounded-full border border-white/55 bg-white/20 backdrop-blur-md transition-colors hover:bg-white/30">
+                    <button onClick={nextHero} aria-label="Next banner" className="flex size-9 items-center justify-center rounded-full border border-white/55 bg-white/20 backdrop-blur-md transition-colors hover:bg-white/30">
                       <ChevronRight className="size-3.5 text-white" strokeWidth={2.5} />
                     </button>
                   </div>
@@ -580,8 +580,8 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
               </StoreLink>
             </div>
             <div className="flex gap-4 overflow-x-auto pb-1 no-scrollbar sm:grid sm:grid-cols-3 lg:grid-cols-4 sm:overflow-visible sm:gap-5">
-              {newThisWeek.map((p, i) => (
-                <StoreLink key={i} href={`/product/${p.slug}`} className="w-[190px] shrink-0 cursor-pointer sm:w-auto">
+              {newThisWeek.map((p) => (
+                <StoreLink key={p.slug} href={`/product/${p.slug}`} className="w-[190px] shrink-0 cursor-pointer sm:w-auto">
                   <div className="relative overflow-hidden rounded-[14px] bg-[#F2EDE4]">
                     <div className="relative aspect-[4/5] w-full">
                       {p.images[0] && <Image src={p.images[0]} alt={p.name} fill sizes="(min-width:1024px) 22vw, 45vw" className="object-cover transition-transform duration-300 hover:scale-105" />}
@@ -645,8 +645,8 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
                 </div>
               </StoreLink>
               <div className="grid grid-cols-2 gap-4 lg:col-span-2 lg:gap-5">
-                {offerGrid.map((p, i) => (
-                  <StoreLink key={i} href={`/product/${p.slug}`} className="flex gap-4 rounded-[14px] border border-[#EDE6DB] bg-white p-4 transition-colors hover:border-store-primary">
+                {offerGrid.map((p) => (
+                  <StoreLink key={p.slug} href={`/product/${p.slug}`} className="flex gap-4 rounded-[14px] border border-[#EDE6DB] bg-white p-4 transition-colors hover:border-store-primary">
                     <div className="relative h-[132px] w-[104px] shrink-0 overflow-hidden rounded-[10px]">
                       {p.images[0] && <Image src={p.images[0]} alt={p.name} fill sizes="104px" className="object-cover" />}
                     </div>
@@ -809,7 +809,7 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
         <DrawerContent className="lg:hidden max-h-[85vh]">
           <DrawerHeader className="flex-row items-center justify-between text-left">
             <DrawerTitle>Filters</DrawerTitle>
-            <button onClick={() => setShowMobileFilters(false)} className="w-8 h-8 rounded-full bg-[#F9F9F9] flex items-center justify-center">
+            <button onClick={() => setShowMobileFilters(false)} aria-label="Close filters" className="w-8 h-8 rounded-full bg-[#F9F9F9] flex items-center justify-center">
               <X className="w-4 h-4 text-fg" />
             </button>
           </DrawerHeader>

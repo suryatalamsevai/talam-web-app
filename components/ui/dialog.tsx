@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 /** Shared animated dialog shell — fades in + slides up on open, matching the pattern already used by order-details-modal / product editor. */
 export function Dialog({
@@ -18,11 +18,47 @@ export function Dialog({
   position?: 'bottom' | 'center'
 }) {
   const [visible, setVisible] = useState(false)
+  const panelRef = useRef<HTMLDivElement>(null)
+  const previouslyFocused = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
     if (open) requestAnimationFrame(() => setVisible(true))
     else queueMicrotask(() => setVisible(false))
   }, [open])
+
+  useEffect(() => {
+    if (!open) return
+
+    previouslyFocused.current = document.activeElement as HTMLElement | null
+    panelRef.current?.focus()
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        onClose()
+        return
+      }
+      if (e.key !== 'Tab' || !panelRef.current) return
+      const focusable = panelRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'
+      )
+      if (focusable.length === 0) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      previouslyFocused.current?.focus()
+    }
+  }, [open, onClose])
 
   if (!open) return null
 
@@ -36,6 +72,10 @@ export function Dialog({
       }}
     >
       <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        tabIndex={-1}
         className={`flex w-full flex-col bg-surface transition-transform duration-250 ease-out md:max-w-[480px] ${
           centered ? 'rounded-2xl' : 'rounded-t-2xl md:rounded-2xl'
         } ${

@@ -502,13 +502,18 @@ export function CheckoutClient({
                             if (!file) return
                             setUploadingProof(true)
                             setProofError('')
-                            const result = await uploadPaymentProofAction(file)
-                            setUploadingProof(false)
-                            if ('error' in result) {
-                              setProofError(result.error)
-                              return
+                            try {
+                              const result = await uploadPaymentProofAction(file)
+                              if ('error' in result) {
+                                setProofError(result.error)
+                                return
+                              }
+                              setPaymentProofUrl(result.url)
+                            } catch {
+                              setProofError('Upload failed. Please try again.')
+                            } finally {
+                              setUploadingProof(false)
                             }
-                            setPaymentProofUrl(result.url)
                           }}
                           className="w-full rounded-lg border-[1.5px] border-border px-3.25 py-2.25 font-body text-sm text-fg file:mr-3 file:rounded-md file:border-0 file:bg-bg file:px-3 file:py-1.5 file:font-body file:text-xs file:font-semibold"
                         />
