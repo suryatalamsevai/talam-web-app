@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useState } from 'react'
 
 /** Indian mobile numbers: 10 digits, starting 6-9 (the digits after the fixed +91 prefix shown in the UI). */
 export function isValidIndianMobile(v: string): boolean {
@@ -40,9 +40,9 @@ export function SectionLabel({ children, right }: { children: React.ReactNode; r
 /** Small transient "✓ Saved" flash shown after a field autosaves — shared across tabs. */
 export function useSavedFlash(): [boolean, () => void] {
   const [saved, setSaved] = useState(false)
-  const flash = useCallback(() => {
+  const flash = () => {
     setSaved(true)
     setTimeout(() => setSaved(false), 1500)
-  }, [])
+  }
   return [saved, flash]
 }

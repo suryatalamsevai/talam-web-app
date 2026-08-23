@@ -1,6 +1,6 @@
 'use client'
 
-import { AnimatePresence } from 'motion/react'
+import { AnimatePresence, useReducedMotion } from 'motion/react'
 import * as m from 'motion/react-m'
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
@@ -22,6 +22,7 @@ const FAQS = [
 
 function FaqItem({ q, a, index }: { q: string; a: string; index: number }) {
   const [open, setOpen] = useState(false)
+  const prefersReducedMotion = useReducedMotion()
 
   return (
     <BlurFade delay={0.05 + index * 0.04} inView>
@@ -44,7 +45,7 @@ function FaqItem({ q, a, index }: { q: string; a: string; index: number }) {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.25, ease: 'easeInOut' }}
               className="overflow-hidden"
             >
               <p className="pb-6 text-sm md:text-base text-muted-warm font-body leading-relaxed pr-10">

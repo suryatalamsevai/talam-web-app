@@ -1,6 +1,5 @@
 "use client"
 
-import { memo } from "react"
 import {
   AnimatePresence,
   motion,
@@ -441,5 +440,4 @@ const TextAnimateBase = ({
   )
 }
 
-// Export the memoized version
-export const TextAnimate = memo(TextAnimateBase)
+export const TextAnimate = TextAnimateBase

@@ -147,7 +147,8 @@ export function CheckoutClient({
   useEffect(() => {
     if (pincodeValue.length !== 6 || pincodeValue === lastLookedUp.current) return
     lastLookedUp.current = pincodeValue
-    fetch(`https://api.postalpincode.in/pincode/${pincodeValue}`)
+    const controller = new AbortController()
+    fetch(`https://api.postalpincode.in/pincode/${pincodeValue}`, { signal: controller.signal })
       .then((r) => r.json())
       .then((data) => {
         const po = data?.[0]?.PostOffice?.[0]
@@ -156,6 +157,7 @@ export function CheckoutClient({
         setValue('state', po.State, { shouldValidate: true })
       })
       .catch(() => {})
+    return () => controller.abort()
   }, [pincodeValue, setValue])
   const usingNewAddress = selectedAddressId === NEW_ADDRESS
   const savedAddress = addresses.find((a) => a.id === selectedAddressId) ?? null

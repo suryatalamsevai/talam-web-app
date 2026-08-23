@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Search, ArrowUpDown, ClipboardList } from 'lucide-react'
 import { OrderActionSheet } from '@/components/admin/order-action-sheet'
 import { OrderDetailsModal } from '@/components/admin/order-details-modal'
@@ -72,7 +72,7 @@ export default function AdminOrdersPage() {
     setOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)))
   }
 
-  const filterCount = useMemo(() => (key: FilterKey) => (key === 'All' ? orders.length : orders.filter((o) => o.status === key).length), [orders])
+  const filterCount = (key: FilterKey) => (key === 'All' ? orders.length : orders.filter((o) => o.status === key).length)
 
   const filtered = orders
     .filter((o) => activeFilter === 'All' || o.status === activeFilter)

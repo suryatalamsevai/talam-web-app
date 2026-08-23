@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect } from 'react'
 import { Controller, type Control, useWatch } from 'react-hook-form'
 import { ImagePlus } from 'lucide-react'
 
@@ -83,7 +83,7 @@ function LogoAttachment({
   readonly existingUrl?: string | null
   readonly error?: string
 }) {
-  const objectUrl = useMemo(() => (file ? URL.createObjectURL(file) : null), [file])
+  const objectUrl = file ? URL.createObjectURL(file) : null
   useEffect(() => () => { if (objectUrl) URL.revokeObjectURL(objectUrl) }, [objectUrl])
   const previewUrl = objectUrl ?? existingUrl ?? null
 

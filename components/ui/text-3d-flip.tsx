@@ -1,7 +1,6 @@
 "use client"
 
 import React, {
-  memo,
   useCallback,
   useEffect,
   useMemo,
@@ -233,8 +232,7 @@ const CONTAINER_TRANSFORMS = {
   right: "rotateY(90deg) translateX(50%) rotateY(-90deg)",
 } as const
 
-const CharBox = memo(
-  ({
+const CharBox = ({
     char,
     textClassName,
     flipTextClassName,
@@ -261,7 +259,6 @@ const CharBox = memo(
       </span>
     </span>
   )
-)
 
 CharBox.displayName = "CharBox"
 Text3DFlip.displayName = "Text3DFlip"

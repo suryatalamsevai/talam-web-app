@@ -39,8 +39,9 @@ export function ProfileForm({ avatarUrl, initialName, initialPhone, email }: Pro
 
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div>
-          <label className="font-body text-xs font-medium text-muted-warm block mb-1.5">Full Name</label>
+          <label htmlFor="profile-name" className="font-body text-xs font-medium text-muted-warm block mb-1.5">Full Name</label>
           <input
+            id="profile-name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -48,8 +49,9 @@ export function ProfileForm({ avatarUrl, initialName, initialPhone, email }: Pro
           />
         </div>
         <div>
-          <label className="font-body text-xs font-medium text-muted-warm block mb-1.5">Phone</label>
+          <label htmlFor="profile-phone" className="font-body text-xs font-medium text-muted-warm block mb-1.5">Phone</label>
           <input
+            id="profile-phone"
             type="tel"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
@@ -58,8 +60,9 @@ export function ProfileForm({ avatarUrl, initialName, initialPhone, email }: Pro
           />
         </div>
         <div>
-          <label className="font-body text-xs font-medium text-muted-warm block mb-1.5">Email</label>
+          <label htmlFor="profile-email" className="font-body text-xs font-medium text-muted-warm block mb-1.5">Email</label>
           <input
+            id="profile-email"
             type="email"
             value={email}
             disabled
