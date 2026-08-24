@@ -449,7 +449,7 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
               onTouchEnd={handleHeroTouchEnd}
             >
               {hero.images[0] ? (
-                <Image src={hero.images[0]} alt={hero.headline} fill sizes="(min-width:1024px) 50vw, 100vw" className="object-cover" priority />
+                <Image src={hero.images[0]} alt={hero.headline} fill sizes="(min-width:1024px) 50vw, 100vw" className="object-contain" priority />
               ) : (
                 <div className="absolute inset-0 bg-[#F2EDE4]" />
               )}
