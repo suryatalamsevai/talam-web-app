@@ -84,12 +84,17 @@ export async function listOrdersForAdmin(tenantId: string): Promise<AdminOrder[]
   })
 }
 
+/** Shiprocket's own identifiers for a shipment, written only when the AWB came from the API
+ *  rather than being typed in by hand. */
+export type ShipmentRefs = { shiprocketOrderId: string; shipmentId: string; courierName: string }
+
 export async function updateOrderStatus(
   tenantId: string,
   orderId: string,
   status: OrderStatus,
   trackingId?: string,
-  cancelReason?: string
+  cancelReason?: string,
+  shipment?: ShipmentRefs
 ): Promise<void> {
   await withTenant(tenantId, async (db) => {
     const current = await db.order.findFirst({ where: { id: orderId, tenantId }, select: { status: true } })
@@ -102,6 +107,7 @@ export async function updateOrderStatus(
       data: {
         status,
         ...(trackingId ? { trackingId } : {}),
+        ...(shipment ?? {}),
         ...(status === 'cancelled' && cancelReason ? { cancelReason } : {}),
       },
     })
