@@ -647,7 +647,7 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
               <div className="grid grid-cols-2 gap-4 lg:col-span-2 lg:gap-5">
                 {offerGrid.map((p, i) => (
                   <StoreLink key={i} href={`/product/${p.slug}`} className="flex gap-4 rounded-[14px] border border-[#EDE6DB] bg-white p-4 transition-colors hover:border-store-primary">
-                    <div className="relative h-[132px] w-[104px] shrink-0 overflow-hidden rounded-[10px]">
+                    <div className="relative min-h-[132px] w-[104px] shrink-0 overflow-hidden rounded-[10px]">
                       {p.images[0] ? (
                         <Image src={p.images[0]} alt={p.name} fill sizes="104px" className="object-cover" />
                       ) : (
