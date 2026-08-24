@@ -259,6 +259,162 @@ export async function sendOnboardingCompleteEmail(
   }
 }
 
+export async function sendOrderShippedEmail(
+  to: string,
+  params: { storeName: string; orderCode: string; trackingId: string; trackUrl: string }
+): Promise<void> {
+  try {
+    await resend.emails.send({
+      from: FROM,
+      to,
+      subject: `Order ${params.orderCode} has shipped`,
+      html: renderEmailShell(
+        renderEmailBody({
+          heading: "It's on the way 📦",
+          paragraphs: [
+            `Your order <strong>${escapeHtml(params.orderCode)}</strong> from ${escapeHtml(params.storeName)} has shipped.`,
+            `Tracking number: <strong>${escapeHtml(params.trackingId)}</strong>`,
+          ],
+          ctas: [{ label: 'Track your order →', href: params.trackUrl }],
+          signature: escapeHtml(params.storeName),
+        })
+      ),
+    })
+  } catch (err) {
+    console.error('[Resend] sendOrderShippedEmail failed:', err)
+  }
+}
+
+export async function sendOrderDeliveredEmail(
+  to: string,
+  params: { storeName: string; orderCode: string; trackUrl: string }
+): Promise<void> {
+  try {
+    await resend.emails.send({
+      from: FROM,
+      to,
+      subject: `Order ${params.orderCode} delivered`,
+      html: renderEmailShell(
+        renderEmailBody({
+          heading: 'Delivered! 🎉',
+          paragraphs: [
+            `Your order <strong>${escapeHtml(params.orderCode)}</strong> from ${escapeHtml(params.storeName)} has been delivered. We hope you love it.`,
+          ],
+          ctas: [{ label: 'View order →', href: params.trackUrl }],
+          signature: `Thanks for shopping with us,<br/>${escapeHtml(params.storeName)}`,
+        })
+      ),
+    })
+  } catch (err) {
+    console.error('[Resend] sendOrderDeliveredEmail failed:', err)
+  }
+}
+
+export async function sendOrderCancelledEmail(
+  to: string,
+  params: { storeName: string; orderCode: string; cancelReason?: string | null; storeUrl: string }
+): Promise<void> {
+  try {
+    await resend.emails.send({
+      from: FROM,
+      to,
+      subject: `Order ${params.orderCode} was cancelled`,
+      html: renderEmailShell(
+        renderEmailBody({
+          heading: 'Order cancelled',
+          paragraphs: [
+            `Your order <strong>${escapeHtml(params.orderCode)}</strong> from ${escapeHtml(params.storeName)} has been cancelled.`,
+            `Reason: ${escapeHtml(params.cancelReason?.trim() || 'Not specified')}`,
+            'If you were charged, any payment will be refunded to your original payment method.',
+          ],
+          ctas: [{ label: 'Continue shopping →', href: params.storeUrl }],
+          signature: escapeHtml(params.storeName),
+        })
+      ),
+    })
+  } catch (err) {
+    console.error('[Resend] sendOrderCancelledEmail failed:', err)
+  }
+}
+
+export async function sendOrderReturnedEmail(
+  to: string,
+  params: { storeName: string; orderCode: string; storeUrl: string }
+): Promise<void> {
+  try {
+    await resend.emails.send({
+      from: FROM,
+      to,
+      subject: `Order ${params.orderCode} return received`,
+      html: renderEmailShell(
+        renderEmailBody({
+          heading: 'Return received',
+          paragraphs: [
+            `We've received your return for order <strong>${escapeHtml(params.orderCode)}</strong> from ${escapeHtml(params.storeName)}. Your refund will be processed to your original payment method.`,
+          ],
+          ctas: [{ label: 'Continue shopping →', href: params.storeUrl }],
+          signature: escapeHtml(params.storeName),
+        })
+      ),
+    })
+  } catch (err) {
+    console.error('[Resend] sendOrderReturnedEmail failed:', err)
+  }
+}
+
+export async function sendPaymentFailedEmail(
+  to: string,
+  params: { storeName: string; orderCode: string; retryUrl: string }
+): Promise<void> {
+  try {
+    await resend.emails.send({
+      from: FROM,
+      to,
+      subject: `Payment failed for order ${params.orderCode}`,
+      html: renderEmailShell(
+        renderEmailBody({
+          heading: "Your payment didn't go through",
+          paragraphs: [
+            `We couldn't process payment for order <strong>${escapeHtml(params.orderCode)}</strong> from ${escapeHtml(params.storeName)}. No charge was made.`,
+            'You can try again with the same or a different payment method.',
+          ],
+          ctas: [{ label: 'Retry payment →', href: params.retryUrl }],
+          signature: escapeHtml(params.storeName),
+        })
+      ),
+    })
+  } catch (err) {
+    console.error('[Resend] sendPaymentFailedEmail failed:', err)
+  }
+}
+
+export async function sendStaffInviteEmail(
+  to: string,
+  params: { name: string; role: string; loginUrl: string }
+): Promise<void> {
+  try {
+    await resend.emails.send({
+      from: FROM,
+      to,
+      subject: "You've been added to the Talam super-admin console",
+      html: renderEmailShell(
+        renderEmailBody({
+          greeting: `Hi ${escapeHtml(params.name)},`,
+          heading: "You're on the team",
+          paragraphs: [
+            `You've been added to the Talam super-admin console as <strong>${escapeHtml(params.role)}</strong>.`,
+            'Sign in with this email address to get started — you\'ll receive a one-time code, no password needed.',
+          ],
+          ctas: [{ label: 'Sign in →', href: params.loginUrl }],
+          signature: 'The Talam Team',
+        })
+      ),
+    })
+  } catch (err) {
+    console.error('[Resend] sendStaffInviteEmail failed:', err)
+  }
+}
+
 /**
  * Tells Talam staff that a shop wants help setting up Shiprocket — the only push signal for
  * the assisted-onboarding path (the super-admin badge is the backstop). Carries the shop's
