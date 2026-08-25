@@ -6,13 +6,10 @@ import { createBrowserClient } from '@/lib/supabase/client'
 import { ShinyButton } from '@/components/ui/shiny-button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { isSafeRedirectTarget } from '@/lib/tenant-url'
 
 type Method = 'phone' | 'email'
 type Step = 'input' | 'otp'
-
-function isSafeRelativePath(value: string | null): value is string {
-  return typeof value === 'string' && value.startsWith('/') && !value.startsWith('//')
-}
 
 /**
  * `onVerified` lets a caller that is already on the page it wants to stay on (checkout)
@@ -40,7 +37,6 @@ export function OtpForm({
   const supabase = createBrowserClient()
   const searchParams = useSearchParams()
   const rawNext = searchParams.get('next')
-  const next = isSafeRelativePath(rawNext) ? rawNext : null
 
   function switchMethod(newMethod: Method) {
     setMethod(newMethod)
@@ -131,7 +127,10 @@ export function OtpForm({
     if (enabled) {
       await fetch(syncEndpoint, { method: 'POST' })
       if (onVerified) onVerified()
-      else window.location.href = next ?? '/auth'
+      else {
+        const next = isSafeRedirectTarget(rawNext, window.location.origin) ? rawNext : null
+        window.location.href = next ?? '/auth'
+      }
     }
   }
 

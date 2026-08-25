@@ -62,4 +62,35 @@ describe('GET /store/auth/callback', () => {
 
     expect(res.headers.get('location')).toBe('http://localhost/onboarding')
   })
+
+  it('redirects to a valid relative next param', async () => {
+    const user = { id: 'customer-1', email: 'shopper@example.com', user_metadata: {} }
+    exchangeCodeForSessionMock.mockResolvedValue({ data: { user }, error: null })
+
+    const res = await GET(makeRequest('http://localhost/auth/callback?code=abc&next=/cart'))
+
+    expect(res.headers.get('location')).toBe('http://localhost/cart')
+  })
+
+  it('rejects a next param using userinfo syntax to redirect off-origin', async () => {
+    const user = { id: 'customer-1', email: 'shopper@example.com', user_metadata: {} }
+    exchangeCodeForSessionMock.mockResolvedValue({ data: { user }, error: null })
+    syncStoreCustomerMock.mockResolvedValue({ onboardingComplete: false })
+
+    const res = await GET(makeRequest('http://localhost/auth/callback?code=abc&next=%40evil.example%2Fx'))
+
+    expect(res.headers.get('location')).not.toContain('evil.example')
+    expect(res.headers.get('location')).toBe('http://localhost/onboarding')
+  })
+
+  it('rejects a protocol-relative next param', async () => {
+    const user = { id: 'customer-1', email: 'shopper@example.com', user_metadata: {} }
+    exchangeCodeForSessionMock.mockResolvedValue({ data: { user }, error: null })
+    syncStoreCustomerMock.mockResolvedValue({ onboardingComplete: false })
+
+    const res = await GET(makeRequest('http://localhost/auth/callback?code=abc&next=//evil.example'))
+
+    expect(res.headers.get('location')).not.toContain('evil.example')
+    expect(res.headers.get('location')).toBe('http://localhost/onboarding')
+  })
 })

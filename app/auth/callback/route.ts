@@ -3,17 +3,13 @@ import { createServerClient } from '@/lib/supabase/server'
 import { syncOwnerUser } from '@/lib/auth/sync-owner-user'
 import { prisma } from '@/lib/prisma'
 import { resolveSignedInDestination } from '@/app/auth/page'
-import { isLocalDevHost } from '@/lib/tenant-url'
-
-function isSafeRelativePath(value: string | null): value is string {
-  return typeof value === 'string' && value.startsWith('/') && !value.startsWith('//')
-}
+import { isLocalDevHost, isSafeRedirectTarget } from '@/lib/tenant-url'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const code = searchParams.get('code')
   const rawNext = searchParams.get('next')
-  const explicitNext = isSafeRelativePath(rawNext) ? rawNext : null
+  const explicitNext = isSafeRedirectTarget(rawNext, request.url) ? rawNext : null
 
   if (!code) {
     return NextResponse.redirect(new URL('/auth?error=oauth_cancelled', request.url))

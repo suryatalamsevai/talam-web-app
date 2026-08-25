@@ -1,5 +1,18 @@
 export const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'talam4shop.com'
 
+// A same-origin-looking prefix (e.g. `/\evil.com`) can still resolve off-origin once run
+// through URL parsing, since browsers and Node normalize backslashes to forward slashes for
+// special schemes. Checking the resolved origin (not just the input string's prefix) closes
+// that bypass — see https://url.spec.whatwg.org/#url-path-segment-string.
+export function isSafeRedirectTarget(value: string | null | undefined, base: string): value is string {
+  if (!value || !value.startsWith('/')) return false
+  try {
+    return new URL(value, base).origin === new URL(base).origin
+  } catch {
+    return false
+  }
+}
+
 export function isLocalDevHost(host: string | null | undefined): boolean {
   if (!host) return false
   const hostname = host.split(':')[0]

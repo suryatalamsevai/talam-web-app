@@ -85,4 +85,14 @@ describe('GET /auth/callback', () => {
     expect(res.headers.get('location')).not.toContain('evil.example')
     expect(res.headers.get('location')).toBe('http://localhost/admin/onboarding')
   })
+
+  it('rejects a backslash-prefixed next param, which URL parsing would otherwise normalize to protocol-relative', async () => {
+    const user = { id: 'user-1', email: 'owner@example.com', user_metadata: {} }
+    exchangeCodeForSessionMock.mockResolvedValue({ data: { user }, error: null })
+
+    const res = await GET(makeRequest('http://localhost/auth/callback?code=abc&next=%2F%5Cevil.example'))
+
+    expect(res.headers.get('location')).not.toContain('evil.example')
+    expect(res.headers.get('location')).toBe('http://localhost/admin/onboarding')
+  })
 })

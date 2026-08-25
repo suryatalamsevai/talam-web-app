@@ -233,32 +233,32 @@ const CONTAINER_TRANSFORMS = {
 } as const
 
 const CharBox = ({
-    char,
-    textClassName,
-    flipTextClassName,
-    rotateDirection,
-  }: CharBoxProps) => (
+  char,
+  textClassName,
+  flipTextClassName,
+  rotateDirection,
+}: CharBoxProps) => (
+  <span
+    className="text-3d-flip-char inline transform-3d"
+    style={{ transform: CONTAINER_TRANSFORMS[rotateDirection] }}
+  >
     <span
-      className="text-3d-flip-char inline transform-3d"
-      style={{ transform: CONTAINER_TRANSFORMS[rotateDirection] }}
+      className={cn("relative h-[1lh] backface-hidden", textClassName)}
+      style={{ transform: FRONT_FACE_TRANSFORMS[rotateDirection] }}
     >
-      <span
-        className={cn("relative h-[1lh] backface-hidden", textClassName)}
-        style={{ transform: FRONT_FACE_TRANSFORMS[rotateDirection] }}
-      >
-        {char}
-      </span>
-      <span
-        className={cn(
-          "absolute top-0 left-0 h-[1lh] backface-hidden",
-          flipTextClassName
-        )}
-        style={{ transform: SECOND_FACE_TRANSFORMS[rotateDirection] }}
-      >
-        {char}
-      </span>
+      {char}
     </span>
-  )
+    <span
+      className={cn(
+        "absolute top-0 left-0 h-[1lh] backface-hidden",
+        flipTextClassName
+      )}
+      style={{ transform: SECOND_FACE_TRANSFORMS[rotateDirection] }}
+    >
+      {char}
+    </span>
+  </span>
+)
 
 CharBox.displayName = "CharBox"
 Text3DFlip.displayName = "Text3DFlip"

@@ -156,7 +156,12 @@ export function CheckoutClient({
         setValue('city', po.District, { shouldValidate: true })
         setValue('state', po.State, { shouldValidate: true })
       })
-      .catch(() => {})
+      .catch(() => {
+        // A failed or aborted lookup didn't actually resolve this pincode — clear the guard
+        // so retyping the same value (e.g. after backspacing mid-edit) retries instead of
+        // silently no-op'ing forever.
+        if (lastLookedUp.current === pincodeValue) lastLookedUp.current = ''
+      })
     return () => controller.abort()
   }, [pincodeValue, setValue])
   const usingNewAddress = selectedAddressId === NEW_ADDRESS

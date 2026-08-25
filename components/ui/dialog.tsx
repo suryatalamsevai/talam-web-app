@@ -20,6 +20,10 @@ export function Dialog({
   const [visible, setVisible] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
   const previouslyFocused = useRef<HTMLElement | null>(null)
+  const onCloseRef = useRef(onClose)
+  useEffect(() => {
+    onCloseRef.current = onClose
+  })
 
   useEffect(() => {
     if (open) requestAnimationFrame(() => setVisible(true))
@@ -30,11 +34,15 @@ export function Dialog({
     if (!open) return
 
     previouslyFocused.current = document.activeElement as HTMLElement | null
-    panelRef.current?.focus()
+    // Don't steal focus from a child that already claimed it (e.g. an autoFocus input) —
+    // only move focus to the panel itself when nothing inside it is focused yet.
+    if (!panelRef.current?.contains(document.activeElement)) {
+      panelRef.current?.focus()
+    }
 
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
-        onClose()
+        onCloseRef.current()
         return
       }
       if (e.key !== 'Tab' || !panelRef.current) return
@@ -58,7 +66,10 @@ export function Dialog({
       document.removeEventListener('keydown', handleKeyDown)
       previouslyFocused.current?.focus()
     }
-  }, [open, onClose])
+    // `onClose` is read via `onCloseRef`, not as a dependency — this effect must run only on
+    // open/close transitions, not on every re-render where the caller passes a fresh inline
+    // `onClose` (which would re-run the trap setup and steal focus mid-interaction).
+  }, [open])
 
   if (!open) return null
 
