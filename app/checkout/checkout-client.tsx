@@ -147,7 +147,8 @@ export function CheckoutClient({
   useEffect(() => {
     if (pincodeValue.length !== 6 || pincodeValue === lastLookedUp.current) return
     lastLookedUp.current = pincodeValue
-    fetch(`https://api.postalpincode.in/pincode/${pincodeValue}`)
+    const controller = new AbortController()
+    fetch(`https://api.postalpincode.in/pincode/${pincodeValue}`, { signal: controller.signal })
       .then((r) => r.json())
       .then((data) => {
         const po = data?.[0]?.PostOffice?.[0]
@@ -155,7 +156,13 @@ export function CheckoutClient({
         setValue('city', po.District, { shouldValidate: true })
         setValue('state', po.State, { shouldValidate: true })
       })
-      .catch(() => {})
+      .catch(() => {
+        // A failed or aborted lookup didn't actually resolve this pincode — clear the guard
+        // so retyping the same value (e.g. after backspacing mid-edit) retries instead of
+        // silently no-op'ing forever.
+        if (lastLookedUp.current === pincodeValue) lastLookedUp.current = ''
+      })
+    return () => controller.abort()
   }, [pincodeValue, setValue])
   const usingNewAddress = selectedAddressId === NEW_ADDRESS
   const savedAddress = addresses.find((a) => a.id === selectedAddressId) ?? null

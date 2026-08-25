@@ -81,7 +81,7 @@ describe('OtpForm redirect after verify', () => {
     mockSearchParams = new URLSearchParams()
     verifyOtpMock.mockResolvedValue({ data: {}, error: null })
     fetchMock.mockClear()
-    Object.defineProperty(window, 'location', { value: { href: '' }, writable: true })
+    Object.defineProperty(window, 'location', { value: { href: '', origin: 'https://example.com' }, writable: true })
   })
 
   afterEach(() => {
@@ -189,7 +189,7 @@ describe('OtpForm email verify + sync', () => {
     signInWithOtpMock.mockResolvedValue({ data: {}, error: null })
     verifyOtpMock.mockResolvedValue({ data: {}, error: null })
     fetchMock.mockClear()
-    Object.defineProperty(window, 'location', { value: { href: '' }, writable: true })
+    Object.defineProperty(window, 'location', { value: { href: '', origin: 'https://example.com' }, writable: true })
   })
 
   afterEach(() => {

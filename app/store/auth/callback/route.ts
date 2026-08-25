@@ -3,11 +3,13 @@ import { syncStoreCustomer } from '@/lib/auth/sync-store-customer'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { headers } from 'next/headers'
+import { isSafeRedirectTarget } from '@/lib/tenant-url'
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  const next = searchParams.get('next')
+  const rawNext = searchParams.get('next')
+  const next = isSafeRedirectTarget(rawNext, origin) ? rawNext : null
 
   const headersList = await headers()
   const storeBase = headersList.get('x-store-base') ?? ''

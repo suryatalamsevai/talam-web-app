@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { X } from 'lucide-react'
 import { useStoreBase } from './store-context'
@@ -49,24 +49,21 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
     return () => window.removeEventListener('keydown', onKey)
   }, [open, onClose])
 
-  const search = useCallback(
-    (q: string) => {
-      if (timerRef.current) clearTimeout(timerRef.current)
-      if (!q.trim()) {
-        setResults([])
-        setSearched(false)
-        return
-      }
-      timerRef.current = setTimeout(async () => {
-        setLoading(true)
-        const res = await searchProductsAction(q)
-        setResults(res as Result[])
-        setSearched(true)
-        setLoading(false)
-      }, 300)
-    },
-    [],
-  )
+  const search = (q: string) => {
+    if (timerRef.current) clearTimeout(timerRef.current)
+    if (!q.trim()) {
+      setResults([])
+      setSearched(false)
+      return
+    }
+    timerRef.current = setTimeout(async () => {
+      setLoading(true)
+      const res = await searchProductsAction(q)
+      setResults(res as Result[])
+      setSearched(true)
+      setLoading(false)
+    }, 300)
+  }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const v = e.target.value

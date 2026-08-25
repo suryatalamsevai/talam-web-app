@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getAdminUrl, getStoreUrl } from './tenant-url'
+import { getAdminUrl, getStoreUrl, isSafeRedirectTarget } from './tenant-url'
 
 describe('getStoreUrl', () => {
   it('returns the dev proxy path in local dev', () => {
@@ -18,5 +18,39 @@ describe('getAdminUrl', () => {
 
   it('returns the subdomain admin URL in prod', () => {
     expect(getAdminUrl('priya-boutique', false)).toBe('https://priya-boutique.talam4shop.com/admin/dashboard')
+  })
+})
+
+describe('isSafeRedirectTarget', () => {
+  const base = 'https://myapp.example.com/auth/callback'
+
+  it('accepts a plain relative path', () => {
+    expect(isSafeRedirectTarget('/admin/onboarding', base)).toBe(true)
+  })
+
+  it('rejects null/undefined', () => {
+    expect(isSafeRedirectTarget(null, base)).toBe(false)
+    expect(isSafeRedirectTarget(undefined, base)).toBe(false)
+  })
+
+  it('rejects a value that does not start with a slash', () => {
+    expect(isSafeRedirectTarget('evil.example', base)).toBe(false)
+  })
+
+  it('rejects an absolute URL to another origin', () => {
+    expect(isSafeRedirectTarget('https://evil.example', base)).toBe(false)
+  })
+
+  it('rejects a protocol-relative URL', () => {
+    expect(isSafeRedirectTarget('//evil.example', base)).toBe(false)
+  })
+
+  it('rejects a backslash-prefixed path (normalizes to protocol-relative)', () => {
+    expect(isSafeRedirectTarget('/\\evil.example', base)).toBe(false)
+  })
+
+  it('rejects userinfo-syntax tricks', () => {
+    expect(isSafeRedirectTarget('/@evil.example', base)).toBe(true) // stays a path segment, not a host
+    expect(isSafeRedirectTarget('//evil.example/@x', base)).toBe(false)
   })
 })

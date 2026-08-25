@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Check, Copy, Loader2 } from 'lucide-react'
@@ -303,11 +303,11 @@ export function ShippingTab() {
   // Lets a tenant who asked for help change their mind without clearing the request.
   const [forceSelfServe, setForceSelfServe] = useState(false)
 
-  const load = useCallback(async () => {
+  const load = async () => {
     const result = await getShippingSettingsAction()
     setConfig(result.config)
     setWebhookToken(result.webhookToken)
-  }, [])
+  }
 
   useEffect(() => {
     getShippingSettingsAction().then((result) => {

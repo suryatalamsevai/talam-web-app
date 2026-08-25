@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { Suspense, useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { ChevronLeft, ChevronRight, ChevronDown, SlidersHorizontal, X } from 'lucide-react'
 import { StoreLink } from '@/components/store/store-context'
@@ -191,29 +191,25 @@ function StorePageInner({ banners, promotions, countdownTarget, tags, categories
   const searchParams = useSearchParams()
 
   // ── Derived product display data ──
-  const allProductsData = useMemo(
-    () =>
-      products.map((p) => ({
-        ...p,
-        badge: p.isNew ? 'New' : null,
-        discount: discountLabel(p.price, p.comparePrice),
-      })),
-    [products]
-  )
+  const allProductsData = products.map((p) => ({
+    ...p,
+    badge: p.isNew ? 'New' : null,
+    discount: discountLabel(p.price, p.comparePrice),
+  }))
 
-  const CATEGORY_OPTIONS = useMemo(() => categories.map((c) => c.name), [categories])
-  const SIZE_OPTIONS = useMemo(() => Array.from(new Set(products.flatMap((p) => p.sizes))).sort(), [products])
-  const categoryCounts = useMemo(() => {
+  const CATEGORY_OPTIONS = categories.map((c) => c.name)
+  const SIZE_OPTIONS = Array.from(new Set(products.flatMap((p) => p.sizes))).sort()
+  const categoryCounts = (() => {
     const m = new Map<string, number>()
     for (const p of products) m.set(p.category, (m.get(p.category) ?? 0) + 1)
     return m
-  }, [products])
+  })()
 
-  const newThisWeek = useMemo(() => allProductsData.filter((p) => p.isNew).slice(0, 8), [allProductsData])
+  const newThisWeek = allProductsData.filter((p) => p.isNew).slice(0, 8)
 
   // ── Shop by Offers filter (single-select, minimum discount %) ──
   const [offerFilterMin, setOfferFilterMin] = useState(0)
-  const filteredOffers = useMemo(() => offers.filter((o) => o.discountPct >= offerFilterMin), [offers, offerFilterMin])
+  const filteredOffers = offers.filter((o) => o.discountPct >= offerFilterMin)
   const featureOffer = filteredOffers[0]
   const offerGrid = filteredOffers.slice(1, 5)
 

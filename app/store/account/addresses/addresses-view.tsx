@@ -98,23 +98,24 @@ export function AddressesView({ initialAddresses }: { initialAddresses: AddressI
 
       <dialog
         ref={dialogRef}
+        aria-labelledby="add-address-heading"
         className="m-auto w-[min(480px,90vw)] rounded-xl border border-border bg-surface p-0 backdrop:bg-black/40"
         onClose={closeDialog}
       >
         <form onSubmit={handleSubmit} className="p-5 sm:p-6">
-          <h2 className="font-heading text-lg font-bold text-fg mb-4">Add New Address</h2>
+          <h2 id="add-address-heading" className="font-heading text-lg font-bold text-fg mb-4">Add New Address</h2>
           <div className="space-y-3">
-            <Field label="Label (e.g. Home, Office)" value={form.label} onChange={(v) => setForm((f) => ({ ...f, label: v }))} required />
-            <Field label="Full Name" value={form.name} onChange={(v) => setForm((f) => ({ ...f, name: v }))} required />
-            <Field label="Address Line 1" value={form.line1} onChange={(v) => setForm((f) => ({ ...f, line1: v }))} required />
-            <Field label="Address Line 2 (optional)" value={form.line2} onChange={(v) => setForm((f) => ({ ...f, line2: v }))} />
+            <Field id="address-label" label="Label (e.g. Home, Office)" value={form.label} onChange={(v) => setForm((f) => ({ ...f, label: v }))} required />
+            <Field id="address-name" label="Full Name" value={form.name} onChange={(v) => setForm((f) => ({ ...f, name: v }))} required />
+            <Field id="address-line1" label="Address Line 1" value={form.line1} onChange={(v) => setForm((f) => ({ ...f, line1: v }))} required />
+            <Field id="address-line2" label="Address Line 2 (optional)" value={form.line2} onChange={(v) => setForm((f) => ({ ...f, line2: v }))} />
             <div className="grid grid-cols-2 gap-3">
-              <Field label="City" value={form.city} onChange={(v) => setForm((f) => ({ ...f, city: v }))} required />
-              <Field label="State" value={form.state} onChange={(v) => setForm((f) => ({ ...f, state: v }))} required />
+              <Field id="address-city" label="City" value={form.city} onChange={(v) => setForm((f) => ({ ...f, city: v }))} required />
+              <Field id="address-state" label="State" value={form.state} onChange={(v) => setForm((f) => ({ ...f, state: v }))} required />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Pincode" value={form.pincode} onChange={(v) => setForm((f) => ({ ...f, pincode: v }))} required />
-              <Field label="Phone" value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} required />
+              <Field id="address-pincode" label="Pincode" value={form.pincode} onChange={(v) => setForm((f) => ({ ...f, pincode: v }))} required />
+              <Field id="address-phone" label="Phone" value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} required />
             </div>
 
             <div className="flex items-center justify-between pt-1">
@@ -154,11 +155,13 @@ export function AddressesView({ initialAddresses }: { initialAddresses: AddressI
 }
 
 function Field({
+  id,
   label,
   value,
   onChange,
   required,
 }: {
+  id: string
   label: string
   value: string
   onChange: (v: string) => void
@@ -166,8 +169,9 @@ function Field({
 }) {
   return (
     <div>
-      <label className="font-body text-xs font-medium text-muted-warm block mb-1.5">{label}</label>
+      <label htmlFor={id} className="font-body text-xs font-medium text-muted-warm block mb-1.5">{label}</label>
       <input
+        id={id}
         type="text"
         value={value}
         required={required}

@@ -6,6 +6,7 @@ import { createBrowserClient } from '@/lib/supabase/client'
 import { ShinyButton } from '@/components/ui/shiny-button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { isSafeRedirectTarget } from '@/lib/tenant-url'
 
 type Method = 'phone' | 'email'
 type Step = 'input' | 'otp'
@@ -35,7 +36,7 @@ export function OtpForm({
 
   const supabase = createBrowserClient()
   const searchParams = useSearchParams()
-  const next = searchParams.get('next')
+  const rawNext = searchParams.get('next')
 
   function switchMethod(newMethod: Method) {
     setMethod(newMethod)
@@ -126,7 +127,10 @@ export function OtpForm({
     if (enabled) {
       await fetch(syncEndpoint, { method: 'POST' })
       if (onVerified) onVerified()
-      else window.location.href = next ?? '/auth'
+      else {
+        const next = isSafeRedirectTarget(rawNext, window.location.origin) ? rawNext : null
+        window.location.href = next ?? '/auth'
+      }
     }
   }
 
