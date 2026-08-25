@@ -73,6 +73,7 @@ function renderCheckout({ addresses = [SAVED_ADDRESS] } = {}) {
           signedIn
           signedInPhone="+919876543210"
           signedInName="Priya"
+          signedInEmail="priya@example.com"
           addresses={addresses}
           methods={{ upi: false, instamojo: false, razorpay: false, cod: true }}
         />
