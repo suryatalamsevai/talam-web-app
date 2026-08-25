@@ -10,7 +10,7 @@ vi.mock('resend', () => ({
   }),
 }))
 
-import { escapeHtml } from './email-templates'
+import { escapeHtml } from './email/shell'
 import {
   sendNewOrderEmail,
   sendOnboardingCompleteEmail,
