@@ -1,7 +1,7 @@
 import type { AdminStaffRole, OrderStatus, PaymentStatus, Prisma } from '@prisma/client'
 import { withTenant } from '@/lib/prisma'
 import { refundRazorpayPayment } from '@/lib/payments/razorpay'
-import { sendOrderCancelledEmail } from '@/lib/resend'
+import { sendOrderCancelledWithRefundEmail } from '@/lib/resend'
 import { canVerifyRefund } from '@/lib/data/admin-permissions'
 
 /**
@@ -97,7 +97,7 @@ async function finalizeCancellation(
 
 async function notifyCustomer(order: CancellableOrder, reason: string, refunded: boolean): Promise<void> {
   if (!order.customer.email) return
-  await sendOrderCancelledEmail(order.customer.email, {
+  await sendOrderCancelledWithRefundEmail(order.customer.email, {
     storeName: order.tenant.name,
     orderCode: `#${order.id.slice(0, 8).toUpperCase()}`,
     reason,

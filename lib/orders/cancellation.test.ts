@@ -14,7 +14,7 @@ const { mockWithTenant, mockFindFirst, mockUpdateMany, mockUpdate, mockEventCrea
 
 vi.mock('@/lib/prisma', () => ({ withTenant: mockWithTenant }))
 vi.mock('@/lib/payments/razorpay', () => ({ refundRazorpayPayment: mockRefund }))
-vi.mock('@/lib/resend', () => ({ sendOrderCancelledEmail: mockSendCancelled }))
+vi.mock('@/lib/resend', () => ({ sendOrderCancelledWithRefundEmail: mockSendCancelled }))
 
 import { cancelOrder, confirmRefundVerification, isCancellable, refundRouteFor, submitRefundProof } from './cancellation'
 

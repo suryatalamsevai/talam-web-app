@@ -20,13 +20,19 @@ Once bearer-token support is confirmed on `main`, proceed through phases in orde
 
 ## Status
 _(automation appends a one-line note here if it has to stall — e.g. "waiting on Phase 0 PRs #41–44 to merge")_
+- 2026-08-27: still stalled, no change — PRs #25/#26/#27 remain open/unreviewed and `lib/auth-guard.ts` on `main` still has no bearer-token path; this container still has no `DATABASE_URL`/`DIRECT_URL` and the Supabase MCP connector still requires interactive authorization this session can't complete, so the pgbouncer spike test still can't run here. This is now 5 consecutive stalled firings since 2026-08-26 — needs a human to merge #25/#26/#27 and/or provision DB creds/authorize Supabase MCP, or run the spike test manually.
+- 2026-08-27 (later): still stalled, no change — PRs #25/#26/#27 are now over 40 hours old with no reviews, merges, or new commits (last activity 2026-08-25); `lib/auth-guard.ts` on `main` still has no bearer-token path, and this container still has no `DATABASE_URL`/`DIRECT_URL`/authorized Supabase MCP, so the pgbouncer spike test still can't run here. This is now 6 consecutive stalled firings since 2026-08-26 — same asks as before: merge #25/#26/#27 and/or provision DB creds/authorize Supabase MCP, or run the spike test manually.
+- 2026-08-26: stalled on the Phase 0 pgbouncer spike-test task — this container has Supabase project access via MCP but no `DATABASE_URL`/`DIRECT_URL` in its env, so it can't open real concurrent Postgres connections through the pooler to run the load test; needs those secrets provisioned to this environment, or a human to run the spike test manually and check the box.
+- 2026-08-26 (10:39 UTC): still stalled, no change since the last check — same missing DB creds block the pgbouncer spike test, and none of PRs #25/#26/#27 (the other 3 Phase 0 tasks) have been merged yet either, so `lib/auth-guard.ts` on `main` still has no bearer-token path; Phase 1+ work stays blocked until a human merges those PRs and/or provisions `DATABASE_URL`/`DIRECT_URL` (or runs the spike test manually).
+- 2026-08-26 (15:41 UTC): still stalled, no change — PRs #25/#26/#27 remain open/unreviewed and `lib/auth-guard.ts` on `main` still has no bearer-token path; `DATABASE_URL`/`DIRECT_URL` are still absent from this container's env and the Supabase MCP connection doesn't expose them either, so the pgbouncer spike test still can't run here. Needs a human to merge #25/#26/#27 and/or provision DB creds to this environment, or run the spike test manually.
+- 2026-08-26 (20:38 UTC): still stalled, no change — PRs #25/#26/#27 are still open/unreviewed and `lib/auth-guard.ts` on `main` has no bearer-token path; this container still has no `DATABASE_URL`/`DIRECT_URL` (only `.env.example` is present, no `.env`) and the Supabase MCP connector still requires interactive authorization this session can't complete, so the pgbouncer spike test still can't run here. Same blockers as the last 3 firings — needs a human to merge #25/#26/#27 and/or provision DB creds/authorize Supabase MCP, or run the spike test manually.
 
 ---
 
 ## Phase 0 — Foundation (blocks everything below)
 - [x] Bearer-token auth path in `lib/auth-guard.ts` / `lib/admin-guard.ts` (accept `Authorization: Bearer <supabase-jwt>` alongside the existing cookie session) — [PR #25](https://github.com/suryatalamsevai/talam-web-app/pull/25)
 - [x] Explicit tenant resolution helper (port `proxy.ts`'s host/subdomain logic into a callable function usable when there's no proxy — mobile sends tenant id/slug directly) — [PR #26](https://github.com/suryatalamsevai/talam-web-app/pull/26)
-- [ ] `app/api/v1/` versioning convention + shared JSON response/error envelope
+- [x] `app/api/v1/` versioning convention + shared JSON response/error envelope — [PR #27](https://github.com/suryatalamsevai/talam-web-app/pull/27)
 - [ ] Verify Prisma/Supabase pgbouncer connection pooling holds under added serverless concurrency (spike test, not a code change if already fine)
 
 ## Phase 1 — Catalog & storefront read
