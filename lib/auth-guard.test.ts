@@ -1,14 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { AdminStaffRole } from '@prisma/client'
 
-const { mockGetUser, mockIsAdminStaffEmail, mockGetAdminStaffRole, mockTouchAdminStaffLastActive, mockRedirect } =
-  vi.hoisted(() => ({
-    mockGetUser: vi.fn(async () => ({ data: { user: { id: 'user-1', email: 'test@example.com' } }, error: null })),
-    mockIsAdminStaffEmail: vi.fn(async () => false),
-    mockGetAdminStaffRole: vi.fn(async (): Promise<AdminStaffRole | null> => null),
-    mockTouchAdminStaffLastActive: vi.fn(),
-    mockRedirect: vi.fn(),
-  }))
+const {
+  mockGetUser,
+  mockIsAdminStaffEmail,
+  mockGetAdminStaffRole,
+  mockTouchAdminStaffLastActive,
+  mockRedirect,
+  mockWithTenant,
+} = vi.hoisted(() => ({
+  mockGetUser: vi.fn(async (): Promise<{
+    data: { user: { id: string; email: string } | null }
+    error: { message: string } | null
+  }> => ({ data: { user: { id: 'user-1', email: 'test@example.com' } }, error: null })),
+  mockIsAdminStaffEmail: vi.fn(async () => false),
+  mockGetAdminStaffRole: vi.fn(async (): Promise<AdminStaffRole | null> => null),
+  mockTouchAdminStaffLastActive: vi.fn(),
+  mockRedirect: vi.fn(),
+  mockWithTenant: vi.fn((tenantId: string, fn: (db: unknown) => unknown) =>
+    fn({ customer: { upsert: vi.fn() } })
+  ),
+}))
 
 vi.mock('@/lib/supabase/server', () => ({
   createServerClient: vi.fn(async () => ({ auth: { getUser: mockGetUser } })),
@@ -30,9 +42,7 @@ vi.mock('next/headers', () => ({
 vi.mock('next/navigation', () => ({ redirect: mockRedirect }))
 
 vi.mock('@/lib/prisma', () => ({
-  withTenant: vi.fn((_tenantId: string, fn: (db: unknown) => unknown) =>
-    fn({ customer: { upsert: vi.fn() } })
-  ),
+  withTenant: mockWithTenant,
 }))
 
 // canAccessSection is a pure lookup — kept real via importActual so
@@ -47,7 +57,13 @@ vi.mock('@/lib/data/admin-staff', async () => {
   }
 })
 
-import { requireTenant, requireAuth, getSuperAdminRole, requireSuperAdminSection } from './auth-guard'
+import { requireTenant, requireAuth, requireApiUser, getSuperAdminRole, requireSuperAdminSection } from './auth-guard'
+
+function bearerRequest(token?: string) {
+  return new Request('https://api.example.com/api/v1/auth/me', {
+    headers: token ? { authorization: `Bearer ${token}` } : {},
+  })
+}
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -68,6 +84,54 @@ describe('requireAuth', () => {
   it('returns the Supabase user when a session exists', async () => {
     const user = await requireAuth()
     expect(user.id).toBe('user-1')
+  })
+})
+
+describe('requireApiUser', () => {
+  it('returns the Supabase user for a valid bearer token, scoped to the given tenant', async () => {
+    const user = await requireApiUser(bearerRequest('valid-token'), 'tenant-a')
+
+    expect(user?.id).toBe('user-1')
+    expect(mockGetUser).toHaveBeenCalledWith('valid-token')
+    expect(mockWithTenant).toHaveBeenCalledWith('tenant-a', expect.any(Function))
+  })
+
+  it('returns null and never touches the database when the Authorization header is missing', async () => {
+    const user = await requireApiUser(bearerRequest(), 'tenant-a')
+
+    expect(user).toBeNull()
+    expect(mockGetUser).not.toHaveBeenCalled()
+    expect(mockWithTenant).not.toHaveBeenCalled()
+  })
+
+  it('returns null for a malformed Authorization header (not a Bearer token)', async () => {
+    const request = new Request('https://api.example.com/api/v1/auth/me', {
+      headers: { authorization: 'Basic dXNlcjpwYXNz' },
+    })
+
+    const user = await requireApiUser(request, 'tenant-a')
+
+    expect(user).toBeNull()
+    expect(mockGetUser).not.toHaveBeenCalled()
+  })
+
+  it('returns null for an invalid or expired token and never touches the database', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: null }, error: { message: 'token expired' } })
+
+    const user = await requireApiUser(bearerRequest('expired-token'), 'tenant-a')
+
+    expect(user).toBeNull()
+    expect(mockWithTenant).not.toHaveBeenCalled()
+  })
+
+  it('scopes each call to exactly the tenant the caller resolved for it — no cross-tenant bleed', async () => {
+    await requireApiUser(bearerRequest('valid-token'), 'tenant-a')
+    await requireApiUser(bearerRequest('valid-token'), 'tenant-b')
+
+    expect(mockWithTenant).toHaveBeenCalledTimes(2)
+    expect(mockWithTenant).toHaveBeenNthCalledWith(1, 'tenant-a', expect.any(Function))
+    expect(mockWithTenant).toHaveBeenNthCalledWith(2, 'tenant-b', expect.any(Function))
+    expect(mockWithTenant).not.toHaveBeenCalledWith('tenant-c', expect.anything())
   })
 })
 

@@ -6,6 +6,21 @@ import { withTenant } from '@/lib/prisma'
 import { isAdminStaffEmail, getAdminStaffRole, touchAdminStaffLastActive } from '@/lib/data/admin-staff'
 import { canAccessSection, type AdminSection } from '@/lib/data/admin-permissions'
 import type { AdminStaffRole } from '@prisma/client'
+import type { User } from '@supabase/supabase-js'
+
+// Shared by both the cookie-session path (requireAuth) and the bearer-token path
+// (requireApiUser) — Google OAuth creates the customer row in /auth/callback, but
+// phone-OTP and mobile bearer sign-in verify client-side and never hit that route,
+// so without this an authenticated action 500s on a customer_id FK violation.
+async function ensureTenantCustomer(user: User, tenantId: string) {
+  await withTenant(tenantId, (db) =>
+    db.customer.upsert({
+      where: { id: user.id },
+      create: { id: user.id, tenantId, email: user.email ?? null, phone: user.phone ?? null },
+      update: {},
+    })
+  )
+}
 
 // cache(): dedupe repeated calls within one request — layouts, pages, and server
 // actions on the same route each call this, and without memoization every call
@@ -26,22 +41,39 @@ export const requireAuth = cache(async function requireAuth(nextPath?: string) {
     redirect(`${storeBase}/auth${suffix}`)
   }
 
-  // Google OAuth creates the customer row in the /auth/callback route, but phone-OTP
-  // sign-in verifies client-side and never hits a server route — so without this, any
-  // authenticated action (e.g. placing an order) 500s on a customer_id FK violation.
   const tenantId = (await headers()).get('x-tenant-id')
-  if (tenantId) {
-    await withTenant(tenantId, (db) =>
-      db.customer.upsert({
-        where: { id: user.id },
-        create: { id: user.id, tenantId, email: user.email ?? null, phone: user.phone ?? null },
-        update: {},
-      })
-    )
-  }
+  if (tenantId) await ensureTenantCustomer(user, tenantId)
 
   return user
 })
+
+/**
+ * Bearer-token counterpart of `requireAuth` for `app/api/v1/**` route handlers, which have
+ * no cookie session to read — the mobile client sends the Supabase access token directly
+ * as `Authorization: Bearer <token>`. Never redirects: returns `null` on a missing, malformed,
+ * or invalid/expired token so the route can respond with its own 401 JSON body.
+ *
+ * `tenantId` is caller-resolved (e.g. from an explicit header) and passed straight through
+ * to `withTenant`, so the customer row this creates/touches is always scoped to that tenant
+ * — never inferred from the token — matching the existing cookie-session behavior above.
+ */
+export async function requireApiUser(request: Request, tenantId: string): Promise<User | null> {
+  const authHeader = request.headers.get('authorization')
+  const token = authHeader?.match(/^Bearer\s+(.+)$/i)?.[1]
+  if (!token) return null
+
+  const supabase = await createServerClient()
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser(token)
+
+  if (error || !user) return null
+
+  await ensureTenantCustomer(user, tenantId)
+
+  return user
+}
 
 export const requireTenant = cache(async function requireTenant() {
   const headersList = await headers()
