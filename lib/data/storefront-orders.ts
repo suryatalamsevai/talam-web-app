@@ -140,3 +140,35 @@ export async function getCustomerOrder(
   )
   return order ? toCustomerOrder(order as unknown as OrderRow) : null
 }
+
+/**
+ * Flags an order for ops review — no messaging system behind this, it just sets
+ * disputeFlaggedAt/disputeReason for the super-admin "Flagged Orders" queue to pick up.
+ * Idempotent: re-reporting an already-flagged order just updates the reason.
+ *
+ * Scoped by customerId as well as tenantId, same as getCustomerOrder above — a guessed
+ * order id must not let one customer flag (or discover the existence of) another's order.
+ */
+export async function reportOrderProblem(
+  tenantId: string,
+  customerId: string,
+  orderId: string,
+  reason: string
+): Promise<{ error?: string }> {
+  const trimmed = reason.trim()
+  if (!trimmed) return { error: 'Please describe the problem.' }
+
+  const order = await withTenant(tenantId, (db) =>
+    db.order.findFirst({ where: { id: orderId, tenantId, customerId }, select: { id: true } })
+  )
+  if (!order) return { error: 'Order not found.' }
+
+  await withTenant(tenantId, (db) =>
+    db.order.update({
+      where: { id: orderId },
+      data: { disputeFlaggedAt: new Date(), disputeReason: trimmed },
+    })
+  )
+
+  return {}
+}
