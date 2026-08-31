@@ -42,16 +42,16 @@ _(automation appends a one-line note here if it has to stall — e.g. "waiting o
 - [ ] Verify Prisma/Supabase pgbouncer connection pooling holds under added serverless concurrency (spike test, not a code change if already fine) — still blocked, see Status log; does not block Phase 1+ under the gating rule above
 
 ## Phase 1 — Catalog & storefront read
-- [ ] Convert `app/store/actions.ts → searchProductsAction` to `GET /api/v1/store/search`
-- [ ] Net-new: product list + detail → `GET /api/v1/store/products`, `GET /api/v1/store/products/{slug}` (currently RSC-only, no action layer — extract query logic from the page first)
-- [ ] Net-new: category listing → `GET /api/v1/store/categories`
-- [ ] Net-new: occasions/offers listing → `GET /api/v1/store/occasions`
-- [ ] Net-new: store config/theme/banners → `GET /api/v1/store/config`
+- [x] Convert `app/store/actions.ts → searchProductsAction` to `GET /api/v1/store/search` — [PR #30](https://github.com/suryatalamsevai/talam-web-app/pull/30) (open, targets `mobile-api/phase-0-foundation` per gating rule)
+- [x] Net-new: product list + detail → `GET /api/v1/store/products`, `GET /api/v1/store/products/{slug}` — [PR #31](https://github.com/suryatalamsevai/talam-web-app/pull/31) (open, targets `mobile-api/phase-0-foundation` per gating rule)
+- [x] Net-new: category listing → `GET /api/v1/store/categories` — [PR #32](https://github.com/suryatalamsevai/talam-web-app/pull/32) (open, targets `mobile-api/phase-0-foundation` per gating rule)
+- [x] Net-new: occasions/offers listing → `GET /api/v1/store/occasions` — [PR #35](https://github.com/suryatalamsevai/talam-web-app/pull/35) (open, targets `mobile-api/phase-0-foundation` per gating rule)
+- [x] Net-new: store config/theme/banners → `GET /api/v1/store/config` — [PR #36](https://github.com/suryatalamsevai/talam-web-app/pull/36) (open, targets `mobile-api/phase-0-foundation` per gating rule)
 
 ## Phase 2 — Cart, wishlist & account
-- [ ] Convert `store/cart/actions.ts → getEmptyCartSuggestions` to `GET /api/v1/store/cart/suggestions`
-- [ ] Convert `store/wishlist/actions.ts → toggleWishlistAction` to `POST /api/v1/store/wishlist`
-- [ ] Convert `store/orders/actions.ts → reportOrderProblemAction` to `POST /api/v1/store/orders/{id}/report`
+- [x] Convert `store/cart/actions.ts → getEmptyCartSuggestions` to `GET /api/v1/store/cart/suggestions` — [PR #37](https://github.com/suryatalamsevai/talam-web-app/pull/37) (open, targets `mobile-api/phase-0-foundation` per gating rule)
+- [x] Convert `store/wishlist/actions.ts → toggleWishlistAction` to `POST /api/v1/store/wishlist` — [PR #38](https://github.com/suryatalamsevai/talam-web-app/pull/38) (open, targets `mobile-api/phase-0-foundation` per gating rule)
+- [x] Convert `store/orders/actions.ts → reportOrderProblemAction` to `POST /api/v1/store/orders/{id}/report` — [PR #39](https://github.com/suryatalamsevai/talam-web-app/pull/39) (open, targets `mobile-api/phase-0-foundation` per gating rule)
 - [ ] Convert `account/addresses/actions.ts → createAddress` to `POST /api/v1/store/addresses`
 - [ ] Convert `account/profile/actions.ts → updateCustomerProfile` to `PATCH /api/v1/store/profile`
 - [ ] Convert `onboarding/actions.ts → saveOnboardingAction` to `POST /api/v1/store/onboarding`
