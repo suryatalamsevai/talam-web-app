@@ -1,7 +1,6 @@
 'use server'
 
 import { cookies, headers } from 'next/headers'
-import QRCode from 'qrcode'
 import { requireTenant } from '@/lib/auth-guard'
 import { createServerClient } from '@/lib/supabase/server'
 import { cookieDomain } from '@/lib/supabase/cookie-domain'
@@ -12,18 +11,10 @@ import { createNotification } from '@/lib/data/notifications'
 import { sendNewOrderEmail, sendOrderPlacedEmail, type OrderEmailItem } from '@/lib/resend'
 import { getAdminUrl, getStoreUrl, isLocalDevHost } from '@/lib/tenant-url'
 import { orderCode } from '@/lib/data/storefront-orders'
-import { buildUpiIntent } from '@/lib/payments/upi'
 import { createRazorpayOrder, getRazorpayKeys, verifyRazorpaySignature } from '@/lib/payments/razorpay'
-import {
-  checkCoupon,
-  computeQuote,
-  decrementStock,
-  stockFor,
-  COUPON_ERROR_MESSAGE,
-  type CouponRow,
-  type Quote,
-  type QuoteLine,
-} from '@/lib/checkout-pricing'
+import { decrementStock, stockFor } from '@/lib/checkout-pricing'
+import { priceCart, isError, type CartLine, type PricingContext, type QuotedLine, type QuoteResult, toQuoteResult } from '@/lib/checkout/price-cart'
+import { computeUpiQr } from '@/lib/checkout/upi-qr'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -52,116 +43,15 @@ async function readGuestOrderCustomerId(orderId: string): Promise<string | null>
   return cookieOrderId === orderId && customerId ? customerId : null
 }
 
-export type CartLine = { productId: string; size?: string | null; quantity: number }
+export type { CartLine, PricingContext, QuotedLine, QuoteResult }
 
 export type PaymentProvider = 'upi_manual' | 'razorpay' | 'cod'
 
 /**
- * Everything below re-reads prices, stock and coupons from the database. The client
- * sends product ids, sizes and quantities only — any total it computed is for display.
+ * Everything below re-reads prices, stock and coupons from the database (via
+ * lib/checkout/price-cart.ts's priceCart). The client sends product ids, sizes and
+ * quantities only — any total it computed is for display.
  */
-
-type PricingContext = {
-  tenantId: string
-  quote: Quote
-  lines: (QuoteLine & { productName: string })[]
-  coupon: { id: string; code: string } | null
-  storeName: string
-}
-
-async function priceCart(tenantId: string, cart: CartLine[], couponCode?: string): Promise<PricingContext | { error: string }> {
-  const clean = cart.filter((l) => Number.isInteger(l.quantity) && l.quantity > 0)
-  if (clean.length === 0) return { error: 'Your cart is empty.' }
-
-  const [tenant, products] = await withTenant(tenantId, (db) =>
-    Promise.all([
-      db.tenant.findUnique({
-        where: { id: tenantId },
-        select: { name: true, shippingFee: true, freeDeliveryAbove: true },
-      }),
-      db.product.findMany({
-        where: { id: { in: clean.map((l) => l.productId) }, tenantId, deletedAt: null, isActive: true, status: 'published' },
-        select: { id: true, name: true, price: true, comparePrice: true, stockBySize: true },
-      }),
-    ])
-  )
-  if (!tenant) return { error: 'Store not found.' }
-
-  const byId = new Map(products.map((p) => [p.id, p]))
-  const lines: (QuoteLine & { productName: string })[] = []
-
-  for (const line of clean) {
-    const product = byId.get(line.productId)
-    if (!product) return { error: 'One of the items in your cart is no longer available.' }
-
-    const size = line.size ?? null
-    if (stockFor(product.stockBySize, size) < line.quantity) {
-      return { error: `${product.name}${size ? ` (${size})` : ''} is out of stock.` }
-    }
-
-    lines.push({
-      productId: product.id,
-      productName: product.name,
-      size,
-      quantity: line.quantity,
-      unitPrice: Number(product.price),
-      compareAtPrice: product.comparePrice === null ? null : Number(product.comparePrice),
-    })
-  }
-
-  const itemsTotal = lines.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0)
-
-  let couponRow: (CouponRow & { id: string; code: string }) | null = null
-  if (couponCode?.trim()) {
-    const found = await withTenant(tenantId, (db) =>
-      db.discountCode.findUnique({ where: { tenantId_code: { tenantId, code: couponCode.trim().toUpperCase() } } })
-    )
-    if (!found) return { error: COUPON_ERROR_MESSAGE.not_found }
-    const row: CouponRow & { id: string; code: string } = {
-      id: found.id,
-      code: found.code,
-      type: found.type,
-      value: Number(found.value),
-      minOrder: found.minOrder === null ? null : Number(found.minOrder),
-      usesLimit: found.usesLimit,
-      usesCount: found.usesCount,
-      expiresAt: found.expiresAt,
-      isActive: found.isActive,
-    }
-    const rejection = checkCoupon(row, itemsTotal)
-    if (rejection) return { error: COUPON_ERROR_MESSAGE[rejection] }
-    couponRow = row
-  }
-
-  return {
-    tenantId,
-    storeName: tenant.name,
-    lines,
-    coupon: couponRow ? { id: couponRow.id, code: couponRow.code } : null,
-    quote: computeQuote({
-      lines,
-      shippingFee: Number(tenant.shippingFee),
-      freeDeliveryAbove: tenant.freeDeliveryAbove === null ? null : Number(tenant.freeDeliveryAbove),
-      coupon: couponRow,
-    }),
-  }
-}
-
-function isError(value: PricingContext | { error: string }): value is { error: string } {
-  return 'error' in value
-}
-
-/** What the summary card renders: unit prices come back from the DB too, so the line items and the total can never disagree. */
-export type QuotedLine = { productId: string; size: string | null; quantity: number; unitPrice: number }
-
-export type QuoteResult = { quote: Quote; lines: QuotedLine[] }
-
-function toQuoteResult(priced: PricingContext): QuoteResult {
-  return {
-    quote: priced.quote,
-    lines: priced.lines.map((l) => ({ productId: l.productId, size: l.size, quantity: l.quantity, unitPrice: l.unitPrice })),
-  }
-}
 
 /** Server-authoritative totals for display — the client never decides what anything costs. */
 export async function getQuoteAction(cart: CartLine[], couponCode?: string): Promise<QuoteResult | { error: string }> {
@@ -208,29 +98,7 @@ export async function getUpiQrAction(
   couponCode?: string
 ): Promise<{ intent: string; svgDataUri: string; total: number; vpa: string } | { error: string }> {
   const { tenantId } = await requireTenant()
-  const priced = await priceCart(tenantId, cart, couponCode)
-  if (isError(priced)) return priced
-
-  const tenant = await withTenant(tenantId, (db) =>
-    db.tenant.findUnique({ where: { id: tenantId }, select: { paymentConfig: true } })
-  )
-  const upi = (tenant?.paymentConfig as { upi?: { enabled?: boolean; upiId?: string } } | null)?.upi
-  if (!upi?.enabled || !upi.upiId) return { error: 'This store has not set up UPI payments yet.' }
-
-  const intent = buildUpiIntent({
-    vpa: upi.upiId,
-    storeName: priced.storeName,
-    amount: priced.quote.total,
-    note: `Order at ${priced.storeName}`,
-  })
-  const svg = await QRCode.toString(intent, { type: 'svg', margin: 1, width: 240 })
-
-  return {
-    intent,
-    svgDataUri: `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`,
-    total: priced.quote.total,
-    vpa: upi.upiId,
-  }
+  return computeUpiQr(tenantId, cart, couponCode)
 }
 
 export type PlaceOrderInput = {
