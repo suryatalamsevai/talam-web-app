@@ -14,6 +14,7 @@ import { getAdminUrl, getStoreUrl, isLocalDevHost } from '@/lib/tenant-url'
 import { orderCode } from '@/lib/data/storefront-orders'
 import { buildUpiIntent } from '@/lib/payments/upi'
 import { createRazorpayOrder, getRazorpayKeys, verifyRazorpaySignature } from '@/lib/payments/razorpay'
+import { verifyRazorpayPayment } from '@/lib/checkout/verify-razorpay-payment'
 import {
   checkCoupon,
   computeQuote,
@@ -540,11 +541,20 @@ export async function verifyRazorpayPaymentAction(params: {
   const customerId = user ? user.id : await readGuestOrderCustomerId(params.orderId)
   if (!customerId) return { error: 'Payment could not be verified.' }
 
-  await withTenant(tenantId, (db) =>
-    db.order.updateMany({
-      where: { id: params.orderId, tenantId, customerId },
-      data: { paymentStatus: 'paid', paymentId: params.razorpayPaymentId, status: 'confirmed' },
-    })
-  )
+  // Shared with POST /api/v1/checkout/razorpay/verify. The signature check above is kept
+  // here too so an unowned order still short-circuits before any DB work, exactly as before;
+  // verifyRazorpayPayment re-checks it, which is cheap and keeps the lib safe on its own.
+  const result = await verifyRazorpayPayment({
+    tenantId,
+    customerId,
+    orderId: params.orderId,
+    razorpayOrderId: params.razorpayOrderId,
+    razorpayPaymentId: params.razorpayPaymentId,
+    signature: params.signature,
+  })
+  if (!result.ok) return { error: 'Payment could not be verified.' }
+
+  // Unchanged from before the extraction: the web action reports success even when the
+  // update matched no row. The API route is stricter and 404s on that case.
   return { ok: true }
 }
