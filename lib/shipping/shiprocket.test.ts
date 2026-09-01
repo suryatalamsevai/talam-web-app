@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { mockLogin, mockCreateOrder, mockAssignAwb, mockGetCredential, mockGetConfig, mockMarkStale, MockShiprocketLoginError } =
+const { mockLogin, mockCreateOrder, mockAssignAwb, mockTrackAwb, mockGetCredential, mockGetConfig, mockMarkStale, MockShiprocketLoginError } =
   vi.hoisted(() => {
     class MockShiprocketLoginError extends Error {
       status: number
@@ -13,6 +13,7 @@ const { mockLogin, mockCreateOrder, mockAssignAwb, mockGetCredential, mockGetCon
       mockLogin: vi.fn(),
       mockCreateOrder: vi.fn(),
       mockAssignAwb: vi.fn(),
+      mockTrackAwb: vi.fn(),
       mockGetCredential: vi.fn(),
       mockGetConfig: vi.fn(),
       mockMarkStale: vi.fn(),
@@ -24,6 +25,7 @@ vi.mock('./shiprocket-client', () => ({
   shiprocketLogin: mockLogin,
   createShiprocketOrder: mockCreateOrder,
   assignShiprocketAwb: mockAssignAwb,
+  getShiprocketTrackingStatus: mockTrackAwb,
   ShiprocketLoginError: MockShiprocketLoginError,
 }))
 vi.mock('./shiprocket-account', () => ({
@@ -32,7 +34,7 @@ vi.mock('./shiprocket-account', () => ({
   markShiprocketCredentialStale: mockMarkStale,
 }))
 
-import { createShiprocketShipment } from './shiprocket'
+import { createShiprocketShipment, getShiprocketTracking } from './shiprocket'
 
 const VALID_INPUT = {
   orderId: 'order-abc',
@@ -141,5 +143,55 @@ describe('createShiprocketShipment', () => {
       'Shiprocket order creation failed (422): bad pincode'
     )
     expect(mockMarkStale).not.toHaveBeenCalled()
+  })
+})
+
+describe('getShiprocketTracking', () => {
+  const SHIPMENT = {
+    awbCode: 'AWB123',
+    currentStatus: 'In Transit',
+    courierName: 'Delhivery',
+    estimatedDeliveryDate: '2026-09-05',
+    trackUrl: 'https://shiprocket.co/tracking/AWB123',
+    activities: [],
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockGetCredential.mockResolvedValue({ email: 'shop@example.com', password: 'pw' })
+    mockLogin.mockResolvedValue('sr_token')
+    mockTrackAwb.mockResolvedValue(SHIPMENT)
+  })
+
+  it('logs into the tenant’s own account and tracks the AWB', async () => {
+    expect(await getShiprocketTracking('t1', 'AWB123')).toEqual(SHIPMENT)
+
+    expect(mockGetCredential).toHaveBeenCalledWith('t1')
+    expect(mockLogin).toHaveBeenCalledWith('shop@example.com', 'pw')
+    expect(mockTrackAwb).toHaveBeenCalledWith('sr_token', 'AWB123')
+  })
+
+  it('throws when no Shiprocket account is connected', async () => {
+    mockGetCredential.mockResolvedValue(null)
+
+    await expect(getShiprocketTracking('t1', 'AWB123')).rejects.toThrow(
+      'No Shiprocket account is connected for this store.'
+    )
+    expect(mockTrackAwb).not.toHaveBeenCalled()
+  })
+
+  it('never flips the shop’s credential to stale — this runs on a customer-facing read', async () => {
+    mockLogin.mockRejectedValue(new MockShiprocketLoginError(401, 'unauthorized'))
+
+    await expect(getShiprocketTracking('t1', 'AWB123')).rejects.toThrow()
+    expect(mockMarkStale).not.toHaveBeenCalled()
+  })
+
+  it('propagates upstream failures for the caller to degrade on', async () => {
+    mockTrackAwb.mockRejectedValue(new Error('Shiprocket tracking lookup failed (503): down'))
+
+    await expect(getShiprocketTracking('t1', 'AWB123')).rejects.toThrow(
+      'Shiprocket tracking lookup failed (503): down'
+    )
   })
 })

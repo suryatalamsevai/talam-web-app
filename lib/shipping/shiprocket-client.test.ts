@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   assignShiprocketAwb,
   createShiprocketOrder,
+  getShiprocketTrackingStatus,
   shiprocketLogin,
   type ShiprocketOrderInput,
 } from './shiprocket-client'
@@ -144,6 +145,95 @@ describe('assignShiprocketAwb', () => {
     stubFetch(failure(400, 'no courier available'))
     await expect(assignShiprocketAwb('tok', 999)).rejects.toThrow(
       'Shiprocket AWB assignment failed (400): no courier available'
+    )
+  })
+})
+
+describe('getShiprocketTrackingStatus', () => {
+  const TRACKING_PAYLOAD = {
+    tracking_data: {
+      track_url: 'https://shiprocket.co/tracking/AWB123',
+      shipment_track: [
+        {
+          awb_code: 'AWB123',
+          current_status: 'In Transit',
+          courier_name: 'Delhivery',
+          edd: '2026-09-05',
+        },
+      ],
+      shipment_track_activities: [
+        { date: '2026-09-02 10:00:00', activity: 'Shipment picked up', location: 'Bengaluru' },
+        { date: '2026-09-01 18:00:00', activity: 'Pickup scheduled', location: 'Bengaluru' },
+      ],
+    },
+  }
+
+  it('GETs the track-by-AWB endpoint with the account token and maps the payload', async () => {
+    const fetchMock = stubFetch(ok(TRACKING_PAYLOAD))
+
+    expect(await getShiprocketTrackingStatus('tok', 'AWB123')).toEqual({
+      awbCode: 'AWB123',
+      currentStatus: 'In Transit',
+      courierName: 'Delhivery',
+      estimatedDeliveryDate: '2026-09-05',
+      trackUrl: 'https://shiprocket.co/tracking/AWB123',
+      activities: [
+        { date: '2026-09-02 10:00:00', activity: 'Shipment picked up', location: 'Bengaluru' },
+        { date: '2026-09-01 18:00:00', activity: 'Pickup scheduled', location: 'Bengaluru' },
+      ],
+    })
+
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(url).toBe('https://apiv2.shiprocket.in/v1/external/courier/track/awb/AWB123')
+    expect(init.headers.Authorization).toBe('Bearer tok')
+    expect(init.method).toBeUndefined()
+  })
+
+  it('url-encodes the AWB so a malformed value cannot escape the path', async () => {
+    const fetchMock = stubFetch(ok(TRACKING_PAYLOAD))
+
+    await getShiprocketTrackingStatus('tok', 'AWB/../orders')
+
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      'https://apiv2.shiprocket.in/v1/external/courier/track/awb/AWB%2F..%2Forders'
+    )
+  })
+
+  it('aborts rather than hanging on a slow upstream', async () => {
+    const fetchMock = stubFetch(ok(TRACKING_PAYLOAD))
+
+    await getShiprocketTrackingStatus('tok', 'AWB123')
+
+    expect(fetchMock.mock.calls[0][1].signal).toBeInstanceOf(AbortSignal)
+  })
+
+  it('returns null when Shiprocket reports the AWB is unknown', async () => {
+    stubFetch(ok({ tracking_data: { error: 'Invalid AWB', track_status: 0 } }))
+    expect(await getShiprocketTrackingStatus('tok', 'AWB404')).toBeNull()
+  })
+
+  it('returns null when the AWB is assigned but not yet scanned', async () => {
+    stubFetch(ok({ tracking_data: { track_status: 0, shipment_track: [] } }))
+    expect(await getShiprocketTrackingStatus('tok', 'AWB123')).toBeNull()
+  })
+
+  it('tolerates a shipment entry with missing optional fields', async () => {
+    stubFetch(ok({ tracking_data: { shipment_track: [{ current_status: 'Pickup Scheduled' }] } }))
+
+    expect(await getShiprocketTrackingStatus('tok', 'AWB123')).toEqual({
+      awbCode: 'AWB123',
+      currentStatus: 'Pickup Scheduled',
+      courierName: null,
+      estimatedDeliveryDate: null,
+      trackUrl: null,
+      activities: [],
+    })
+  })
+
+  it('throws on a non-2xx response', async () => {
+    stubFetch(failure(503, 'service unavailable'))
+    await expect(getShiprocketTrackingStatus('tok', 'AWB123')).rejects.toThrow(
+      'Shiprocket tracking lookup failed (503): service unavailable'
     )
   })
 })
