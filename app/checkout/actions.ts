@@ -13,7 +13,8 @@ import { sendNewOrderEmail, sendOrderPlacedEmail, type OrderEmailItem } from '@/
 import { getAdminUrl, getStoreUrl, isLocalDevHost } from '@/lib/tenant-url'
 import { orderCode } from '@/lib/data/storefront-orders'
 import { buildUpiIntent } from '@/lib/payments/upi'
-import { createRazorpayOrder, getRazorpayKeys, verifyRazorpaySignature } from '@/lib/payments/razorpay'
+import { getRazorpayKeys, verifyRazorpaySignature } from '@/lib/payments/razorpay'
+import { createRazorpayOrderForOrder } from '@/lib/payments/razorpay-order'
 import {
   checkCoupon,
   computeQuote,
@@ -495,25 +496,17 @@ export async function createRazorpayOrderAction(
     data: { user },
   } = await (await createServerClient()).auth.getUser()
 
-  const keys = getRazorpayKeys()
-  if (!keys) return { error: 'Card & netbanking payments are not available right now.' }
+  // Kept ahead of the ownership check (and duplicated inside createRazorpayOrderForOrder,
+  // which the API route relies on) so an unconfigured account still reports "payments
+  // unavailable" rather than "order not found", exactly as this action always has.
+  if (!getRazorpayKeys()) return { error: 'Card & netbanking payments are not available right now.' }
 
   const customerId = user ? user.id : await readGuestOrderCustomerId(orderId)
   if (!customerId) return { error: 'Order not found.' }
 
-  const order = await withTenant(tenantId, (db) =>
-    db.order.findFirst({ where: { id: orderId, tenantId, customerId }, select: { total: true } })
-  )
-  if (!order) return { error: 'Order not found.' }
-
-  const amountPaise = Math.round(Number(order.total) * 100)
-  const razorpayOrder = await createRazorpayOrder(amountPaise, orderId)
-
-  await withTenant(tenantId, (db) =>
-    db.order.update({ where: { id: orderId }, data: { paymentId: razorpayOrder.id } })
-  )
-
-  return { razorpayOrderId: razorpayOrder.id, keyId: keys.keyId, amountPaise }
+  const result = await createRazorpayOrderForOrder({ tenantId, customerId, orderId })
+  if ('error' in result) return { error: result.error }
+  return result
 }
 
 export async function verifyRazorpayPaymentAction(params: {
