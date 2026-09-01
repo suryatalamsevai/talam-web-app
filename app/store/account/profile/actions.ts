@@ -1,14 +1,11 @@
 'use server'
 
 import { requireAuth, requireTenant } from '@/lib/auth-guard'
-import { prisma } from '@/lib/prisma'
+import { updateCustomerProfile as updateCustomerProfileLib } from '@/lib/data/customer-profile'
 
 export async function updateCustomerProfile({ name, phone }: { name: string; phone: string }) {
   const user = await requireAuth('/account/profile')
-  await requireTenant()
+  const { tenantId } = await requireTenant()
 
-  await prisma.customer.update({
-    where: { id: user.id },
-    data: { name, phone: phone || null },
-  })
+  await updateCustomerProfileLib(tenantId, user.id, { name, phone })
 }
