@@ -1,31 +1,28 @@
 'use server'
 
-import { cookies, headers } from 'next/headers'
+import { cookies } from 'next/headers'
 import QRCode from 'qrcode'
 import { requireTenant } from '@/lib/auth-guard'
 import { createServerClient } from '@/lib/supabase/server'
 import { cookieDomain } from '@/lib/supabase/cookie-domain'
-import { resolveOrCreateGuestCustomer } from '@/lib/auth/resolve-guest-customer'
 import { uploadImage } from '@/lib/cloudinary'
-import { prisma, withTenant } from '@/lib/prisma'
-import { createNotification } from '@/lib/data/notifications'
-import { sendNewOrderEmail, sendOrderPlacedEmail, type OrderEmailItem } from '@/lib/resend'
-import { getAdminUrl, getStoreUrl, isLocalDevHost } from '@/lib/tenant-url'
-import { orderCode } from '@/lib/data/storefront-orders'
+import { withTenant } from '@/lib/prisma'
 import { buildUpiIntent } from '@/lib/payments/upi'
 import { createRazorpayOrder, getRazorpayKeys, verifyRazorpaySignature } from '@/lib/payments/razorpay'
+import type { Quote } from '@/lib/checkout-pricing'
 import {
-  checkCoupon,
-  computeQuote,
-  decrementStock,
-  stockFor,
-  COUPON_ERROR_MESSAGE,
-  type CouponRow,
-  type Quote,
-  type QuoteLine,
-} from '@/lib/checkout-pricing'
+  isPricingError,
+  placeOrder,
+  priceCart,
+  type CartLine,
+  type PaymentProvider,
+  type PlaceOrderInput,
+  type PricingContext,
+} from '@/lib/data/checkout'
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+// Types moved to lib/data/checkout.ts alongside the logic that owns them; re-exported here
+// so the checkout client keeps importing them from the action module it already uses.
+export type { CartLine, PaymentProvider, PlaceOrderInput }
 
 // Proves, for the two Razorpay follow-up actions below, that THIS browser is the one that
 // just placed a given guest order — without it, "no session" would mean "no ownership check
@@ -52,104 +49,10 @@ async function readGuestOrderCustomerId(orderId: string): Promise<string | null>
   return cookieOrderId === orderId && customerId ? customerId : null
 }
 
-export type CartLine = { productId: string; size?: string | null; quantity: number }
-
-export type PaymentProvider = 'upi_manual' | 'razorpay' | 'cod'
-
 /**
  * Everything below re-reads prices, stock and coupons from the database. The client
  * sends product ids, sizes and quantities only — any total it computed is for display.
  */
-
-type PricingContext = {
-  tenantId: string
-  quote: Quote
-  lines: (QuoteLine & { productName: string })[]
-  coupon: { id: string; code: string } | null
-  storeName: string
-}
-
-async function priceCart(tenantId: string, cart: CartLine[], couponCode?: string): Promise<PricingContext | { error: string }> {
-  const clean = cart.filter((l) => Number.isInteger(l.quantity) && l.quantity > 0)
-  if (clean.length === 0) return { error: 'Your cart is empty.' }
-
-  const [tenant, products] = await withTenant(tenantId, (db) =>
-    Promise.all([
-      db.tenant.findUnique({
-        where: { id: tenantId },
-        select: { name: true, shippingFee: true, freeDeliveryAbove: true },
-      }),
-      db.product.findMany({
-        where: { id: { in: clean.map((l) => l.productId) }, tenantId, deletedAt: null, isActive: true, status: 'published' },
-        select: { id: true, name: true, price: true, comparePrice: true, stockBySize: true },
-      }),
-    ])
-  )
-  if (!tenant) return { error: 'Store not found.' }
-
-  const byId = new Map(products.map((p) => [p.id, p]))
-  const lines: (QuoteLine & { productName: string })[] = []
-
-  for (const line of clean) {
-    const product = byId.get(line.productId)
-    if (!product) return { error: 'One of the items in your cart is no longer available.' }
-
-    const size = line.size ?? null
-    if (stockFor(product.stockBySize, size) < line.quantity) {
-      return { error: `${product.name}${size ? ` (${size})` : ''} is out of stock.` }
-    }
-
-    lines.push({
-      productId: product.id,
-      productName: product.name,
-      size,
-      quantity: line.quantity,
-      unitPrice: Number(product.price),
-      compareAtPrice: product.comparePrice === null ? null : Number(product.comparePrice),
-    })
-  }
-
-  const itemsTotal = lines.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0)
-
-  let couponRow: (CouponRow & { id: string; code: string }) | null = null
-  if (couponCode?.trim()) {
-    const found = await withTenant(tenantId, (db) =>
-      db.discountCode.findUnique({ where: { tenantId_code: { tenantId, code: couponCode.trim().toUpperCase() } } })
-    )
-    if (!found) return { error: COUPON_ERROR_MESSAGE.not_found }
-    const row: CouponRow & { id: string; code: string } = {
-      id: found.id,
-      code: found.code,
-      type: found.type,
-      value: Number(found.value),
-      minOrder: found.minOrder === null ? null : Number(found.minOrder),
-      usesLimit: found.usesLimit,
-      usesCount: found.usesCount,
-      expiresAt: found.expiresAt,
-      isActive: found.isActive,
-    }
-    const rejection = checkCoupon(row, itemsTotal)
-    if (rejection) return { error: COUPON_ERROR_MESSAGE[rejection] }
-    couponRow = row
-  }
-
-  return {
-    tenantId,
-    storeName: tenant.name,
-    lines,
-    coupon: couponRow ? { id: couponRow.id, code: couponRow.code } : null,
-    quote: computeQuote({
-      lines,
-      shippingFee: Number(tenant.shippingFee),
-      freeDeliveryAbove: tenant.freeDeliveryAbove === null ? null : Number(tenant.freeDeliveryAbove),
-      coupon: couponRow,
-    }),
-  }
-}
-
-function isError(value: PricingContext | { error: string }): value is { error: string } {
-  return 'error' in value
-}
 
 /** What the summary card renders: unit prices come back from the DB too, so the line items and the total can never disagree. */
 export type QuotedLine = { productId: string; size: string | null; quantity: number; unitPrice: number }
@@ -167,7 +70,7 @@ function toQuoteResult(priced: PricingContext): QuoteResult {
 export async function getQuoteAction(cart: CartLine[], couponCode?: string): Promise<QuoteResult | { error: string }> {
   const { tenantId } = await requireTenant()
   const priced = await priceCart(tenantId, cart, couponCode)
-  return isError(priced) ? priced : toQuoteResult(priced)
+  return isPricingError(priced) ? priced : toQuoteResult(priced)
 }
 
 export type AvailableCoupon = { code: string; type: 'percent' | 'fixed'; value: number }
@@ -198,7 +101,7 @@ export async function validateCouponAction(
 ): Promise<(QuoteResult & { code: string }) | { error: string }> {
   const { tenantId } = await requireTenant()
   const priced = await priceCart(tenantId, cart, code)
-  if (isError(priced)) return priced
+  if (isPricingError(priced)) return priced
   return { ...toQuoteResult(priced), code: priced.coupon?.code ?? code.trim().toUpperCase() }
 }
 
@@ -209,7 +112,7 @@ export async function getUpiQrAction(
 ): Promise<{ intent: string; svgDataUri: string; total: number; vpa: string } | { error: string }> {
   const { tenantId } = await requireTenant()
   const priced = await priceCart(tenantId, cart, couponCode)
-  if (isError(priced)) return priced
+  if (isPricingError(priced)) return priced
 
   const tenant = await withTenant(tenantId, (db) =>
     db.tenant.findUnique({ where: { id: tenantId }, select: { paymentConfig: true } })
@@ -233,29 +136,6 @@ export async function getUpiQrAction(
   }
 }
 
-export type PlaceOrderInput = {
-  cart: CartLine[]
-  couponCode?: string
-  paymentProvider: PaymentProvider
-  /** Mandatory for both guest and signed-in checkout — guests get an account resolved/created from it. */
-  email: string
-  /** Either an existing saved address, or a new one to use for this order. */
-  addressId?: string
-  address?: {
-    name: string
-    phone: string
-    line1: string
-    line2?: string
-    city: string
-    state: string
-    pincode: string
-  }
-  /** UPI reference number, when paying by UPI. */
-  utr?: string
-  /** Uploaded payment screenshot URL — accepted as an alternative to a UTR, when paying by UPI. */
-  paymentProofUrl?: string
-}
-
 export async function uploadPaymentProofAction(file: File): Promise<{ url: string } | { error: string }> {
   const { tenantId } = await requireTenant()
   try {
@@ -273,216 +153,16 @@ export async function placeOrderAction(input: PlaceOrderInput): Promise<{ orderI
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!EMAIL_RE.test(input.email?.trim() ?? '')) {
-    return { error: 'Enter a valid email address.' }
-  }
-
-  const priced = await priceCart(tenantId, input.cart, input.couponCode)
-  if (isError(priced)) return priced
-
-  // Guests never have saved addresses (the checkout page only loads them for a signed-in
-  // user), so ignore any addressId a guest submission might carry and force a new address.
-  const addressInput = user ? input : { ...input, addressId: undefined }
-  const shippingAddress = await resolveAddress(tenantId, user?.id ?? '', addressInput)
-  if (!shippingAddress) return { error: 'A delivery address is required.' }
-
-  let customerId: string
-  if (user) {
-    customerId = user.id
-    // Backfill only — never overwrite an email already on file.
-    await withTenant(tenantId, (db) =>
-      db.customer.updateMany({ where: { id: user.id, tenantId, email: null }, data: { email: input.email.trim() } })
-    )
-  } else {
-    const resolved = await resolveOrCreateGuestCustomer(tenantId, { email: input.email.trim(), phone: shippingAddress.phone })
-    if ('error' in resolved) {
-      return { error: 'An account already exists for this email or phone. Sign in to continue.' }
-    }
-    customerId = resolved.customerId
-  }
-
-  const hasValidUtr = /^\d{12}$/.test(input.utr ?? '')
-  if (input.paymentProvider === 'upi_manual' && !hasValidUtr && !input.paymentProofUrl) {
-    return { error: 'Enter the 12-digit UPI reference number, or upload a payment screenshot.' }
-  }
-
-  let orderId: string
-  try {
-    orderId = await withTenant(tenantId, async (db) => {
-      // Re-read stock inside the transaction: priceCart's check was advisory, this one
-      // is the one that actually prevents two shoppers buying the last item.
-      for (const line of priced.lines) {
-        const product = await db.product.findUniqueOrThrow({
-          where: { id: line.productId },
-          select: { stockBySize: true },
-        })
-        if (stockFor(product.stockBySize, line.size) < line.quantity) {
-          throw new OutOfStockError(line.productName, line.size)
-        }
-        await db.product.update({
-          where: { id: line.productId },
-          data: { stockBySize: decrementStock(product.stockBySize, line.size, line.quantity) },
-        })
-      }
-
-      const order = await db.order.create({
-        data: {
-          tenantId,
-          customerId,
-          status: 'pending',
-          itemsTotal: priced.quote.itemsTotal,
-          discount: priced.quote.couponDiscount,
-          shippingFee: priced.quote.shippingFee,
-          discountCode: priced.coupon?.code ?? null,
-          total: priced.quote.total,
-          paymentProvider: input.paymentProvider,
-          paymentId: input.paymentProvider === 'upi_manual' ? (input.utr || null) : null,
-          paymentProofUrl: input.paymentProvider === 'upi_manual' ? (input.paymentProofUrl ?? null) : null,
-          paymentStatus: 'pending',
-          shippingAddress,
-          items: {
-            create: priced.lines.map((line) => ({
-              tenantId,
-              productId: line.productId,
-              productName: line.productName,
-              size: line.size,
-              quantity: line.quantity,
-              unitPrice: line.unitPrice,
-            })),
-          },
-        },
-        select: { id: true },
-      })
-
-      if (priced.coupon) {
-        await db.discountCode.update({
-          where: { id: priced.coupon.id },
-          data: { usesCount: { increment: 1 } },
-        })
-      }
-
-      return order.id
-    })
-  } catch (err) {
-    if (err instanceof OutOfStockError) {
-      return { error: `${err.productName}${err.size ? ` (${err.size})` : ''} just went out of stock.` }
-    }
-    throw err
-  }
+  const result = await placeOrder(tenantId, user, input)
+  // `reason` is an API-only affordance; the web client only ever reads `.error`, so keep
+  // this action's returned shape exactly as it was.
+  if ('error' in result) return { error: result.error }
 
   // No session to prove ownership on the next call (Razorpay create/verify) — this cookie
   // is that proof instead, scoped to exactly this order.
-  if (!user) await setGuestOrderCookie(orderId, customerId)
+  if (result.isGuest) await setGuestOrderCookie(result.orderId, result.customerId)
 
-  // The order row is the source of truth — a mail or notification failure must never
-  // undo a placed (and possibly paid) order, so this is deliberately outside the transaction.
-  try {
-    await notifyOrderPlaced({ tenantId, customerId, orderId, priced, shippingAddress })
-  } catch (err) {
-    console.error('[checkout] order notifications failed for', orderId, err)
-  }
-
-  return { orderId }
-}
-
-class OutOfStockError extends Error {
-  constructor(readonly productName: string, readonly size: string | null) {
-    super('out_of_stock')
-  }
-}
-
-async function resolveAddress(tenantId: string, customerId: string, input: PlaceOrderInput) {
-  if (input.addressId) {
-    const saved = await withTenant(tenantId, (db) =>
-      db.address.findFirst({ where: { id: input.addressId, tenantId, customerId } })
-    )
-    if (!saved) return null
-    return {
-      name: saved.name,
-      phone: saved.phone,
-      line1: saved.line1,
-      line2: saved.line2 ?? '',
-      city: saved.city,
-      state: saved.state,
-      pincode: saved.pincode,
-    }
-  }
-  if (!input.address) return null
-  return { ...input.address, line2: input.address.line2 ?? '' }
-}
-
-type ShippingAddress = { name: string; phone: string; line1: string; line2: string; city: string; state: string; pincode: string }
-
-async function notifyOrderPlaced(params: {
-  tenantId: string
-  customerId: string
-  orderId: string
-  priced: PricingContext
-  shippingAddress: ShippingAddress
-}) {
-  const { tenantId, orderId, priced } = params
-  const code = orderCode(orderId)
-
-  const [tenant, customer, host] = await Promise.all([
-    prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { slug: true, name: true, contactEmail: true, notifyEmailOnOrder: true },
-    }),
-    prisma.customer.findUnique({ where: { id: params.customerId }, select: { name: true, email: true } }),
-    headers().then((h) => h.get('host')),
-  ])
-  if (!tenant) return
-
-  // getStoreUrl/getAdminUrl return a bare path in local dev; emails need an absolute
-  // URL, so prefix the request origin there.
-  const isLocalDev = isLocalDevHost(host)
-  const origin = isLocalDev ? `http://${host ?? 'localhost:3000'}` : ''
-  const storeUrl = `${origin}${getStoreUrl(tenant.slug, isLocalDev)}`
-  const adminOrdersUrl = `${origin}${getAdminUrl(tenant.slug, isLocalDev).replace(/\/admin\/dashboard$/, '/admin/orders')}`
-
-  const items: OrderEmailItem[] = priced.lines.map((line) => ({
-    name: line.productName,
-    size: line.size,
-    quantity: line.quantity,
-    unitPrice: line.unitPrice,
-  }))
-
-  await createNotification(tenantId, {
-    type: 'new_order',
-    title: `New order ${code}`,
-    body: `${customer?.name ?? 'A customer'} placed an order worth ₹${priced.quote.total.toLocaleString('en-IN')}.`,
-    link: '/admin/orders',
-  })
-
-  if (customer?.email) {
-    await sendOrderPlacedEmail(customer.email, {
-      storeName: tenant.name,
-      orderCode: code,
-      items,
-      total: priced.quote.total,
-      addressLines: [
-        params.shippingAddress.name,
-        [params.shippingAddress.line1, params.shippingAddress.line2].filter(Boolean).join(', '),
-        `${params.shippingAddress.city}, ${params.shippingAddress.state} ${params.shippingAddress.pincode}`,
-        params.shippingAddress.phone,
-      ].filter(Boolean),
-      trackUrl: `${storeUrl}/orders/${orderId}`,
-      invoiceUrl: `${storeUrl}/orders/${orderId}/invoice`,
-    })
-  } else {
-    console.info('[checkout] no customer email on file — skipping order confirmation mail for', code)
-  }
-
-  if (tenant.notifyEmailOnOrder && tenant.contactEmail) {
-    await sendNewOrderEmail(tenant.contactEmail, {
-      storeName: tenant.name,
-      orderCode: code,
-      customerName: customer?.name ?? 'A customer',
-      items,
-      total: priced.quote.total,
-      adminOrdersUrl,
-    })
-  }
+  return { orderId: result.orderId }
 }
 
 // ── Razorpay ──
