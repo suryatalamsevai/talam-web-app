@@ -9,12 +9,14 @@ import {
   type QuoteLine,
 } from '@/lib/checkout-pricing'
 
-export type CartLine = { productId: string; size?: string | null; quantity: number }
-
 /**
- * Everything below re-reads prices, stock and coupons from the database. The client
- * sends product ids, sizes and quantities only — any total it computed is for display.
+ * Shared cart-pricing core, extracted from app/checkout/actions.ts so the mobile API
+ * routes (app/api/v1/checkout/**) and the web Server Actions can both call into the
+ * same server-authoritative pricing logic. Re-reads prices, stock and coupons from
+ * the database — the caller's cart only ever supplies product ids, sizes and quantities.
  */
+
+export type CartLine = { productId: string; size?: string | null; quantity: number }
 
 export type PricingContext = {
   tenantId: string
@@ -24,8 +26,6 @@ export type PricingContext = {
   storeName: string
 }
 
-/** Shared by the checkout Server Actions (app/checkout/actions.ts) and their `v1` API
- *  route counterparts — both surfaces must price a cart identically. */
 export async function priceCart(
   tenantId: string,
   cart: CartLine[],

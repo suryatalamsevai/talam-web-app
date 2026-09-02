@@ -1,7 +1,6 @@
 'use server'
 
 import { cookies, headers } from 'next/headers'
-import QRCode from 'qrcode'
 import { requireTenant } from '@/lib/auth-guard'
 import { createServerClient } from '@/lib/supabase/server'
 import { cookieDomain } from '@/lib/supabase/cookie-domain'
@@ -13,7 +12,6 @@ import { getAvailableCoupons, type AvailableCoupon } from '@/lib/data/checkout-c
 import { sendNewOrderEmail, sendOrderPlacedEmail, type OrderEmailItem } from '@/lib/resend'
 import { getAdminUrl, getStoreUrl, isLocalDevHost } from '@/lib/tenant-url'
 import { orderCode } from '@/lib/data/storefront-orders'
-import { buildUpiIntent } from '@/lib/payments/upi'
 import { createRazorpayOrder, getRazorpayKeys, verifyRazorpaySignature } from '@/lib/payments/razorpay'
 import { decrementStock, stockFor } from '@/lib/checkout-pricing'
 import {
@@ -25,6 +23,7 @@ import {
   type QuotedLine,
   type QuoteResult,
 } from '@/lib/checkout/price-cart'
+import { computeUpiQr } from '@/lib/checkout/upi-qr'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -55,7 +54,7 @@ async function readGuestOrderCustomerId(orderId: string): Promise<string | null>
 
 // Re-exported so existing call sites (e.g. app/checkout/checkout-client.tsx) importing
 // these types from this module keep working unchanged.
-export type { CartLine, QuotedLine, QuoteResult }
+export type { CartLine, PricingContext, QuotedLine, QuoteResult }
 
 export type PaymentProvider = 'upi_manual' | 'razorpay' | 'cod'
 
@@ -64,7 +63,6 @@ export type PaymentProvider = 'upi_manual' | 'razorpay' | 'cod'
  * `priceCart` in lib/checkout/price-cart.ts). The client sends product ids, sizes
  * and quantities only — any total it computed is for display.
  */
-
 
 /** Server-authoritative totals for display — the client never decides what anything costs. */
 export async function getQuoteAction(cart: CartLine[], couponCode?: string): Promise<QuoteResult | { error: string }> {
@@ -96,29 +94,7 @@ export async function getUpiQrAction(
   couponCode?: string
 ): Promise<{ intent: string; svgDataUri: string; total: number; vpa: string } | { error: string }> {
   const { tenantId } = await requireTenant()
-  const priced = await priceCart(tenantId, cart, couponCode)
-  if (isError(priced)) return priced
-
-  const tenant = await withTenant(tenantId, (db) =>
-    db.tenant.findUnique({ where: { id: tenantId }, select: { paymentConfig: true } })
-  )
-  const upi = (tenant?.paymentConfig as { upi?: { enabled?: boolean; upiId?: string } } | null)?.upi
-  if (!upi?.enabled || !upi.upiId) return { error: 'This store has not set up UPI payments yet.' }
-
-  const intent = buildUpiIntent({
-    vpa: upi.upiId,
-    storeName: priced.storeName,
-    amount: priced.quote.total,
-    note: `Order at ${priced.storeName}`,
-  })
-  const svg = await QRCode.toString(intent, { type: 'svg', margin: 1, width: 240 })
-
-  return {
-    intent,
-    svgDataUri: `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`,
-    total: priced.quote.total,
-    vpa: upi.upiId,
-  }
+  return computeUpiQr(tenantId, cart, couponCode)
 }
 
 export type PlaceOrderInput = {
