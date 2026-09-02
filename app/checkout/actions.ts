@@ -59,6 +59,13 @@ export type { CartLine, QuotedLine, QuoteResult }
 
 export type PaymentProvider = 'upi_manual' | 'razorpay' | 'cod'
 
+/**
+ * Everything below re-reads prices, stock and coupons from the database (via
+ * `priceCart` in lib/checkout/price-cart.ts). The client sends product ids, sizes
+ * and quantities only — any total it computed is for display.
+ */
+
+
 /** Server-authoritative totals for display — the client never decides what anything costs. */
 export async function getQuoteAction(cart: CartLine[], couponCode?: string): Promise<QuoteResult | { error: string }> {
   const { tenantId } = await requireTenant()
