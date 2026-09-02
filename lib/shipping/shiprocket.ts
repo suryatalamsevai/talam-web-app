@@ -1,10 +1,12 @@
 import {
   assignShiprocketAwb,
   createShiprocketOrder,
+  getShiprocketTrackingStatus,
   ShiprocketLoginError,
   shiprocketLogin,
   type ShiprocketOrderInput,
   type ShiprocketShipment,
+  type ShiprocketTrackingStatus,
 } from './shiprocket-client'
 import {
   getDecryptedShiprocketCredential,
@@ -21,7 +23,12 @@ import {
  * replaced.
  */
 
-export type { ShiprocketOrderInput, ShiprocketShipment } from './shiprocket-client'
+export type {
+  ShiprocketOrderInput,
+  ShiprocketShipment,
+  ShiprocketTrackingActivity,
+  ShiprocketTrackingStatus,
+} from './shiprocket-client'
 
 export async function createShiprocketShipment(
   tenantId: string,
@@ -55,4 +62,24 @@ export async function createShiprocketShipment(
   const { awbCode, courierName } = await assignShiprocketAwb(token, shipmentId)
 
   return { awbCode, courierName, shipmentId }
+}
+
+/**
+ * Reads live courier scans for one AWB from *the tenant's own* Shiprocket account.
+ *
+ * Throws on every failure — no Shiprocket account connected, login rejected, upstream 5xx,
+ * timeout — because the only caller (lib/data/order-tracking.ts) already degrades to the
+ * order's stored status. Deliberately does NOT call markShiprocketCredentialStale on a 401
+ * the way createShiprocketShipment does: this runs on a customer-facing read, and a customer
+ * refreshing a tracking screen must never be able to flip the shop's shipping config.
+ */
+export async function getShiprocketTracking(
+  tenantId: string,
+  awbCode: string
+): Promise<ShiprocketTrackingStatus | null> {
+  const credential = await getDecryptedShiprocketCredential(tenantId)
+  if (!credential) throw new Error('No Shiprocket account is connected for this store.')
+
+  const token = await shiprocketLogin(credential.email, credential.password)
+  return getShiprocketTrackingStatus(token, awbCode)
 }
