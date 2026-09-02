@@ -5,7 +5,7 @@ import { requireTenant } from '@/lib/auth-guard'
 import { createServerClient } from '@/lib/supabase/server'
 import { cookieDomain } from '@/lib/supabase/cookie-domain'
 import { resolveOrCreateGuestCustomer } from '@/lib/auth/resolve-guest-customer'
-import { uploadImage } from '@/lib/cloudinary'
+import { uploadPaymentProof } from '@/lib/checkout/payment-proof'
 import { prisma, withTenant } from '@/lib/prisma'
 import { createNotification } from '@/lib/data/notifications'
 import { getAvailableCoupons, type AvailableCoupon } from '@/lib/data/checkout-coupons'
@@ -123,7 +123,7 @@ export type PlaceOrderInput = {
 export async function uploadPaymentProofAction(file: File): Promise<{ url: string } | { error: string }> {
   const { tenantId } = await requireTenant()
   try {
-    const url = await uploadImage(file, `talam/${tenantId}/payment-proofs`)
+    const url = await uploadPaymentProof(tenantId, file)
     return { url }
   } catch {
     return { error: 'Upload failed. Please try again.' }
