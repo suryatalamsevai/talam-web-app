@@ -9,14 +9,12 @@ import {
   type QuoteLine,
 } from '@/lib/checkout-pricing'
 
-/**
- * Shared read-only cart pricing: re-reads prices, stock and coupons from the database so
- * neither the web checkout Server Action nor the mobile API route trusts client-computed
- * totals. Used by `app/checkout/actions.ts` (getQuoteAction/validateCouponAction/
- * getUpiQrAction/placeOrderAction) and `app/api/v1/checkout/quote/route.ts`.
- */
-
 export type CartLine = { productId: string; size?: string | null; quantity: number }
+
+/**
+ * Everything below re-reads prices, stock and coupons from the database. The client
+ * sends product ids, sizes and quantities only — any total it computed is for display.
+ */
 
 export type PricingContext = {
   tenantId: string
@@ -26,6 +24,8 @@ export type PricingContext = {
   storeName: string
 }
 
+/** Shared by the checkout Server Actions (app/checkout/actions.ts) and their `v1` API
+ *  route counterparts — both surfaces must price a cart identically. */
 export async function priceCart(
   tenantId: string,
   cart: CartLine[],

@@ -23,7 +23,7 @@ import {
   type PricingContext,
   type QuoteResult,
   type QuotedLine,
-} from '@/lib/data/checkout-quote'
+} from '@/lib/checkout/price-cart'
 
 export type { CartLine, QuoteResult, QuotedLine }
 
@@ -58,7 +58,7 @@ export type PaymentProvider = 'upi_manual' | 'razorpay' | 'cod'
 
 /**
  * Everything below re-reads prices, stock and coupons from the database (via
- * `priceCart` in lib/data/checkout-quote.ts). The client sends product ids, sizes
+ * `priceCart` in lib/checkout/price-cart.ts). The client sends product ids, sizes
  * and quantities only — any total it computed is for display.
  */
 

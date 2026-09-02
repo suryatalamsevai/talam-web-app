@@ -12,8 +12,8 @@ vi.mock('@/lib/tenant', () => ({
 vi.mock('@/lib/auth-guard', () => ({
   requireApiUser: mockRequireApiUser,
 }))
-vi.mock('@/lib/data/checkout-quote', async () => {
-  const actual = await vi.importActual<typeof import('@/lib/data/checkout-quote')>('@/lib/data/checkout-quote')
+vi.mock('@/lib/checkout/price-cart', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/checkout/price-cart')>('@/lib/checkout/price-cart')
   return {
     ...actual,
     priceCart: mockPriceCart,

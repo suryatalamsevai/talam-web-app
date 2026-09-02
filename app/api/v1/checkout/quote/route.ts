@@ -1,10 +1,10 @@
 import { requireApiUser } from '@/lib/auth-guard'
 import { resolveTenantForApi } from '@/lib/tenant'
 import { apiSuccess, apiError } from '@/lib/api/response'
-import { priceCart, isError, toQuoteResult, type CartLine } from '@/lib/data/checkout-quote'
+import { priceCart, isError, toQuoteResult, type CartLine } from '@/lib/checkout/price-cart'
 
 // Mobile counterpart of app/checkout/actions.ts's getQuoteAction, wrapping the same
-// lib/data/checkout-quote.ts's priceCart/toQuoteResult so both surfaces stay in lockstep.
+// lib/checkout/price-cart.ts's priceCart/toQuoteResult so both surfaces stay in lockstep.
 //
 // Read-only pricing calculation — no writes, so this is idempotent/retry-safe: calling it
 // twice with the same body re-derives the same totals from the DB and has no side effects.
