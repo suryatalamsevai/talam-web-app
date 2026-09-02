@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import type { AddressItem } from '@/lib/data/addresses'
 import type { Quote } from '@/lib/checkout-pricing'
+import type { AvailableCoupon } from '@/lib/data/checkout-coupons'
 import {
   createRazorpayOrderAction,
   getAvailableCouponsAction,
@@ -28,7 +29,6 @@ import {
   uploadPaymentProofAction,
   validateCouponAction,
   verifyRazorpayPaymentAction,
-  type AvailableCoupon,
   type CartLine,
   type PaymentProvider,
   type QuotedLine,

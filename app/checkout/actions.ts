@@ -9,6 +9,7 @@ import { resolveOrCreateGuestCustomer } from '@/lib/auth/resolve-guest-customer'
 import { uploadImage } from '@/lib/cloudinary'
 import { prisma, withTenant } from '@/lib/prisma'
 import { createNotification } from '@/lib/data/notifications'
+import { getAvailableCoupons, type AvailableCoupon } from '@/lib/data/checkout-coupons'
 import { sendNewOrderEmail, sendOrderPlacedEmail, type OrderEmailItem } from '@/lib/resend'
 import { getAdminUrl, getStoreUrl, isLocalDevHost } from '@/lib/tenant-url'
 import { orderCode } from '@/lib/data/storefront-orders'
@@ -170,26 +171,11 @@ export async function getQuoteAction(cart: CartLine[], couponCode?: string): Pro
   return isError(priced) ? priced : toQuoteResult(priced)
 }
 
-export type AvailableCoupon = { code: string; type: 'percent' | 'fixed'; value: number }
-
 /** Active, unexpired, not-yet-exhausted codes to promote near the coupon field — not a
  *  substitute for validateCouponAction, which re-checks everything (incl. minOrder) at apply time. */
 export async function getAvailableCouponsAction(): Promise<AvailableCoupon[]> {
   const { tenantId } = await requireTenant()
-  const now = new Date()
-  const codes = await withTenant(tenantId, (db) =>
-    db.discountCode.findMany({
-      where: {
-        tenantId,
-        isActive: true,
-        OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
-      },
-      select: { code: true, type: true, value: true, usesLimit: true, usesCount: true },
-    })
-  )
-  return codes
-    .filter((c) => c.usesLimit === null || c.usesCount < c.usesLimit)
-    .map((c) => ({ code: c.code, type: c.type, value: Number(c.value) }))
+  return getAvailableCoupons(tenantId)
 }
 
 export async function validateCouponAction(
