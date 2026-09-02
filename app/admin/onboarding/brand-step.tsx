@@ -93,7 +93,7 @@ function LogoAttachment({
         <AttachmentTrigger render={<label />}>
           <input
             type="file"
-            accept="image/png,image/jpeg,image/svg+xml"
+            accept="image/*"
             className="sr-only"
             onChange={(event) => onFileChange(event.target.files?.[0] ?? null)}
           />
@@ -109,7 +109,7 @@ function LogoAttachment({
         {!previewUrl && (
           <AttachmentContent>
             <AttachmentTitle>Upload</AttachmentTitle>
-            <AttachmentDescription>PNG, JPG, or SVG</AttachmentDescription>
+            <AttachmentDescription>Any image format</AttachmentDescription>
           </AttachmentContent>
         )}
       </Attachment>

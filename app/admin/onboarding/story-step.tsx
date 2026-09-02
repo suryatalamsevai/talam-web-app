@@ -26,7 +26,7 @@ export function StoryStep({ control }: { readonly control: Control<OnboardingVal
             <Field label="About your store" error={fieldState.error?.message}>
               <FieldHint>Shown on your About page</FieldHint>
               <TextArea value={field.value} onChange={field.onChange} onBlur={field.onBlur} invalid={Boolean(fieldState.error)} />
-              <CountHint value={field.value ?? ''} min={20} max={100} />
+              <CountHint value={field.value ?? ''} min={20} max={500} />
             </Field>
           )}
         />

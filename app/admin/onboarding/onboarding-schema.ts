@@ -1,12 +1,12 @@
 import { z } from 'zod'
 import { isValidVpa } from '@/lib/payments/upi'
 
-const ACCEPTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/svg+xml']
-
 function imageFile(requiredMessage: string) {
   return z
     .instanceof(File, { message: requiredMessage })
-    .refine((file) => ACCEPTED_IMAGE_TYPES.includes(file.type), 'Only PNG, JPEG, or SVG images are supported')
+    // Some browsers (notably iOS Safari with HEIC photos) leave file.type empty,
+    // so don't reject on a missing type — only reject types known not to be images.
+    .refine((file) => !file.type || file.type.startsWith('image/'), 'Only image files are supported')
 }
 
 export const onboardingSchema = z
@@ -42,7 +42,7 @@ export const onboardingSchema = z
       .string()
       .trim()
       .min(20, 'About must be at least 20 characters')
-      .max(100, 'About must be at most 100 characters'),
+      .max(500, 'About must be at most 500 characters'),
     subscriptionTier: z.enum(['starter', 'pro'], { message: 'Choose a plan' }),
     paymentIds: z.array(z.enum(['upi', 'razorpay', 'instamojo'])).min(1, 'Select at least one payment method'),
     upiAddress: z.string().trim().optional(),

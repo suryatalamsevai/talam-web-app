@@ -31,11 +31,12 @@ function OptionalMark() {
 }
 
 const MAX_GALLERY_PHOTOS = 8
-const ACCEPTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp']
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024
 
 function validateGalleryFile(file: File): string | null {
-  if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) return 'Only PNG, JPEG, or WEBP images are supported.'
+  // Some browsers (notably iOS Safari with HEIC photos) leave file.type empty,
+  // so don't reject on a missing type — only reject types known not to be images.
+  if (file.type && !file.type.startsWith('image/')) return 'Only image files are supported.'
   if (file.size > MAX_PHOTO_BYTES) return 'Photo must be under 5MB.'
   return null
 }
@@ -62,7 +63,7 @@ function GalleryDropzone({ gallery, onAdd, onRemove, error }: { gallery: string[
             <AttachmentTrigger render={<label />}>
               <input
                 type="file"
-                accept={ACCEPTED_IMAGE_TYPES.join(',')}
+                accept="image/*"
                 className="sr-only"
                 onChange={(e) => {
                   const file = e.target.files?.[0]
