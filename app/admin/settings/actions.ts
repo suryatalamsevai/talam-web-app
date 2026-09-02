@@ -651,7 +651,12 @@ export async function startRazorpayOnboardingAction(): Promise<{ onboardingUrl: 
     return { error: 'Add a contact phone and email before connecting Razorpay.' }
   }
 
-  const account = await createLinkedAccount({ email: tenant.contactEmail, phone: tenant.contactPhone, businessName: tenant.name })
+  let account: Awaited<ReturnType<typeof createLinkedAccount>>
+  try {
+    account = await createLinkedAccount({ email: tenant.contactEmail, phone: tenant.contactPhone, businessName: tenant.name })
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Could not connect to Razorpay. Please try again.' }
+  }
 
   // Merge into the existing multi-gateway config — never overwrite the whole column, or a
   // merchant's saved UPI ID silently disappears the moment they connect Razorpay.
