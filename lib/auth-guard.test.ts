@@ -8,6 +8,7 @@ const {
   mockTouchAdminStaffLastActive,
   mockRedirect,
   mockWithTenant,
+  mockCustomerFindUnique,
 } = vi.hoisted(() => ({
   mockGetUser: vi.fn(async (): Promise<{
     data: { user: { id: string; email: string } | null }
@@ -20,6 +21,7 @@ const {
   mockWithTenant: vi.fn((tenantId: string, fn: (db: unknown) => unknown) =>
     fn({ customer: { upsert: vi.fn() } })
   ),
+  mockCustomerFindUnique: vi.fn(async (): Promise<{ tenantId: string } | null> => null),
 }))
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -43,6 +45,7 @@ vi.mock('next/navigation', () => ({ redirect: mockRedirect }))
 
 vi.mock('@/lib/prisma', () => ({
   withTenant: mockWithTenant,
+  prisma: { customer: { findUnique: mockCustomerFindUnique } },
 }))
 
 // canAccessSection is a pure lookup — kept real via importActual so
@@ -121,6 +124,24 @@ describe('requireApiUser', () => {
     const user = await requireApiUser(bearerRequest('expired-token'), 'tenant-a')
 
     expect(user).toBeNull()
+    expect(mockWithTenant).not.toHaveBeenCalled()
+  })
+
+  it('returns null when the bearer-authenticated user is already a customer of a different tenant', async () => {
+    mockCustomerFindUnique.mockResolvedValueOnce({ tenantId: 'tenant-b' })
+
+    const user = await requireApiUser(bearerRequest('valid-token'), 'tenant-a')
+
+    expect(user).toBeNull()
+    expect(mockWithTenant).not.toHaveBeenCalled()
+  })
+
+  it('returns the user without upserting when they already belong to the requested tenant', async () => {
+    mockCustomerFindUnique.mockResolvedValueOnce({ tenantId: 'tenant-a' })
+
+    const user = await requireApiUser(bearerRequest('valid-token'), 'tenant-a')
+
+    expect(user?.id).toBe('user-1')
     expect(mockWithTenant).not.toHaveBeenCalled()
   })
 

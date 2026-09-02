@@ -50,12 +50,44 @@ export async function verifyRazorpayPayment(
 
   const { count } = await withTenant(input.tenantId, (db) =>
     db.order.updateMany({
-      where: { id: input.orderId, tenantId: input.tenantId, customerId: input.customerId },
+      where: {
+        id: input.orderId,
+        tenantId: input.tenantId,
+        customerId: input.customerId,
+        // Binds this verification to the Razorpay order actually minted for this order row
+        // (set by createRazorpayOrderForOrder). Razorpay keys are shared across every tenant
+        // on this platform, so a signature is only proof of *a* genuine payment somewhere —
+        // without this, a signature earned on one order could be replayed to confirm any
+        // other pending order, for any amount, in any tenant.
+        paymentId: input.razorpayOrderId,
+        paymentStatus: 'pending',
+      },
       data: { paymentStatus: 'paid', paymentId: input.razorpayPaymentId, status: 'confirmed' },
     })
   )
 
-  // `updated === 0` means the order doesn't exist, belongs to another tenant, or
-  // belongs to another customer — callers decide how loudly to report that.
-  return { ok: true, updated: count }
+  if (count > 0) return { ok: true, updated: count }
+
+  // Nothing pending matched. Distinguish "already verified by an earlier call with this
+  // exact payment" (retry-safe no-op — `count` above is 0 on a retry precisely because the
+  // first call already flipped `paymentStatus` off `pending`) from every other case: wrong
+  // order, wrong tenant/customer, or a signature that doesn't correspond to what was actually
+  // created for this order. Only the former may report success.
+  const alreadyVerified = await withTenant(input.tenantId, (db) =>
+    db.order.findFirst({
+      where: {
+        id: input.orderId,
+        tenantId: input.tenantId,
+        customerId: input.customerId,
+        paymentId: input.razorpayPaymentId,
+        paymentStatus: 'paid',
+      },
+      select: { id: true },
+    })
+  )
+
+  // `updated === 0` means the order doesn't exist, belongs to another tenant/customer, or
+  // this signature doesn't match what was created for it — callers decide how loudly to
+  // report that.
+  return { ok: true, updated: alreadyVerified ? 1 : 0 }
 }

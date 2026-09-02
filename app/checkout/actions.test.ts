@@ -502,7 +502,15 @@ describe('createRazorpayOrderAction / verifyRazorpayPaymentAction — guest chec
 
     expect(result).toEqual({ ok: true })
     expect(mockDb.order.updateMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: 'order-1', tenantId: 't1', customerId: 'guest-cust-1' } })
+      expect.objectContaining({
+        where: {
+          id: 'order-1',
+          tenantId: 't1',
+          customerId: 'guest-cust-1',
+          paymentId: 'rzp_1',
+          paymentStatus: 'pending',
+        },
+      })
     )
   })
 

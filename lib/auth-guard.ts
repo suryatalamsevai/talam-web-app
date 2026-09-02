@@ -2,7 +2,7 @@ import { cache } from 'react'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createServerClient } from '@/lib/supabase/server'
-import { withTenant } from '@/lib/prisma'
+import { prisma, withTenant } from '@/lib/prisma'
 import { isAdminStaffEmail, getAdminStaffRole, touchAdminStaffLastActive } from '@/lib/data/admin-staff'
 import { canAccessSection, type AdminSection } from '@/lib/data/admin-permissions'
 import type { AdminStaffRole } from '@prisma/client'
@@ -70,7 +70,19 @@ export async function requireApiUser(request: Request, tenantId: string): Promis
 
   if (error || !user) return null
 
-  await ensureTenantCustomer(user, tenantId)
+  // `tenantId` here comes from a request header the mobile client controls, so — unlike the
+  // cookie/subdomain-resolved web path — it cannot be trusted to actually be this user's
+  // tenant. `Customer.id` is a bare global PK (no composite key on tenantId), so a naive
+  // upsert-by-id would silently no-op for a customer row that already exists under a
+  // *different* tenant, and this call would return the user as authorized for the tenant it
+  // merely claimed. Look the row up first — unscoped, since that's exactly what's being
+  // checked — and reject outright on a mismatch instead of upserting.
+  const existing = await prisma.customer.findUnique({ where: { id: user.id }, select: { tenantId: true } })
+  if (existing) {
+    if (existing.tenantId !== tenantId) return null // token belongs to a different tenant's customer
+  } else {
+    await ensureTenantCustomer(user, tenantId)
+  }
 
   return user
 }

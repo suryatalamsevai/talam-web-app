@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { mockResolveTenantForApi, mockRequireApiUser, mockVerifySignature, mockUpdateMany } = vi.hoisted(() => ({
+const { mockResolveTenantForApi, mockRequireApiUser, mockVerifySignature, mockUpdateMany, mockFindFirst } = vi.hoisted(() => ({
   mockResolveTenantForApi: vi.fn(),
   mockRequireApiUser: vi.fn(),
   mockVerifySignature: vi.fn(),
   mockUpdateMany: vi.fn(),
+  mockFindFirst: vi.fn(async () => null),
 }))
 
 vi.mock('@/lib/tenant', () => ({
@@ -20,8 +21,10 @@ vi.mock('@/lib/payments/razorpay', () => ({
 }))
 vi.mock('@/lib/prisma', () => ({
   prisma: { order: { updateMany: mockUpdateMany } },
-  withTenant: (_tenantId: string, fn: (db: { order: { updateMany: typeof mockUpdateMany } }) => unknown) =>
-    fn({ order: { updateMany: mockUpdateMany } }),
+  withTenant: (
+    _tenantId: string,
+    fn: (db: { order: { updateMany: typeof mockUpdateMany; findFirst: typeof mockFindFirst } }) => unknown
+  ) => fn({ order: { updateMany: mockUpdateMany, findFirst: mockFindFirst } }),
 }))
 
 // The real lib/checkout/verify-razorpay-payment.ts runs here on purpose, so these tests prove
@@ -60,7 +63,13 @@ describe('POST /api/v1/checkout/razorpay/verify', () => {
     expect(res.status).toBe(200)
     expect(body).toEqual({ data: { ok: true } })
     expect(mockUpdateMany).toHaveBeenCalledWith({
-      where: { id: 'order-1', tenantId: 'tenant-a', customerId: 'cust-1' },
+      where: {
+        id: 'order-1',
+        tenantId: 'tenant-a',
+        customerId: 'cust-1',
+        paymentId: 'rzp_order_1',
+        paymentStatus: 'pending',
+      },
       data: { paymentStatus: 'paid', paymentId: 'pay_1', status: 'confirmed' },
     })
   })
