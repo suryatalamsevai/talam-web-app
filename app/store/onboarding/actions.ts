@@ -1,7 +1,7 @@
 'use server'
 
 import { requireAuth, requireTenant } from '@/lib/auth-guard'
-import { withTenant } from '@/lib/prisma'
+import { saveOnboarding } from '@/lib/data/onboarding'
 
 export async function saveOnboardingAction(data: {
   preferredCategories: string[]
@@ -10,16 +10,7 @@ export async function saveOnboardingAction(data: {
   const { tenantId } = await requireTenant()
   const user = await requireAuth()
 
-  await withTenant(tenantId, (db) =>
-    db.customer.update({
-      where: { id: user.id },
-      data: {
-        preferredCategories: data.preferredCategories,
-        preferredSize: data.preferredSize,
-        onboardingComplete: true,
-      },
-    })
-  )
+  await saveOnboarding(tenantId, user.id, data)
 
   return { ok: true }
 }
